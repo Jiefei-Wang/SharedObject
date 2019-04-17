@@ -10,14 +10,18 @@ using namespace boost::interprocess;
 using std::string;
 using std::pair;
 using std::to_string;
+//The shared space that is shared across all spaces, it is used to shared the basic info
 #define PROCESS_SHARED_NAME "R_shared_memory_process"
+//The map name that stores the info of each process. it is under PROCESS_SHARED_NAME
 #define PROCESS_INFO_MAP_NAME "R_shared_memory_process_info_map"
+//The map name that stores the data id to process id links. it is under PROCESS_SHARED_NAME
 #define DATA_PROCESS_MAP_NAME "R_shared_memory_data_process_map"
-
-
+//Number of shared memory
 #define DATA_COUNT_NAME "R_shared_memory_data_count"
-#define PROCESS_LIST_SIZE 1024*1024
+
+#define PROCESS_LIST_SIZE 1024*1024*64
 #define DATA_LIST_SIZE 1024*1024*8
+
 
 enum sharedSystem { MSM, SMO };
 
@@ -320,7 +324,7 @@ void* readSharedOBJ(DID did) {
 	{
 		shared_memory_object shm(open_only, signature.c_str(), read_only);
 		//Map the whole shared memory in this process
-		mapped_region* region=new mapped_region(*shm, read_only);
+		mapped_region* region=new mapped_region(shm, read_only);
 		//segment_list
 		return(region->get_address());
 

@@ -17,3 +17,15 @@ void warningHandle(const char* msg){
   warning(msg);
 
 }
+
+int getTypeSize(unsigned int type){
+  switch(type){
+  case INT_TYPE:
+    return 4;
+  case BOOL_TYPE:
+    return 4;
+  case REAL_TYPE:
+    return 8;
+  }
+  errorHandle("Unexpected data type");
+}

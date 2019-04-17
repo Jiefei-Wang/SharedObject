@@ -15,6 +15,7 @@ RoxygenNote: 6.1.1
 Collate: 
     'pkgSetting.R'
     'resourcesManager.R'
-    'sharedObject-class.R'
-    'sharedObject-methods.R'
+    'sharedMemory-class.R'
+    'sharedMemory-methods.R'
+    'sharedObject-altrep.R'
     'tools.R'

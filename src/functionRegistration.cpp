@@ -4,6 +4,7 @@
 #include <R_ext/Rdynload.h>
 
 #include "C_Interface.h"
+#include "altrep_real_class.h"
 
 
 static const R_CallMethodDef callMethods[] = {
@@ -15,6 +16,7 @@ static const R_CallMethodDef callMethods[] = {
   { "clearObj", (DL_FUNC)& clearObj, 1 },
   { "getProcessList", (DL_FUNC)& getProcessList, 0 },
   { "getDataList", (DL_FUNC)& getDataList, 1 },
+  { "createAltrep", (DL_FUNC)& createAltrep, 4 },
   { NULL, NULL, 0 }
 };
 
@@ -22,7 +24,14 @@ static const R_CallMethodDef callMethods[] = {
 extern "C"
 void R_init_sharedObject(DllInfo * info)
 {
+  //Normal functions registration
   R_registerRoutines(info, NULL, callMethods, NULL, NULL);
   R_useDynamicSymbols(info, FALSE);
   R_forceSymbols(info, TRUE);
+
+  //altrep class registration
+  InitRealClass(info);
 }
+
+
+

@@ -1,6 +1,7 @@
 #include "C_interface.h"
 #include "tools.h"
 #include "memoryManager.h"
+#include "altrep_real_class.h"
 using std::string;
 SEXP testFunc(SEXP x)
 {
@@ -41,20 +42,20 @@ SEXP readSharedMemory(SEXP R_DID) {
 SEXP getValue_32(SEXP data, SEXP type_id,SEXP i){
   void* p = R_ExternalPtrAddr(data);
   //
-  TYPE dataType=static_cast<TYPE>(asInteger(type_id));
+  int dataType=asInteger(type_id);
   //printf("The value of p is: %p\n", p);
   int* ind=INTEGER(i);
   int n = length(i);
   //Allocate the output vector
   SEXP out;
   switch(dataType){
-  case TYPE::logical:
+  case BOOL_TYPE:
     out=PROTECT(allocVector(LGLSXP, n));
     break;
-  case TYPE::integer:
+  case INT_TYPE:
     out=PROTECT(allocVector(INTSXP, n));
     break;
-  case TYPE::real:
+  case REAL_TYPE:
     out=PROTECT(allocVector(REALSXP, n));
     break;
   default:
@@ -62,15 +63,14 @@ SEXP getValue_32(SEXP data, SEXP type_id,SEXP i){
   }
 
   for(int j=0;j<n;j++){
-    //printf("index:%d\n",ind);
-    switch (TYPE::real) {
-    case TYPE::logical:
+    switch (dataType) {
+    case BOOL_TYPE:
       LOGICAL(out)[j]=((int*)p)[ind[j]];
       break;
-    case TYPE::integer:
+    case INT_TYPE:
       INTEGER(out)[j]=((int*)p)[ind[j]];
       break;
-    case TYPE::real:
+    case REAL_TYPE:
       REAL(out)[j]=((double*)p)[ind[j]];
       break;
     }
@@ -78,7 +78,6 @@ SEXP getValue_32(SEXP data, SEXP type_id,SEXP i){
   UNPROTECT(1);
    return(out);
 }
-
 SEXP getProcessList() {
 	size_t processNum = getProcessNum();
 	SEXP processList=PROTECT(allocVector(INTSXP, processNum));
@@ -94,6 +93,27 @@ SEXP getDataList(SEXP R_pid) {
 	getDataID(pid,INTEGER(dataList));
 	UNPROTECT(1);
 	return(dataList);
+}
+
+SEXP createAltrep(SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size){
+	Rprintf("creating state\n");
+  SEXP state = PROTECT(make_sharedObject_state(R_type,R_length, R_size));
+  int type=asInteger(R_type);
+  R_altrep_class_t alt_class;
+  switch(type) {
+  case REAL_TYPE:
+	  Rprintf("real type\n");
+	  alt_class = shared_real_class;
+    break;
+  default: error("Type of %ul is not supported yet", type);
+  }
+
+  SEXP res = PROTECT(R_new_altrep(alt_class, R_address, state));
+
+  Rprintf("altrep generated\n");
+
+  UNPROTECT(2);
+  return res;
 }
 
 
