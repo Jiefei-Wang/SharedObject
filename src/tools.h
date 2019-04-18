@@ -1,5 +1,6 @@
 #include <string>
 
+#define DEBUG(x) x;
 #define asString(x) std::string(CHAR(asChar(x)))
 #define BOOL_TYPE 1L
 #define INT_TYPE 2L
@@ -11,3 +12,5 @@ void warningHandle(std::string msg);
 void warningHandle(const char* msg);
 
 int getTypeSize(unsigned int type);
+void messageHandle(const char* fmt, ...);
+

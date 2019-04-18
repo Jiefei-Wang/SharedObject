@@ -7,17 +7,25 @@ sharedMemory$methods(
     if(!is.null(x)){
       .self$initializeWithData(x)
     }
-},
-initializeWithData=function(x){
-  .self$NID=RM$getNID()
-  .self$PID=RM$getPID()
-  .self$length=as.double(length(x))
-  .self$type=typeof(x)
-  .self$type_id=get_type_id(.self$type)
-  .self$total_size=.self$length*type_size(.self$type)
-  .self$DID=.Call(C_createSharedMemory,x,.self$type_id,.self$total_size,.self$PID)
-  .self$loadMemObj()
-}
+  },
+  finalize=function(){
+    if(!"sharedObject"%in%loadedNamespaces())
+      message("package has been unloaded")
+    if(.self$NID==RM$getNID()&&
+       .self$PID==RM$getPID()){
+      removeObject(.self$DID,TRUE)
+    }
+  },
+  initializeWithData=function(x){
+    .self$NID=RM$getNID()
+    .self$PID=RM$getPID()
+    .self$length=as.double(length(x))
+    .self$type=typeof(x)
+    .self$type_id=get_type_id(.self$type)
+    .self$total_size=.self$length*type_size(.self$type)
+    .self$DID=.Call(C_createSharedMemory,x,.self$type_id,.self$total_size,.self$PID)
+    .self$loadMemObj()
+  }
 )
 
 
@@ -29,16 +37,18 @@ initializeWithData=function(x){
 
 
 test<-function(x){
+  options(error=recover)
   devtools::load_all()
   x=runif(10)
   a=sharedMemory(x)
   a$subset_oneInd(1)
 
-  processList=showProcessIDs()
-  processList
-  showDataIDs(processList[1])
-  removeObject(0L:3L)
-  removeAllObject()
+  getProcessInfo()
+  getDataInfo()
+  removeObject(0L:3L,TRUE)
+  removeAllObject(TRUE)
+  getFreedKeyList()
+
 
   devtools::load_all()
   x=runif(10)

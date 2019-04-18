@@ -4,6 +4,7 @@
 #include <boost/exception_ptr.hpp>
 #include "tools.h"
 #include <boost/interprocess/containers/map.hpp>
+#include <boost/interprocess/containers/set.hpp>
 #include "memoryManager.h"
 #include <map>
 using namespace boost::interprocess;
@@ -16,6 +17,8 @@ using std::to_string;
 #define PROCESS_INFO_MAP_NAME "R_shared_memory_process_info_map"
 //The map name that stores the data id to process id links. it is under PROCESS_SHARED_NAME
 #define DATA_PROCESS_MAP_NAME "R_shared_memory_data_process_map"
+//The map name that stores the unused key. it is under PROCESS_SHARED_NAME
+#define FREED_KEY_SET_NAME "R_shared_freed_key_set"
 //Number of shared memory
 #define DATA_COUNT_NAME "R_shared_memory_data_count"
 
@@ -35,6 +38,8 @@ struct dataInfo {
 	int type;
 };
 
+
+
 typedef std::pair<const PID, processInfo> processInfoPair;
 typedef allocator<processInfoPair, managed_shared_memory::segment_manager> ProcessInfoAllocator;
 typedef map<PID, processInfo, std::less<PID>, ProcessInfoAllocator> sharedProcessInfoMap;
@@ -43,9 +48,16 @@ typedef std::pair<const DID, PID> dataProcessPair;
 typedef allocator<dataProcessPair, managed_shared_memory::segment_manager> dataProcessMapAllocator;
 typedef map<DID, PID, std::less<DID>, dataProcessMapAllocator> sharedDataProcessMap;
 
+typedef allocator<DID, managed_shared_memory::segment_manager> freedKeySetAllocator;
+typedef set< DID, std::less<DID>, freedKeySetAllocator> sharedFreedKeySet;
+
 typedef std::pair<const DID, dataInfo> dataInfoPair;
 typedef allocator<dataInfoPair, managed_shared_memory::segment_manager> dataInfoAllocator;
 typedef map<DID, dataInfo, std::less<DID>, dataInfoAllocator> processDataInfoMap;
+
+
+
+
 
 std::map<DID, shared_memory_object*> segment_list;
 
@@ -57,6 +69,7 @@ PID current_pid = 0;
 ULLong* data_count;
 sharedProcessInfoMap* processInfoMap = nullptr;
 sharedDataProcessMap* dataProcessMap = nullptr;
+sharedFreedKeySet* freedKeySet = nullptr;
 //private objects for the current process
 processInfo* current_processInfo = nullptr;
 processDataInfoMap* current_dataMap = nullptr;
@@ -90,27 +103,42 @@ string getProcessToDataListKey(PID pid) {
 	//common name + PID
 	return(string(PROCESS_SHARED_NAME).append("PID") + to_string(pid));
 }
-
-ULLong getNewDataKey() {
-	ULLong did = *data_count;
-	*data_count = *data_count + 1;
-	return(did);
-}
-
 string getDataMemKey(DID did) {
 	//common name + DID
 	return(string(PROCESS_SHARED_NAME).append("DID") + to_string(did));
 }
 
+ULLong getNewDataKey() {
+	ULLong did;
+	if (!freedKeySet->empty()) {
+		did = *(freedKeySet->begin());
+		freedKeySet->erase(did);
+		printf("get id from freed key list: %llu\n", did);
+	}
+	else {
+		did = *data_count;
+		*data_count = *data_count + 1;
+		printf("get id from data count: %llu\n", did);
+	}
+	return(did);
+}
+
+//free a data key, if the data key is the largest key, initiate garbage collection for the keys.
+//TODO:Need a lock
+void freeKey(DID did) {
+	freedKeySet->insert(did);
+	while (freedKeySet->find(*data_count - 1) != freedKeySet->end()) {
+		*data_count = *data_count - 1;
+		freedKeySet->erase(*data_count);
+	}
+}
 
 
-
-
-managed_shared_memory* createSharedSpace(const char* name) {
+managed_shared_memory* createSharedSegment(const char* name, size_t size) {
 	managed_shared_memory* segment;
 	if (!valid(name, sharedSystem::MSM)) {
 		shared_memory_object::remove(name);
-		segment = new managed_shared_memory(create_only, name, PROCESS_LIST_SIZE);
+		segment = new managed_shared_memory(create_only, name, size);
 	}
 	else {
 		segment = new managed_shared_memory(open_only, name);
@@ -119,7 +147,7 @@ managed_shared_memory* createSharedSpace(const char* name) {
 }
 
 template<typename alloc, typename mapType, typename mapKey>
-mapType* openOrCreateSharedMap(managed_shared_memory* segment, const char* name) {
+mapType* openOrCreateSharedMap(managed_shared_memory * segment, const char* name) {
 	//segment->destroy<mapType>(name);
 	mapType* infoMap = segment->find<mapType>(name).first;
 	//Create named shared memory object if not exist
@@ -129,18 +157,20 @@ mapType* openOrCreateSharedMap(managed_shared_memory* segment, const char* name)
 			(std::less<mapKey>(), alloc_inst);
 	}
 	return(infoMap);
-
-
 }
+
+
+
 void initialProcessSharedMemory() {
 	//If it is the first time to run the program, check if the shared memory exist
 	//If it does not exist, create it
-	if (processInfoMap == nullptr) {
+	if (processInfoSegment == nullptr) {
 		//printf("not initialized\n");
 		//Create shared memory space if not exist
-		processInfoSegment = createSharedSpace(PROCESS_SHARED_NAME);
+		processInfoSegment = createSharedSegment(PROCESS_SHARED_NAME, PROCESS_LIST_SIZE);
 		processInfoMap = openOrCreateSharedMap< ProcessInfoAllocator, sharedProcessInfoMap, PID>(processInfoSegment, PROCESS_INFO_MAP_NAME);
 		dataProcessMap = openOrCreateSharedMap< dataProcessMapAllocator, sharedDataProcessMap, DID>(processInfoSegment, DATA_PROCESS_MAP_NAME);
+		freedKeySet = openOrCreateSharedMap< freedKeySetAllocator, sharedFreedKeySet, DID>(processInfoSegment, FREED_KEY_SET_NAME);
 		//processInfoMap = segment.find<sharedProcessInfoMap>(PROCESS_SHARED_NAME).first;
 		//Find the data count
 		data_count = processInfoSegment->find<ULLong>(DATA_COUNT_NAME).first;
@@ -174,12 +204,12 @@ void initialSharedMemory(PID pid) {
 			delete(processDataInfoSegment);
 		}
 		string processDataKey = getProcessToDataListKey(pid);
-		processDataInfoSegment = createSharedSpace(processDataKey.c_str());
+		processDataInfoSegment = createSharedSegment(processDataKey.c_str(), DATA_LIST_SIZE);
 		current_dataMap = openOrCreateSharedMap<dataInfoAllocator, processDataInfoMap, DID>(processDataInfoSegment, processDataKey.c_str());
 		current_pid = pid;
 	}
 	catch (const std::exception & ex) {
-		errorHandle(string("error in initialize the shared memory\n")+ex.what());
+		errorHandle(string("error in initialize the shared memory\n") + ex.what());
 	}
 }
 
@@ -192,41 +222,52 @@ typedef std::pair<const DID, dataInfo> dataInfoPair;
 typedef allocator<dataInfoPair, managed_shared_memory::segment_manager> dataInfoAllocator;
 typedef map<DID, dataInfo, std::less<DID>, dataInfoAllocator> processDataInfoMap;
 */
+void destroyObj(processDataInfoMap* curDataListMap, PID pid, DID did);
+void destroyObj(PID pid, DID did);
 
-void destroyAllObj() {
+
+void destroyAllObj(bool output) {
 	initialProcessSharedMemory();
 
 	for (sharedProcessInfoMap::iterator it = processInfoMap->begin(); it != processInfoMap->end(); ++it) {
 		PID curPID = it->first;
-		destroyAllObj(curPID);
+		destroyAllObj(curPID,output);
 	}
 	processInfoMap->clear();
+	freedKeySet->clear();
 	*data_count = 0;
 }
 
-void destroyAllObj(PID pid) {
+void destroyAllObj(PID pid, bool output) {
+	initialProcessSharedMemory();
 	try
 	{
 		string processDataListKey = getProcessToDataListKey(pid);
 		managed_shared_memory segment(open_only, processDataListKey.c_str());
 		processDataInfoMap* curDataListMap = segment.find<processDataInfoMap>(processDataListKey.c_str()).first;
-
-		for (processDataInfoMap::iterator it = curDataListMap->begin(); it!= curDataListMap->end(); ++it) {
+		processDataInfoMap::iterator next_it = curDataListMap->begin();
+		for (processDataInfoMap::iterator it = next_it; it != curDataListMap->end(); it = next_it) {
+			++next_it;
 			DID curDID = it->first;
-			printf("Deleting data %u at process %d\n", curDID, pid);
-			string dataKey = getDataMemKey(curDID);
-			shared_memory_object::remove(dataKey.c_str());
-			dataProcessMap->erase(curDID);
+			if (output) {
+				messageHandle("Deleting data %u at process %d\n", curDID, pid);
+			}
+			destroyObj(curDataListMap,pid, curDID);
 		}
 		shared_memory_object::remove(processDataListKey.c_str());
 	}
-	catch (const std::exception&)
+	catch (const std::exception& ex)
 	{
+		errorHandle(string("Unable to remove the shared memory at process") + to_string(pid).append("\n") + ex.what());
 	}
 	if (pid == current_pid) {
 		current_pid = 0;
 	}
 }
+
+
+
+
 
 void destroyObj(DID did) {
 	initialProcessSharedMemory();
@@ -237,39 +278,51 @@ void destroyObj(DID did) {
 		}
 		else {
 			PID pid = (*dataProcessMap)[did];
-			string processDataListKey = getProcessToDataListKey(pid);
-			managed_shared_memory segment(open_only, processDataListKey.c_str());
-			processDataInfoMap* curDataListMap = segment.find<processDataInfoMap>(processDataListKey.c_str()).first;
-			if (curDataListMap == 0) {
-				warningHandle(string("The process ") + to_string(pid) + string(" does not exist in the map"));
-			}
-			else {
-				curDataListMap->erase(did);
-			}
+			printf("PID is %d\n", pid);
+			destroyObj(pid, did);
 		}
-
-
-		string dataKey = getDataMemKey(did);
-		shared_memory_object::remove(dataKey.c_str());
-		dataProcessMap->erase(did);
 	}
-	catch (const std::exception&)
+	catch (const std::exception & ex)
 	{
+		errorHandle(string("Unable to remove the shared memory ") + to_string(did).append("\n") + ex.what());
 	}
+}
+//Assume that the process id is correct
+void destroyObj(PID pid, DID did) {
+	string processDataListKey = getProcessToDataListKey(pid);
+	managed_shared_memory segment(open_only, processDataListKey.c_str());
+	processDataInfoMap* curDataListMap = segment.find<processDataInfoMap>(processDataListKey.c_str()).first;
+	if (curDataListMap == 0) {
+		warningHandle(string("The process ") + to_string(pid) + string(" does not exist in the process-data map"));
+	}
+	else {
+		destroyObj(curDataListMap, pid, did);
+	}
+}
+//Assume curDataListMap and pid are correct
+void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did) {
+	string dataKey = getDataMemKey(did);
+	printf("removing data\n");
+	//remove the data
+	shared_memory_object::remove(dataKey.c_str());
+	printf("removing count\n");
+	//remove the data count from the process info
+	processInfo* curProcessInfo= &processInfoMap->find(pid)->second;
+	curProcessInfo->object_num = curProcessInfo->object_num - 1;
+	size_t size = curDataListMap->find(did)->second.size;
+	curProcessInfo->total_size = curProcessInfo->total_size - size;
+	printf("removing data-key\n");
+	//remove the data id from the process data-key list
+	curDataListMap->erase(did);
+	printf("removing DID-PID pair\n");
+	//remove DID to PID pair
+	dataProcessMap->erase(did);
+	printf("adding id to freed key list\n");
+	//add DID to the freed key list
+	freeKey(did);
 }
 
-void destroyObj(int* objList, size_t size) {
-	for (size_t i = 0; i < size; ++i) {
-		try
-		{
-			printf("Removing object %d\n", objList[i]);
-			destroyObj(objList[i]);
-		}
-		catch (const std::exception & ex) {
-			warningHandle(string("Can't remove shared object ")+to_string(objList[i])+string(",\n") + ex.what());
-		}
-	}
-}
+
 
 
 DID createSharedOBJ(void* data, int type, size_t total_size, PID pid) {
@@ -324,7 +377,7 @@ void* readSharedOBJ(DID did) {
 	{
 		shared_memory_object shm(open_only, signature.c_str(), read_only);
 		//Map the whole shared memory in this process
-		mapped_region* region=new mapped_region(shm, read_only);
+		mapped_region* region = new mapped_region(shm, read_only);
 		//segment_list
 		return(region->get_address());
 
@@ -339,17 +392,6 @@ size_t getProcessNum() {
 	initialProcessSharedMemory();
 	return(processInfoMap->size());
 }
-template<typename T>
-void getProcessID(T* idList) {
-	extern sharedProcessInfoMap* processInfoMap;
-	extern void initialProcessSharedMemory();
-	initialProcessSharedMemory();
-	int i = 0;
-	for (sharedProcessInfoMap::iterator it = processInfoMap->begin(); it != processInfoMap->end(); ++it) {
-		idList[i] = it->first;
-		i += 1;
-	}
-}
 
 
 size_t getDataNum(PID pid) {
@@ -362,32 +404,58 @@ size_t getDataNum(PID pid) {
 			return(0);
 		return(curDataListMap->size());
 	}
-	catch (const std::exception& ex) {
+	catch (const std::exception & ex) {
 		warningHandle("Fail to open shared memory\n");
 	}
 	return(0);
 }
-template<typename T>
-void getDataID(PID pid, T* idList) {
-	size_t size = getDataNum(pid);
-	if (size != 0) {
+
+void getProcessInfo(double* pid, double* data_num, double* total_size) {
+	initialProcessSharedMemory();
+	int i = 0;
+	for (sharedProcessInfoMap::iterator it = processInfoMap->begin(); it != processInfoMap->end(); ++it) {
+		pid[i] = it->first;
+		data_num[i] = it->second.object_num;
+		total_size[i] = it->second.total_size;
+		i += 1;
+	}
+}
+
+void getDataInfo(PID pid, double* did, double* size, double* type) {
+	try {
 		string processDataListKey = getProcessToDataListKey(pid);
 		managed_shared_memory segment(open_only, processDataListKey.c_str());
 		processDataInfoMap* curDataListMap = segment.find<processDataInfoMap>(processDataListKey.c_str()).first;
 		int i = 0;
 		for (processDataInfoMap::iterator it = curDataListMap->begin(); it != curDataListMap->end(); ++it) {
-			idList[i] = it->first;
+			did[i] = it->first;
+			size[i] = it->second.size;
+			type[i] = it->second.type;
 			i += 1;
 		}
+	}
+	catch (const std::exception& ex) {
+		warningHandle(string("The process ")+to_string(pid).append(" does not exist.\n"));
 	}
 }
 
 
+size_t getDataCount() {
+	initialProcessSharedMemory();
+	return *data_count;
+}
 
-
-
-
-template void getProcessID<int>(int* param);
-template void getDataID<int>(PID pid, int* param);
-
+size_t getFreedKeyNum() {
+	initialProcessSharedMemory();
+	return(freedKeySet->size());
+}
+void getFreedAllKeys(double* key) {
+	initialProcessSharedMemory();
+	int i = 0;
+	for (sharedFreedKeySet::iterator itr = freedKeySet->begin(); itr != freedKeySet->end(); ++itr)
+	{
+		key[i]=*itr;
+		++i;
+	}
+}
 

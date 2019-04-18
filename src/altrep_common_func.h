@@ -1,9 +1,9 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Altrep.h>
+#include "tools.h"
 #define PGKNAME "sharedObject"
 
-#define DEBUG(x) x;
 
 #define SO_PTR(x) R_ExternalPtrAddr(SO_EPTR(x))
 #define SO_EPTR(x) R_altrep_data1(x)

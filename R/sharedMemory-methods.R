@@ -22,24 +22,55 @@ sharedMemory$methods(
 )
 
 
-showProcessIDs<-function(){
-  .Call(C_getProcessList)
-}
-
-showDataIDs<-function(process_id){
-  .Call(C_getDataList,as.integer(process_id))
-}
-
-
 removeObject<-function(data_ids){
-  .Call(C_clearObj,as.integer(data_ids))
+  sapply(as.double(data_ids),removeObject_single)
   invisible()
 }
 
 
-removeAllObject<-function(){
-  .Call(C_clearAll)
+removeObject_single<-function(id){
+  .Call("clearObj",id)
   invisible()
 }
 
+
+
+
+removeAllObject<-function(verbose){
+  .Call(C_clearAll,as.logical(verbose))
+  invisible()
+}
+
+
+getDataCount<-function(){
+  .Call(C_getDataCount)
+}
+
+getFreedKeyList<-function(){
+  .Call(C_getFreedKeys)
+}
+
+getProcessInfo<-function(){
+ res=.Call(C_getProcessInfo)
+ res=as.data.frame(res)
+ colnames(res)=c("processID","objectNum","totalSize")
+ res
+}
+
+getDataInfo<-function(pid=NULL){
+if(is.null(pid)){
+  pid=getProcessInfo()$processID
+}
+  pid=as.double(pid)
+  res=lapply(pid,getDataInfo_single)
+  res=list.rbind(res)
+  res
+}
+getDataInfo_single<-function(pid){
+  res=.Call(C_getDataInfo,pid)
+  res=as.data.frame(res)
+  res=cbind(pid,res)
+  colnames(res)=c("pid","dataID","size","type")
+  res
+}
 

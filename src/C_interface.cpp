@@ -12,7 +12,7 @@ SEXP testFunc(SEXP x)
 
 SEXP createSharedMemory(SEXP R_x,SEXP R_type, SEXP R_total_size,SEXP R_pid){
   ULLong total_size=asReal(R_total_size);
-  PID pid=asInteger(R_pid);
+  PID pid=asReal(R_pid);
   //Rprintf("total:%d\n",total_size);
   void* data = nullptr;
   switch (TYPEOF(R_x)) {
@@ -78,31 +78,15 @@ SEXP getValue_32(SEXP data, SEXP type_id,SEXP i){
   UNPROTECT(1);
    return(out);
 }
-SEXP getProcessList() {
-	size_t processNum = getProcessNum();
-	SEXP processList=PROTECT(allocVector(INTSXP, processNum));
-	getProcessID(INTEGER(processList));
-	UNPROTECT(1);
-	return(processList);
-}
-
-SEXP getDataList(SEXP R_pid) {
-	PID pid = asInteger(R_pid);
-	size_t dataNum = getDataNum(pid);
-	SEXP dataList = PROTECT(allocVector(INTSXP, dataNum));
-	getDataID(pid,INTEGER(dataList));
-	UNPROTECT(1);
-	return(dataList);
-}
 
 SEXP createAltrep(SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size){
-	Rprintf("creating state\n");
+	//Rprintf("creating state\n");
   SEXP state = PROTECT(make_sharedObject_state(R_type,R_length, R_size));
   int type=asInteger(R_type);
   R_altrep_class_t alt_class;
   switch(type) {
   case REAL_TYPE:
-	  Rprintf("real type\n");
+	  //Rprintf("real type\n");
 	  alt_class = shared_real_class;
     break;
   default: error("Type of %ul is not supported yet", type);
@@ -110,18 +94,66 @@ SEXP createAltrep(SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size){
 
   SEXP res = PROTECT(R_new_altrep(alt_class, R_address, state));
 
-  Rprintf("altrep generated\n");
+  //Rprintf("altrep generated\n");
 
   UNPROTECT(2);
   return res;
 }
 
 
-SEXP clearAll() {
-	destroyAllObj();
+SEXP clearAll(SEXP output) {
+	destroyAllObj(asLogical(output));
 	return(R_NilValue);
 }
-SEXP clearObj(SEXP objIndex) {
-	destroyObj(INTEGER(objIndex), length(objIndex));
+SEXP clearObj(SEXP objID) {
+	try {
+		destroyObj(asReal(objID));
+	}
+	catch (const std::exception& ex) {
+		errorHandle(string("Unexpected error in removing object: \n") + ex.what());
+	}
 	return(R_NilValue);
+}
+
+
+SEXP R_getDataCount() {
+	size_t count = getDataCount();
+	return(ScalarInteger(count));
+}
+
+SEXP R_getFreedKeys() {
+	size_t n = getFreedKeyNum();
+	SEXP res = PROTECT(allocVector(REALSXP, n));
+	getFreedAllKeys(REAL(res));
+	UNPROTECT(1);
+	return(res);
+}
+
+SEXP R_getProcessInfo() {
+	size_t n = getProcessNum();
+	SEXP processInfo = PROTECT(allocVector(VECSXP, 3));
+	SEXP pid = PROTECT(allocVector(REALSXP, n));
+	SEXP dataNum = PROTECT(allocVector(REALSXP, n));
+	SEXP dataSize = PROTECT(allocVector(REALSXP, n));
+	getProcessInfo(REAL(pid), REAL(dataNum), REAL(dataSize));
+	SET_VECTOR_ELT(processInfo, 0, pid);
+	SET_VECTOR_ELT(processInfo, 1, dataNum);
+	SET_VECTOR_ELT(processInfo, 2, dataSize);
+	UNPROTECT(4);
+	return(processInfo);
+}
+
+SEXP R_getDataInfo(SEXP R_pid) {
+	PID pid = asReal(R_pid);
+	size_t n = getDataNum(pid);
+	SEXP dataInfo= PROTECT(allocVector(VECSXP, 3));
+	SEXP did = PROTECT(allocVector(REALSXP, n));
+	SEXP size = PROTECT(allocVector(REALSXP, n));
+	SEXP type = PROTECT(allocVector(REALSXP, n));
+	getDataInfo(pid,REAL(did), REAL(size), REAL(type));
+	SET_VECTOR_ELT(dataInfo, 0, did);
+	SET_VECTOR_ELT(dataInfo, 1, size);
+	SET_VECTOR_ELT(dataInfo, 2, type);
+	UNPROTECT(4);
+	return(dataInfo);
 }

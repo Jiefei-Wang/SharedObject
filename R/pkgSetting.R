@@ -1,6 +1,6 @@
 #' @useDynLib sharedObject, .registration = TRUE,  .fixes = 'C_'
-#' @importFrom xptr set_xptr_tag
 #' @importFrom stringr str_match
+#' @importFrom rlist list.rbind
 
 .onUnload <- function(libpath) {
   library.dynam.unload("sharedObject", libpath)

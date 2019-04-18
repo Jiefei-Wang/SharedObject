@@ -12,11 +12,13 @@ static const R_CallMethodDef callMethods[] = {
   { "createSharedMemory", (DL_FUNC)& createSharedMemory, 4 },
   { "readSharedMemory", (DL_FUNC)& readSharedMemory, 1 },
   { "getValue_32", (DL_FUNC)& getValue_32, 3 },
-  { "clearAll", (DL_FUNC)& clearAll, 0 },
+  { "clearAll", (DL_FUNC)& clearAll, 1 },
   { "clearObj", (DL_FUNC)& clearObj, 1 },
-  { "getProcessList", (DL_FUNC)& getProcessList, 0 },
-  { "getDataList", (DL_FUNC)& getDataList, 1 },
   { "createAltrep", (DL_FUNC)& createAltrep, 4 },
+  { "getDataCount", (DL_FUNC)& R_getDataCount, 0 },
+  { "getFreedKeys", (DL_FUNC)& R_getFreedKeys, 0 },
+  { "getProcessInfo", (DL_FUNC)& R_getProcessInfo, 0 },
+  { "getDataInfo", (DL_FUNC)& R_getDataInfo, 1 },
   { NULL, NULL, 0 }
 };
 

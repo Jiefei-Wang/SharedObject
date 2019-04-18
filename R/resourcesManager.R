@@ -2,7 +2,7 @@ RM<-new.env()
 RM_data<-new.env()
 
 RM_data$NID=Sys.info()["nodename"]
-RM_data$PID=as.integer(Sys.getpid())
+RM_data$PID=as.double(Sys.getpid())
 
 RM$getNID<-function(){
   RM_data$NID
@@ -15,7 +15,7 @@ RM$setNID<-function(id){
   RM_data$NID=id
 }
 RM$setPID<-function(id){
-  RM_data$PID=as.integer(id)
+  RM_data$PID=as.double(id)
 }
 
 RM$memoryUsage<-function(){
