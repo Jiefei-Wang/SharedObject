@@ -13,7 +13,7 @@ sharedMemory$methods(
       message("package has been unloaded")
     if(.self$NID==RM$getNID()&&
        .self$PID==RM$getPID()){
-      removeObject(.self$DID,TRUE)
+      removeObject(.self$DID)
     }
   },
   initializeWithData=function(x){
@@ -45,7 +45,7 @@ test<-function(x){
 
   getProcessInfo()
   getDataInfo()
-  removeObject(0L:3L,TRUE)
+  removeObject(0:3)
   removeAllObject(TRUE)
   getFreedKeyList()
 

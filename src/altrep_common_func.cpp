@@ -38,7 +38,6 @@ R_xlen_t sharedObject_length(SEXP x)
 void *sharedObject_dataptr(SEXP x, Rboolean writeable){
 	DEBUG(Rprintf("accessing data pointer\n"));
   return SO_PTR(x);
-
 }
 const void *sharedObject_dataptr_or_null(SEXP x)
 {

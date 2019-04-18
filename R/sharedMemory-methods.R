@@ -61,13 +61,17 @@ getDataInfo<-function(pid=NULL){
 if(is.null(pid)){
   pid=getProcessInfo()$processID
 }
+  if(length(pid)==0)
+    return(NULL)
   pid=as.double(pid)
   res=lapply(pid,getDataInfo_single)
+  if(length(res)==0) return(NULL)
   res=list.rbind(res)
   res
 }
 getDataInfo_single<-function(pid){
   res=.Call(C_getDataInfo,pid)
+  if(length(res)==0) return(NULL)
   res=as.data.frame(res)
   res=cbind(pid,res)
   colnames(res)=c("pid","dataID","size","type")
