@@ -465,6 +465,7 @@ const dataInfo getDataInfo(PID pid, DID did) {
 }
 
 PID getDataPID(DID did) {
+  initialProcessSharedMemory();
 	if (dataProcessMap->find(did) == dataProcessMap->end()) {
 		errorHandle(string("The data ") + to_string(did).append(" does not exist.\n"));
 	}

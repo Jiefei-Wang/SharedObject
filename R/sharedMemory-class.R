@@ -11,7 +11,8 @@ sharedMemory$methods(
   finalize=function(){
     if(!"sharedObject"%in%loadedNamespaces())
       message("package has been unloaded")
-    if(.self$NID==RM$getNID()&&
+    if(!is.na(.self$NID)&&
+       .self$NID==RM$getNID()&&
        .self$PID==RM$getPID()){
       removeObject(.self$DID)
     }
@@ -27,8 +28,15 @@ sharedMemory$methods(
     .self$loadMemObj()
   },
   initializeWithID=function(id){
-
-
+    .self$NID=NA
+    .self$DID=as.double(id)
+    .self$PID=as.double(.Call(C_getDataPID,.self$DID))
+    dataInfo=.Call(C_recoverDataInfo,.self$DID)
+    .self$total_size=as.double(dataInfo[1])
+    .self$type_id=as.integer(dataInfo[2])
+    .self$type=get_type_name(.self$type_id)
+    .self$length=.self$total_size/type_size(.self$type)
+    .self$loadMemObj()
   }
 )
 
@@ -43,9 +51,11 @@ sharedMemory$methods(
 test<-function(x){
   options(error=recover)
   devtools::load_all()
-  getDataInfo()
-  x=runif(10)
+  set.seed(1)
+  x=runif(1024*1024*1024/8)
   a=sharedMemory(x)
+  b=sharedObject(x)
+  d=sharedObject(id=2)
   a$subset_oneInd(1)
 
   getProcessInfo()
@@ -56,9 +66,9 @@ test<-function(x){
 
 
   devtools::load_all()
-  x=runif(10)
-  SM_obj=sharedMemory(x)
-  obj=.Call(C_createAltrep,SM_obj$address,SM_obj$type_id,SM_obj$length,SM_obj$total_size)
+
+  a=sharedMemory()
+  a$initializeWithID(1)
 }
 
 

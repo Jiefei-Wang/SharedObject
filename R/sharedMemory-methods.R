@@ -5,7 +5,7 @@
 sharedMemory$methods(
   loadMemObj=function(){
     .self$address=.Call(C_readSharedMemory,.self$DID)
-    .self$address_sig=compressSettings(NID=.self$NID,PID=.self$PID)
+    .self$address_sig=compressSettings(NID=RM$getNID(),PID=RM$getPID())
   }
 )
 
@@ -74,7 +74,7 @@ getDataInfo_single<-function(pid){
   if(length(res)==0) return(NULL)
   res=as.data.frame(res)
   res=cbind(pid,res)
-  colnames(res)=c("pid","dataID","size","type")
+  colnames(res)=c("processID","dataID","size","type")
   res
 }
 
