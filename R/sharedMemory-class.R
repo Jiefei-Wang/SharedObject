@@ -52,10 +52,13 @@ test<-function(x){
   options(error=recover)
   devtools::load_all()
   set.seed(1)
-  x=runif(1024*1024*1024/8)
+  x=runif(10)
   a=sharedMemory(x)
+  for(i in 1:20){
+  x=runif(1024*1024*1024/8)
   b=sharedObject(x)
-  d=sharedObject(id=2)
+  }
+  d=sharedObject(id=0)
   a$subset_oneInd(1)
 
   getProcessInfo()

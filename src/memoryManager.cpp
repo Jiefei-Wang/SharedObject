@@ -295,9 +295,10 @@ void destroyObj(PID pid, DID did) {
 //Assume curDataListMap and pid are correct
 void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did) {
 	string dataKey = getDataMemKey(did);
-	printf("removing data\n");
+	printf("removing data %d\n", did);
 	//remove the data
-	shared_memory_object::remove(dataKey.c_str());
+	bool removed=shared_memory_object::remove(dataKey.c_str());
+	if(!removed) printf("fail to remove the data\n");
 	printf("removing count\n");
 	//remove the data count from the process info
 	processInfo* curProcessInfo = &processInfoMap->find(pid)->second;
