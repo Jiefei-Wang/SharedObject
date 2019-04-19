@@ -7,6 +7,7 @@
 #include "altrep_real_class.h"
 
 
+
 static const R_CallMethodDef callMethods[] = {
   { "testFunc", (DL_FUNC)& testFunc, 1 },
   { "createSharedMemory", (DL_FUNC)& createSharedMemory, 4 },
@@ -17,8 +18,12 @@ static const R_CallMethodDef callMethods[] = {
   { "createAltrep", (DL_FUNC)& createAltrep, 4 },
   { "getDataCount", (DL_FUNC)& R_getDataCount, 0 },
   { "getFreedKeys", (DL_FUNC)& R_getFreedKeys, 0 },
+  { "getProcessIDs", (DL_FUNC)& R_getProcessIDs, 0 },
+  { "getDataIDs", (DL_FUNC)& R_getDataIDs, 1 },
   { "getProcessInfo", (DL_FUNC)& R_getProcessInfo, 0 },
   { "getDataInfo", (DL_FUNC)& R_getDataInfo, 1 },
+  { "getDataPID", (DL_FUNC)& R_getDataPID, 1 },
+  { "recoverDataInfo", (DL_FUNC)& R_recoverDataInfo, 1 },
   { NULL, NULL, 0 }
 };
 

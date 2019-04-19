@@ -29,14 +29,7 @@ using std::to_string;
 enum sharedSystem { MSM, SMO };
 
 
-struct processInfo {
-	size_t object_num = 0;
-	size_t total_size = 0;
-};
-struct dataInfo {
-	size_t size;
-	int type;
-};
+
 
 
 
@@ -222,7 +215,7 @@ typedef std::pair<const DID, dataInfo> dataInfoPair;
 typedef allocator<dataInfoPair, managed_shared_memory::segment_manager> dataInfoAllocator;
 typedef map<DID, dataInfo, std::less<DID>, dataInfoAllocator> processDataInfoMap;
 */
-void destroyObj(processDataInfoMap* curDataListMap, PID pid, DID did);
+void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did);
 void destroyObj(PID pid, DID did);
 
 
@@ -231,7 +224,7 @@ void destroyAllObj(bool output) {
 
 	for (sharedProcessInfoMap::iterator it = processInfoMap->begin(); it != processInfoMap->end(); ++it) {
 		PID curPID = it->first;
-		destroyAllObj(curPID,output);
+		destroyAllObj(curPID, output);
 	}
 	processInfoMap->clear();
 	freedKeySet->clear();
@@ -252,11 +245,11 @@ void destroyAllObj(PID pid, bool output) {
 			if (output) {
 				messageHandle("Deleting data %u at process %d\n", curDID, pid);
 			}
-			destroyObj(curDataListMap,pid, curDID);
+			destroyObj(curDataListMap, pid, curDID);
 		}
 		shared_memory_object::remove(processDataListKey.c_str());
 	}
-	catch (const std::exception& ex)
+	catch (const std::exception & ex)
 	{
 		errorHandle(string("Unable to remove the shared memory at process") + to_string(pid).append("\n") + ex.what());
 	}
@@ -307,7 +300,7 @@ void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did) {
 	shared_memory_object::remove(dataKey.c_str());
 	printf("removing count\n");
 	//remove the data count from the process info
-	processInfo* curProcessInfo= &processInfoMap->find(pid)->second;
+	processInfo* curProcessInfo = &processInfoMap->find(pid)->second;
 	curProcessInfo->object_num = curProcessInfo->object_num - 1;
 	size_t size = curDataListMap->find(did)->second.size;
 	curProcessInfo->total_size = curProcessInfo->total_size - size;
@@ -410,32 +403,73 @@ size_t getDataNum(PID pid) {
 	return(0);
 }
 
-void getProcessInfo(double* pid, double* data_num, double* total_size) {
+void getProcessIDs(double* idList) {
 	initialProcessSharedMemory();
 	int i = 0;
 	for (sharedProcessInfoMap::iterator it = processInfoMap->begin(); it != processInfoMap->end(); ++it) {
-		pid[i] = it->first;
-		data_num[i] = it->second.object_num;
-		total_size[i] = it->second.total_size;
+		idList[i] = it->first;
 		i += 1;
 	}
 }
 
-void getDataInfo(PID pid, double* did, double* size, double* type) {
+void getDataIDs(PID pid, double* idList) {
+	try {
+		size_t size = getDataNum(pid);
+		if (size != 0) {
+			string processDataListKey = getProcessToDataListKey(pid);
+			managed_shared_memory segment(open_only, processDataListKey.c_str());
+			processDataInfoMap* curDataListMap = segment.find<processDataInfoMap>(processDataListKey.c_str()).first;
+			int i = 0;
+			for (processDataInfoMap::iterator it = curDataListMap->begin(); it != curDataListMap->end(); ++it) {
+				idList[i] = it->first;
+				i += 1;
+			}
+		}
+	}
+	catch (const std::exception & ex) {
+		errorHandle(string("The process ") + to_string(pid).append(" does not exist.\n"));
+	}
+}
+
+
+
+const processInfo& getProcessInfo(PID pid) {
+	initialProcessSharedMemory();
+	if (processInfoMap->find(pid) == processInfoMap->end()) {
+		errorHandle(string("The process ") + to_string(pid).append(" does not exist.\n"));
+	}
+	else {
+		return processInfoMap->at(pid);
+	}
+}
+
+
+
+const dataInfo getDataInfo(PID pid, DID did) {
+	initialProcessSharedMemory();
 	try {
 		string processDataListKey = getProcessToDataListKey(pid);
 		managed_shared_memory segment(open_only, processDataListKey.c_str());
 		processDataInfoMap* curDataListMap = segment.find<processDataInfoMap>(processDataListKey.c_str()).first;
-		int i = 0;
-		for (processDataInfoMap::iterator it = curDataListMap->begin(); it != curDataListMap->end(); ++it) {
-			did[i] = it->first;
-			size[i] = it->second.size;
-			type[i] = it->second.type;
-			i += 1;
+
+		if (curDataListMap->find(did) == curDataListMap->end()) {
+			errorHandle(string("The data ") + to_string(did).append(" does not exist.\n"));
+		}
+		else {
+			return curDataListMap->at(did);
 		}
 	}
-	catch (const std::exception& ex) {
-		warningHandle(string("The process ")+to_string(pid).append(" does not exist.\n"));
+	catch (const std::exception & ex) {
+		errorHandle(string("The process ") + to_string(pid).append(" does not exist.\n"));
+	}
+}
+
+PID getDataPID(DID did) {
+	if (dataProcessMap->find(did) == dataProcessMap->end()) {
+		errorHandle(string("The data ") + to_string(did).append(" does not exist.\n"));
+	}
+	else {
+		return(dataProcessMap->at(did));
 	}
 }
 
@@ -454,8 +488,12 @@ void getFreedAllKeys(double* key) {
 	int i = 0;
 	for (sharedFreedKeySet::iterator itr = freedKeySet->begin(); itr != freedKeySet->end(); ++itr)
 	{
-		key[i]=*itr;
+		key[i] = *itr;
 		++i;
 	}
 }
+
+
+
+
 

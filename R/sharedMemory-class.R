@@ -25,6 +25,10 @@ sharedMemory$methods(
     .self$total_size=.self$length*type_size(.self$type)
     .self$DID=.Call(C_createSharedMemory,x,.self$type_id,.self$total_size,.self$PID)
     .self$loadMemObj()
+  },
+  initializeWithID=function(id){
+
+
   }
 )
 
@@ -39,6 +43,7 @@ sharedMemory$methods(
 test<-function(x){
   options(error=recover)
   devtools::load_all()
+  getDataInfo()
   x=runif(10)
   a=sharedMemory(x)
   a$subset_oneInd(1)

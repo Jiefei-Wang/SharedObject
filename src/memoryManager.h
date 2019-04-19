@@ -1,6 +1,12 @@
 #include <string>
-struct processInfo;
-struct dataInfo;
+struct processInfo {
+	size_t object_num = 0;
+	size_t total_size = 0;
+};
+struct dataInfo {
+	size_t size;
+	int type;
+};
 
 typedef unsigned long long int ULLong;
 typedef int PID;
@@ -18,10 +24,11 @@ void showDataInfo(PID pid);
 
 size_t getProcessNum();
 size_t getDataNum(PID pid);
-
-
-void getProcessInfo(double* pid, double* data_num, double* total_size);
-void getDataInfo(PID pid, double* did,double* size, double* type);
+void getProcessIDs(double* idList);
+void getDataIDs(PID pid, double* idList);
+const processInfo& getProcessInfo(PID pid);
+const dataInfo getDataInfo(PID pid, DID did);
+PID getDataPID(DID did);
 
 size_t getDataCount();
 size_t getFreedKeyNum();

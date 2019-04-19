@@ -129,31 +129,77 @@ SEXP R_getFreedKeys() {
 	return(res);
 }
 
+
+SEXP R_getProcessIDs() {
+	size_t n = getProcessNum();
+	SEXP processList = PROTECT(allocVector(REALSXP, n));
+	getProcessIDs(REAL(processList));
+	UNPROTECT(1);
+	return(processList);
+}
+
+SEXP R_getDataIDs(SEXP R_pid) {
+	PID pid = asReal(R_pid);
+	size_t n = getDataNum(pid);
+	SEXP dataList = PROTECT(allocVector(REALSXP, n));
+	getDataIDs(pid, REAL(dataList));
+	UNPROTECT(1);
+	return(dataList);
+}
 SEXP R_getProcessInfo() {
 	size_t n = getProcessNum();
-	SEXP processInfo = PROTECT(allocVector(VECSXP, 3));
-	SEXP pid = PROTECT(allocVector(REALSXP, n));
+	SEXP PIs = PROTECT(allocVector(VECSXP, 3));
+	SEXP pid = PROTECT(R_getProcessIDs());
 	SEXP dataNum = PROTECT(allocVector(REALSXP, n));
 	SEXP dataSize = PROTECT(allocVector(REALSXP, n));
-	getProcessInfo(REAL(pid), REAL(dataNum), REAL(dataSize));
-	SET_VECTOR_ELT(processInfo, 0, pid);
-	SET_VECTOR_ELT(processInfo, 1, dataNum);
-	SET_VECTOR_ELT(processInfo, 2, dataSize);
+	//getProcessInfo(REAL(pid), REAL(dataNum), REAL(dataSize));
+	for (int i = 0; i < n; i++) {
+		const processInfo pi = getProcessInfo(REAL(pid)[i]);
+		REAL(dataNum)[i] = pi.object_num;
+		REAL(dataSize)[i] = pi.total_size;
+	}
+
+	SET_VECTOR_ELT(PIs, 0, pid);
+	SET_VECTOR_ELT(PIs, 1, dataNum);
+	SET_VECTOR_ELT(PIs, 2, dataSize);
 	UNPROTECT(4);
-	return(processInfo);
+	return(PIs);
 }
+
 
 SEXP R_getDataInfo(SEXP R_pid) {
 	PID pid = asReal(R_pid);
 	size_t n = getDataNum(pid);
-	SEXP dataInfo= PROTECT(allocVector(VECSXP, 3));
-	SEXP did = PROTECT(allocVector(REALSXP, n));
+	SEXP DIs= PROTECT(allocVector(VECSXP, 3));
+	SEXP did = PROTECT(R_getDataIDs(R_pid));
 	SEXP size = PROTECT(allocVector(REALSXP, n));
 	SEXP type = PROTECT(allocVector(REALSXP, n));
-	getDataInfo(pid,REAL(did), REAL(size), REAL(type));
-	SET_VECTOR_ELT(dataInfo, 0, did);
-	SET_VECTOR_ELT(dataInfo, 1, size);
-	SET_VECTOR_ELT(dataInfo, 2, type);
+
+	for (int i = 0; i < n; i++) {
+		const dataInfo di = getDataInfo(pid,REAL(did)[i]);
+		REAL(size)[i] = di.size;
+		REAL(type)[i] = di.type;
+	}
+
+	SET_VECTOR_ELT(DIs, 0, did);
+	SET_VECTOR_ELT(DIs, 1, size);
+	SET_VECTOR_ELT(DIs, 2, type);
 	UNPROTECT(4);
-	return(dataInfo);
+	return(DIs);
+}
+
+SEXP R_getDataPID(SEXP R_did) {
+	return ScalarReal(getDataPID(asReal(R_did)));
+}
+
+SEXP R_recoverDataInfo(SEXP R_did) {
+	DID did = asReal(R_did);
+	PID pid = getDataPID(did);
+	dataInfo di = getDataInfo(pid, did);
+
+	SEXP info = PROTECT(allocVector(REALSXP, 2));
+	REAL(info)[0] = di.size;
+	REAL(info)[1] = di.type;
+	unprotect(1);
+	return info;
 }

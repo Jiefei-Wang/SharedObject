@@ -19,5 +19,10 @@ SEXP R_getDataCount();
 
 SEXP R_getFreedKeys();
 
+
+SEXP R_getProcessIDs();
+SEXP R_getDataIDs(SEXP R_pid);
 SEXP R_getProcessInfo();
 SEXP R_getDataInfo(SEXP R_pid);
+SEXP R_getDataPID(SEXP R_did);
+SEXP R_recoverDataInfo(SEXP R_did);
