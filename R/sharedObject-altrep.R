@@ -5,7 +5,8 @@ sharedObject<-function(x,id=NULL){
   }
   SM_obj=sharedMemory(x)
   obj=.Call(C_createAltrep,SM_obj$address,SM_obj$type_id,SM_obj$length,SM_obj$total_size)
-  attr(obj,"sharedMemory")=obj
+  #attr(obj,"sharedMemory")=obj
+  .Call(C_attachAttr,obj,"sharedMemory",SM_obj)
   obj
 }
 

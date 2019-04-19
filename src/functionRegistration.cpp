@@ -24,6 +24,7 @@ static const R_CallMethodDef callMethods[] = {
   { "getDataInfo", (DL_FUNC)& R_getDataInfo, 1 },
   { "getDataPID", (DL_FUNC)& R_getDataPID, 1 },
   { "recoverDataInfo", (DL_FUNC)& R_recoverDataInfo, 1 },
+  { "attachAttr", (DL_FUNC)& attachAttr, 3 },
   { NULL, NULL, 0 }
 };
 

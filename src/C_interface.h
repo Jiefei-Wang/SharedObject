@@ -26,3 +26,5 @@ SEXP R_getProcessInfo();
 SEXP R_getDataInfo(SEXP R_pid);
 SEXP R_getDataPID(SEXP R_did);
 SEXP R_recoverDataInfo(SEXP R_did);
+
+SEXP attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr);

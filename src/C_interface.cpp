@@ -203,3 +203,9 @@ SEXP R_recoverDataInfo(SEXP R_did) {
 	unprotect(1);
 	return info;
 }
+
+SEXP attachAttr(SEXP R_source, SEXP R_tag,SEXP R_attr) {
+	const char* tag = CHAR(asChar(R_tag));
+	setAttrib(R_source, install(tag), R_attr);
+	return R_NilValue;
+}

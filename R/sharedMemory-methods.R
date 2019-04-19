@@ -67,7 +67,6 @@ if(is.null(pid)){
   res=lapply(pid,getDataInfo_single)
   if(length(res)==0) return(NULL)
   res=list.rbind(res)
-  colnames(res)=c("processID","dataID","size","type")
   res
 }
 getDataInfo_single<-function(pid){
@@ -75,6 +74,7 @@ getDataInfo_single<-function(pid){
   if(length(res[[1]])==0) return(NULL)
   res=as.data.frame(res)
   res=cbind(pid,res)
+  colnames(res)=c("processID","dataID","size","type")
   res
 }
 
