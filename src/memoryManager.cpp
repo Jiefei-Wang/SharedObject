@@ -312,14 +312,22 @@ void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did) {
 	//remove DID to PID pair
 	dataProcessMap->erase(did);
 	printf("adding id to freed key list\n");
-	//add DID to the freed key list
 	freeKey(did);
+	//add DID to the freed key list
+	printf("removing memory map");
+	if (segment_list.find(did) != segment_list.end()) {
+		delete(segment_list.at(did));
+		segment_list.erase(did);
+	}
+	else {
+		warningHandle("The memory map key does not exist\n");
+	}
 }
 
 
 
 
-DID createSharedOBJ(void* data, int type, size_t total_size, PID pid) {
+DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID pid) {
 	initialSharedMemory(pid);
 	//Write the data into shared space
 	DID did = getNewDataKey();
@@ -346,6 +354,7 @@ DID createSharedOBJ(void* data, int type, size_t total_size, PID pid) {
 		current_processInfo->object_num = current_processInfo->object_num + 1;
 		current_processInfo->total_size = current_processInfo->total_size + total_size;
 		dataInfo di;
+		di.length=length;
 		di.size = total_size;
 		di.type = type;
 		current_dataMap->insert(dataInfoPair(did, di));
@@ -357,21 +366,15 @@ DID createSharedOBJ(void* data, int type, size_t total_size, PID pid) {
 	return(did);
 }
 
-void showDataInfo(PID pid) {
-	initialSharedMemory(pid);
-	printf("current thread: %d\n", pid);
-	printf("current object num:%llu\n", current_processInfo->object_num);
-	printf("current object size:%llu\n", current_processInfo->total_size);
-}
 
 
 void* readSharedOBJ(DID did) {
 	string signature = getDataMemKey(did);
 	try
 	{
-		shared_memory_object shm(open_only, signature.c_str(), read_only);
+		shared_memory_object shm(open_only, signature.c_str(), read_write);
 		//Map the whole shared memory in this process
-		mapped_region* region = new mapped_region(shm, read_only);
+		mapped_region* region = new mapped_region(shm, read_write);
 		//segment_list
 		return(region->get_address());
 

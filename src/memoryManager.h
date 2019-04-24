@@ -1,14 +1,14 @@
 #include <string>
 struct processInfo {
-	size_t object_num = 0;
-	size_t total_size = 0;
+	ULLong object_num = 0;
+	ULLong total_size = 0;
 };
 struct dataInfo {
-	size_t size;
+	ULLong length;
+	ULLong size;
 	int type;
 };
 
-typedef unsigned long long int ULLong;
 typedef int PID;
 typedef unsigned int DID;
 //struct processInfo;
@@ -19,8 +19,7 @@ void destroyObj(DID did);
 
 void* readSharedOBJ(DID did);
 std::string getDataMemKey(DID did);
-DID createSharedOBJ(void* data, int type, size_t total_size, PID pid);
-void showDataInfo(PID pid);
+DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID pid);
 
 size_t getProcessNum();
 size_t getDataNum(PID pid);

@@ -44,3 +44,7 @@ const void *sharedObject_dataptr_or_null(SEXP x)
 	DEBUG(Rprintf("accessing data pointer or null\n"));
 	return sharedObject_dataptr(x, Rboolean::TRUE);
 }
+SEXP sharedObject_dulplicate(SEXP x, Rboolean deep) {
+	return(x);
+}
+

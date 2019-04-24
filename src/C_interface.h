@@ -4,7 +4,7 @@
 #include <Rinternals.h>
 
 
-SEXP testFunc(SEXP x);
+SEXP testFunc(SEXP expr, SEXP rho);
 SEXP createSharedMemory(SEXP R_x, SEXP R_type, SEXP R_total_size,SEXP R_pid);
 SEXP readSharedMemory(SEXP R_DID);
 SEXP getValue_32(SEXP data, SEXP type_id, SEXP i);

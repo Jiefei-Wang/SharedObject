@@ -3,15 +3,16 @@
 #include "memoryManager.h"
 #include "altrep_real_class.h"
 using std::string;
-SEXP testFunc(SEXP x)
+SEXP testFunc(SEXP expr,SEXP rho)
 {
-  showDataInfo(asInteger(x));
-  return(x);
+	SEXP res=eval(expr, rho);
+  return(res);
 }
 
 
-SEXP createSharedMemory(SEXP R_x,SEXP R_type, SEXP R_total_size,SEXP R_pid){
+SEXP createSharedMemory(SEXP R_x,SEXP R_type, SEXP R_total_size, SEXP R_pid){
   ULLong total_size=asReal(R_total_size);
+  ULLong len = xlength(R_x);
   PID pid=asReal(R_pid);
   //Rprintf("total:%d\n",total_size);
   void* data = nullptr;
@@ -20,14 +21,13 @@ SEXP createSharedMemory(SEXP R_x,SEXP R_type, SEXP R_total_size,SEXP R_pid){
     data=LOGICAL(R_x);
     break;
   case INTSXP:
-    //printf("int type\n");
     data = INTEGER(R_x);
     break;
   case REALSXP:
     data = REAL(R_x);
     break;
   }
-  DID did=createSharedOBJ(data,asInteger(R_type), total_size, pid);
+  DID did=createSharedOBJ(data,asInteger(R_type), total_size, len, pid);
   return(ScalarReal((double)did));
 }
 
@@ -86,7 +86,6 @@ SEXP createAltrep(SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size){
   R_altrep_class_t alt_class;
   switch(type) {
   case REAL_TYPE:
-	  //Rprintf("real type\n");
 	  alt_class = shared_real_class;
     break;
   default: error("Type of %ul is not supported yet", type);
@@ -175,7 +174,7 @@ SEXP R_getDataInfo(SEXP R_pid) {
 	SEXP size = PROTECT(allocVector(REALSXP, n));
 	SEXP type = PROTECT(allocVector(REALSXP, n));
 
-	for (int i = 0; i < n; i++) {
+	for (unsigned int i = 0; i < n; i++) {
 		const dataInfo di = getDataInfo(pid,REAL(did)[i]);
 		REAL(size)[i] = di.size;
 		REAL(type)[i] = di.type;

@@ -1,9 +1,13 @@
 
 sharedMemory=
-  setRefClass("sharedMemory", fields = c("NID","PID","DID", "length","type","type_id","total_size","address","address_sig"))
+  setRefClass("sharedMemory",
+              fields = c("NID","PID","DID",
+                         "length","type","type_id","total_size",
+                         "address","address_sig","needPrint"))
 
 sharedMemory$methods(
   initialize = function(x=NULL) {
+    .self$needPrint=TRUE
     if(!is.null(x)){
       .self$initializeWithData(x)
     }
@@ -37,9 +41,25 @@ sharedMemory$methods(
     .self$type=get_type_name(.self$type_id)
     .self$length=.self$total_size/type_size(.self$type)
     .self$loadMemObj()
+  },
+  show = function(){
+    if(needPrint){
+      flds <- getRefClass()$fields()
+      cat("Shared memory object\n")
+      for (fld in names(flds)){
+        if(fld%in%c("address")){
+          cat( fld,': ', capture.output(.self[[fld]]), '\n')
+        }else{
+
+          cat( fld,': ', .self[[fld]], '\n')
+        }
+      }
+      #print.default(.self)
+    }else{
+      cat("Shared memory object\n")
+    }
   }
 )
-
 
 
 

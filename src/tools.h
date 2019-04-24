@@ -5,12 +5,14 @@
 #define BOOL_TYPE 1L
 #define INT_TYPE 2L
 #define REAL_TYPE 3L
+typedef unsigned long long int ULLong;
 
 void errorHandle(std::string msg);
-void errorHandle(const char* msg);
+void errorHandle(const char* fmt, ...);
 void warningHandle(std::string msg);
-void warningHandle(const char* msg);
+void warningHandle(const char* fmt, ...);
 
-int getTypeSize(unsigned int type);
+void messageHandle(std::string msg);
 void messageHandle(const char* fmt, ...);
+int getTypeSize(unsigned int type);
 

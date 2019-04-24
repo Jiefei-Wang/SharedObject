@@ -9,7 +9,7 @@
 
 
 static const R_CallMethodDef callMethods[] = {
-  { "testFunc", (DL_FUNC)& testFunc, 1 },
+  { "testFunc", (DL_FUNC)& testFunc, 2 },
   { "createSharedMemory", (DL_FUNC)& createSharedMemory, 4 },
   { "readSharedMemory", (DL_FUNC)& readSharedMemory, 1 },
   { "getValue_32", (DL_FUNC)& getValue_32, 3 },
