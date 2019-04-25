@@ -5,22 +5,26 @@
 sharedMemory$methods(
   loadMemObj=function(){
     .self$address=.Call(C_readSharedMemory,.self$DID)
-    .self$address_sig=compressSettings(NID=RM$getNID(),PID=RM$getPID())
   }
 )
 
 sharedMemory$methods(
-  subset_oneInd=function(i){
-    if(is.null(.self$address)) .self$loadMemObj()
-    if(globalSettings$supportLargeIndex){
-      stop("Large index is not supported")
-    }else{
-      res=.Call(C_getValue_32,.self$address,.self$type_id,as.integer(i-1))
-    }
-    return(res)
+  updateAddress=function(){
+      if(!.self$AddressValid()){
+        message("Update the address")
+        .self$loadMemObj()
+      }
   }
 )
-
+sharedMemory$methods(
+  AddressValid=function(){
+    if((is.na(.self$NID)||.self$NID==RM$getNID())&&.self$PID==RM$getPID()){
+      return(TRUE)
+    }else{
+      return(FALSE)
+    }
+  }
+)
 
 removeObject<-function(data_ids){
   sapply(as.double(data_ids),removeObject_single)

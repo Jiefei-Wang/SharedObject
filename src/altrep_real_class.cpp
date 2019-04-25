@@ -47,7 +47,6 @@ static R_xlen_t real_region(SEXP x, R_xlen_t start, R_xlen_t size, double* out) 
 		out[k] = source[k];
 	}
 	return ncopy;
-
 }
 
 

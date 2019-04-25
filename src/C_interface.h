@@ -13,7 +13,7 @@ SEXP clearObj(SEXP objID);
 
 
 //altrep
-SEXP createAltrep(SEXP R_address, SEXP R_type, SEXP R_length, SEXP R_size);
+SEXP createAltrep(SEXP SM_obj);
 
 SEXP R_getDataCount();
 

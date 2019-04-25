@@ -4,21 +4,25 @@
 #include "tools.h"
 #define PGKNAME "sharedObject"
 
+#define SM_ENV(x) getAttrib(x,install(".xData"))
+#define SM_DATA(sm,data) findVar(install(#data), SM_ENV(sm))
+#define SM_FUN(sm,fun) findFun(install(#fun), SM_ENV(sm))
 
+#define SO_DATA(so,data) SM_DATA(R_altrep_data1(so),data)
+#define SO_FUN(so,fun) SM_FUN(R_altrep_data1(so),fun)
+
+
+#define SO_EPTR(x) SO_DATA(x,address)
 #define SO_PTR(x) R_ExternalPtrAddr(SO_EPTR(x))
-#define SO_EPTR(x) R_altrep_data1(x)
-#define SO_STATE(x) R_altrep_data2(x)
+#define SO_LENGTH(x) asReal(SO_DATA(x,length))
+#define SO_SIZE(x) asReal(SO_DATA(x,total_size))
+#define SO_TYPE(x) asInteger(SO_DATA(x, type_id))
+#define SO_TYPE_CHAR(x) CHAR(asChar((SO_DATA(x, type))))
 
-#define SO_STATE_LENGTH(x) ((R_xlen_t) REAL_ELT(VECTOR_ELT(x,1), 0))
-#define SO_STATE_SIZE(x) ((R_xlen_t) REAL_ELT(VECTOR_ELT(x,1), 1))
-
-#define SO_LENGTH(x) SO_STATE_LENGTH(SO_STATE(x))
-#define SO_SIZE(x) SO_STATE_SIZE(SO_STATE(x))
 
 Rboolean sharedObject_Inspect(SEXP x, int pre, int deep, int pvec,
                       void (*inspect_subtree)(SEXP, int, int, int));
 
-SEXP make_sharedObject_state( SEXP R_type,SEXP R_length,SEXP R_size);
 
 R_xlen_t sharedObject_length(SEXP x);
 

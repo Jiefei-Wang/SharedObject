@@ -15,7 +15,7 @@ static const R_CallMethodDef callMethods[] = {
   { "getValue_32", (DL_FUNC)& getValue_32, 3 },
   { "clearAll", (DL_FUNC)& clearAll, 1 },
   { "clearObj", (DL_FUNC)& clearObj, 1 },
-  { "createAltrep", (DL_FUNC)& createAltrep, 4 },
+  { "createAltrep", (DL_FUNC)& createAltrep, 1 },
   { "getDataCount", (DL_FUNC)& R_getDataCount, 0 },
   { "getFreedKeys", (DL_FUNC)& R_getFreedKeys, 0 },
   { "getProcessIDs", (DL_FUNC)& R_getProcessIDs, 0 },

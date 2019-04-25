@@ -5,8 +5,11 @@
 using std::string;
 SEXP testFunc(SEXP expr,SEXP rho)
 {
-	SEXP res=eval(expr, rho);
-  return(res);
+	//SEXP res=eval(expr, rho);
+	Rprintf("%d", Rf_isS4(expr));
+	SEXP res = getAttrib(expr,install(".xData"));
+	SEXP res1 = findVar(install("PID"), res);
+  return(res1);
 }
 
 
@@ -79,10 +82,12 @@ SEXP getValue_32(SEXP data, SEXP type_id,SEXP i){
    return(out);
 }
 
-SEXP createAltrep(SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size){
+
+
+//SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size
+SEXP createAltrep(SEXP SM_obj){
 	//Rprintf("creating state\n");
-  SEXP state = PROTECT(make_sharedObject_state(R_type,R_length, R_size));
-  int type=asInteger(R_type);
+  int type=asInteger(SM_DATA(SM_obj, type_id));
   R_altrep_class_t alt_class;
   switch(type) {
   case REAL_TYPE:
@@ -91,11 +96,11 @@ SEXP createAltrep(SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size){
   default: error("Type of %ul is not supported yet", type);
   }
 
-  SEXP res = PROTECT(R_new_altrep(alt_class, R_address, state));
+  SEXP res = PROTECT(R_new_altrep(alt_class, SM_obj, R_NilValue));
 
   //Rprintf("altrep generated\n");
 
-  UNPROTECT(2);
+  UNPROTECT(1);
   return res;
 }
 

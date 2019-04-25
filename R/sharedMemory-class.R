@@ -3,7 +3,7 @@ sharedMemory=
   setRefClass("sharedMemory",
               fields = c("NID","PID","DID",
                          "length","type","type_id","total_size",
-                         "address","address_sig","needPrint"))
+                         "address","needPrint"))
 
 sharedMemory$methods(
   initialize = function(x=NULL) {
