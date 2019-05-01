@@ -1,30 +1,50 @@
 #pragma once
-#include "R_ext/libextern.h"
-#include <R.h>
-#include <Rinternals.h>
+#include <Rcpp.h>
+#include "sharedObject_types.h"
+using namespace Rcpp;
 
 
-SEXP testFunc(SEXP expr, SEXP rho);
-SEXP createSharedMemory(SEXP R_x, SEXP R_type, SEXP R_total_size,SEXP R_pid);
-SEXP readSharedMemory(SEXP R_DID);
-SEXP getValue_32(SEXP data, SEXP type_id, SEXP i);
-SEXP clearAll(SEXP output);
-SEXP clearObj(SEXP objID);
+//[[Rcpp::init]]
+void InitRealClass(DllInfo* dll);
 
 
+// [[Rcpp::export]]
+SEXP C_testFunc(S4 a);
+// [[Rcpp::export]]
+DID C_createSharedMemory(SEXP R_x, int R_type, ULLong total_size, PID R_pid);
+// [[Rcpp::export]]
+SEXP C_readSharedMemory(PID R_DID);
 //altrep
-SEXP createAltrep(SEXP SM_obj);
-
-SEXP R_getDataCount();
-
-SEXP R_getFreedKeys();
+// [[Rcpp::export]]
+SEXP C_createAltrep(SEXP SM_obj);
 
 
-SEXP R_getProcessIDs();
-SEXP R_getDataIDs(SEXP R_pid);
-SEXP R_getProcessInfo();
-SEXP R_getDataInfo(SEXP R_pid);
-SEXP R_getDataPID(SEXP R_did);
-SEXP R_recoverDataInfo(SEXP R_did);
+// [[Rcpp::export]]
+void C_clearAll(bool verbose);
+// [[Rcpp::export]]
+void C_clearObj(DID did);
 
-SEXP attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr);
+
+
+// [[Rcpp::export]]
+double C_getDataCount();
+
+// [[Rcpp::export]]
+SEXP C_getFreedKeys();
+
+
+// [[Rcpp::export]]
+SEXP C_getProcessIDs();
+// [[Rcpp::export]]
+SEXP C_getDataIDs(PID pid);
+// [[Rcpp::export]]
+SEXP C_getProcessInfo();
+// [[Rcpp::export]]
+SEXP C_getDataInfo(PID pid);
+// [[Rcpp::export]]
+double C_getDataPID(DID did);
+// [[Rcpp::export]]
+SEXP C_recoverDataInfo(DID did);
+
+// [[Rcpp::export]]
+SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr);

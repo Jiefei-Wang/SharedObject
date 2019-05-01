@@ -1,4 +1,5 @@
 #include <string>
+#include "sharedObject_types.h"
 struct processInfo {
 	ULLong object_num = 0;
 	ULLong total_size = 0;
@@ -9,8 +10,7 @@ struct dataInfo {
 	int type;
 };
 
-typedef int PID;
-typedef unsigned int DID;
+
 //struct processInfo;
 //struct dataInfo;
 void destroyAllObj(bool output);

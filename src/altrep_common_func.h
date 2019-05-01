@@ -1,23 +1,7 @@
-#include <R.h>
 #include <Rinternals.h>
-#include <R_ext/Altrep.h>
 #include "tools.h"
-#define PGKNAME "sharedObject"
-
-#define SM_ENV(x) getAttrib(x,install(".xData"))
-#define SM_DATA(sm,data) findVar(install(#data), SM_ENV(sm))
-#define SM_FUN(sm,fun) findFun(install(#fun), SM_ENV(sm))
-
-#define SO_DATA(so,data) SM_DATA(R_altrep_data1(so),data)
-#define SO_FUN(so,fun) SM_FUN(R_altrep_data1(so),fun)
-
-
-#define SO_EPTR(x) SO_DATA(x,address)
-#define SO_PTR(x) R_ExternalPtrAddr(SO_EPTR(x))
-#define SO_LENGTH(x) asReal(SO_DATA(x,length))
-#define SO_SIZE(x) asReal(SO_DATA(x,total_size))
-#define SO_TYPE(x) asInteger(SO_DATA(x, type_id))
-#define SO_TYPE_CHAR(x) CHAR(asChar((SO_DATA(x, type))))
+#include "sharedObject_types.h"
+#include "altrep_macro.h"
 
 
 Rboolean sharedObject_Inspect(SEXP x, int pre, int deep, int pvec,
@@ -29,7 +13,9 @@ R_xlen_t sharedObject_length(SEXP x);
 void *sharedObject_dataptr(SEXP x, Rboolean writeable);
 const void *sharedObject_dataptr_or_null(SEXP x);
 SEXP sharedObject_dulplicate(SEXP x, Rboolean deep);
-
+//void sharedObject_updateAd(SEXP x);
+SEXP sharedObject_serialized_state(SEXP x);
+SEXP sharedObject_unserialize(SEXP R_class, SEXP state);
 
 
 #include <type_traits>
@@ -59,13 +45,13 @@ SEXP template_coerce(T* x, R_xlen_t len, int type)
 	switch (type)
 	{
 	case INTSXP:
-		result = PROTECT(allocVector(INTSXP, len));
+		result = Rf_protect(Rf_allocVector(INTSXP, len));
 		for (R_xlen_t i = 0; i < len; i++) {
 			INTEGER(result)[i] = x[i];
 		}
 		break;
 	case REALSXP:
-		result = PROTECT(allocVector(REALSXP, len));
+		result = Rf_protect(Rf_allocVector(REALSXP, len));
 		for (R_xlen_t i = 0; i < len; i++) {
 			REAL(result)[i] = x[i];
 		}

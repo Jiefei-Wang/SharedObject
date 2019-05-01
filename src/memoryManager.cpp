@@ -52,7 +52,7 @@ typedef map<DID, dataInfo, std::less<DID>, dataInfoAllocator> processDataInfoMap
 
 
 
-std::map<DID, shared_memory_object*> segment_list;
+std::map<DID, mapped_region*> segment_list;
 
 
 
@@ -129,9 +129,12 @@ void freeKey(DID did) {
 
 managed_shared_memory* createSharedSegment(const char* name, size_t size) {
 	managed_shared_memory* segment;
+
+	boost::interprocess::permissions perm;
+	perm.set_unrestricted();
 	if (!valid(name, sharedSystem::MSM)) {
 		shared_memory_object::remove(name);
-		segment = new managed_shared_memory(create_only, name, size);
+		segment = new managed_shared_memory(create_only, name, size,0, perm);
 	}
 	else {
 		segment = new managed_shared_memory(open_only, name);
@@ -160,6 +163,7 @@ void initialProcessSharedMemory() {
 	if (processInfoSegment == nullptr) {
 		//printf("not initialized\n");
 		//Create shared memory space if not exist
+
 		processInfoSegment = createSharedSegment(PROCESS_SHARED_NAME, PROCESS_LIST_SIZE);
 		processInfoMap = openOrCreateSharedMap< ProcessInfoAllocator, sharedProcessInfoMap, PID>(processInfoSegment, PROCESS_INFO_MAP_NAME);
 		dataProcessMap = openOrCreateSharedMap< dataProcessMapAllocator, sharedDataProcessMap, DID>(processInfoSegment, DATA_PROCESS_MAP_NAME);
@@ -219,12 +223,12 @@ void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did);
 void destroyObj(PID pid, DID did);
 
 
-void destroyAllObj(bool output) {
+void destroyAllObj(bool verbose) {
 	initialProcessSharedMemory();
 
 	for (sharedProcessInfoMap::iterator it = processInfoMap->begin(); it != processInfoMap->end(); ++it) {
 		PID curPID = it->first;
-		destroyAllObj(curPID, output);
+		destroyAllObj(curPID, verbose);
 	}
 	processInfoMap->clear();
 	freedKeySet->clear();
@@ -251,7 +255,7 @@ void destroyAllObj(PID pid, bool output) {
 	}
 	catch (const std::exception & ex)
 	{
-		errorHandle(string("Unable to remove the shared memory at process") + to_string(pid).append("\n") + ex.what());
+		errorHandle(string("Unable to remove the shared memory at process ") + to_string(pid).append("\n") + ex.what());
 	}
 	if (pid == current_pid) {
 		current_pid = 0;
@@ -295,7 +299,7 @@ void destroyObj(PID pid, DID did) {
 //Assume curDataListMap and pid are correct
 void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did) {
 	string dataKey = getDataMemKey(did);
-	printf("removing data %d\n", did);
+	printf("removing data %llu\n", did);
 	//remove the data
 	bool removed=shared_memory_object::remove(dataKey.c_str());
 	if(!removed) printf("fail to remove the data\n");
@@ -314,7 +318,7 @@ void destroyObj(processDataInfoMap * curDataListMap, PID pid, DID did) {
 	printf("adding id to freed key list\n");
 	freeKey(did);
 	//add DID to the freed key list
-	printf("removing memory map");
+	printf("removing memory map\n");
 	if (segment_list.find(did) != segment_list.end()) {
 		delete(segment_list.at(did));
 		segment_list.erase(did);
@@ -334,7 +338,9 @@ DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID 
 	string dataKey = getDataMemKey(did);
 	try
 	{
-		shared_memory_object sharedData(create_only, dataKey.c_str(), read_write);
+		boost::interprocess::permissions perm;
+		perm.set_unrestricted();
+		shared_memory_object sharedData(create_only, dataKey.c_str(), read_write, perm);
 		//Set size
 		sharedData.truncate(total_size);
 		//Map the whole shared memory in this process
@@ -376,8 +382,8 @@ void* readSharedOBJ(DID did) {
 		//Map the whole shared memory in this process
 		mapped_region* region = new mapped_region(shm, read_write);
 		//segment_list
+		segment_list.insert(pair<DID, mapped_region*>(did, region));
 		return(region->get_address());
-
 	}
 	catch (boost::interprocess::interprocess_exception const& ex) {
 		errorHandle(string("Can't read shared object,\n") + boost::diagnostic_information(ex));
@@ -402,7 +408,7 @@ size_t getDataNum(PID pid) {
 		return(curDataListMap->size());
 	}
 	catch (const std::exception & ex) {
-		warningHandle("Fail to open shared memory\n");
+		warningHandle("Fail to open shared memory\n%s\n",ex.what());
 	}
 	return(0);
 }
@@ -442,9 +448,8 @@ const processInfo& getProcessInfo(PID pid) {
 	if (processInfoMap->find(pid) == processInfoMap->end()) {
 		errorHandle(string("The process ") + to_string(pid).append(" does not exist.\n"));
 	}
-	else {
-		return processInfoMap->at(pid);
-	}
+
+	return processInfoMap->at(pid);
 }
 
 
@@ -459,9 +464,8 @@ const dataInfo getDataInfo(PID pid, DID did) {
 		if (curDataListMap->find(did) == curDataListMap->end()) {
 			errorHandle(string("The data ") + to_string(did).append(" does not exist.\n"));
 		}
-		else {
-			return curDataListMap->at(did);
-		}
+
+		return curDataListMap->at(did);
 	}
 	catch (const std::exception & ex) {
 		errorHandle(string("The process ") + to_string(pid).append(" does not exist.\n"));
@@ -473,9 +477,7 @@ PID getDataPID(DID did) {
 	if (dataProcessMap->find(did) == dataProcessMap->end()) {
 		errorHandle(string("The data ") + to_string(did).append(" does not exist.\n"));
 	}
-	else {
-		return(dataProcessMap->at(did));
-	}
+	return(dataProcessMap->at(did));
 }
 
 

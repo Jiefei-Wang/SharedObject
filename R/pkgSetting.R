@@ -1,4 +1,8 @@
-#' @useDynLib sharedObject, .registration = TRUE,  .fixes = 'C_'
+## usethis namespace: start
+#' @useDynLib sharedObject, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+## usethis namespace: end
+NULL
 #' @importFrom stringr str_match
 #' @importFrom rlist list.rbind
 
@@ -10,4 +14,3 @@
 
 globalSettings=new.env()
 globalSettings$supportLargeIndex=FALSE
-globalSettings$delimiter=":-:"

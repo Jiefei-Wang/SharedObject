@@ -5,7 +5,7 @@
 #define BOOL_TYPE 1L
 #define INT_TYPE 2L
 #define REAL_TYPE 3L
-typedef unsigned long long int ULLong;
+#define REF_SLOT(x,name) ((Environment)x.attr(".xData"))[name]
 
 void errorHandle(std::string msg);
 void errorHandle(const char* fmt, ...);

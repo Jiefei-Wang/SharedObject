@@ -1,6 +1,7 @@
 #include "altrep_real_class.h"
 
 
+
 #define REAL_PTR(x) ((double*)SO_PTR(x))
 
 R_altrep_class_t shared_real_class;
@@ -21,6 +22,8 @@ void InitRealClass(DllInfo* dll)
 	R_set_altrep_Length_method(cls, sharedObject_length);
 	R_set_altrep_Duplicate_method(cls, sharedObject_dulplicate);
 	R_set_altrep_Coerce_method(cls, real_coerce);
+	R_set_altrep_Unserialize_method(cls, sharedObject_unserialize);
+	R_set_altrep_Serialized_state_method(cls, sharedObject_serialized_state);
 
 	/* override ALTVEC methods */
 	R_set_altvec_Dataptr_method(cls, sharedObject_dataptr);

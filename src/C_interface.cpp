@@ -1,23 +1,27 @@
-#include "C_interface.h"
+#include <Rcpp.h>
+using namespace Rcpp;
+#include "R_ext/libextern.h"
+#include <R.h>
+#include <Rinternals.h>
+#include "R_ext/Altrep.h"
 #include "tools.h"
 #include "memoryManager.h"
 #include "altrep_real_class.h"
 using std::string;
-SEXP testFunc(SEXP expr,SEXP rho)
+
+
+
+SEXP C_testFunc(S4 a)
 {
-	//SEXP res=eval(expr, rho);
-	Rprintf("%d", Rf_isS4(expr));
-	SEXP res = getAttrib(expr,install(".xData"));
-	SEXP res1 = findVar(install("PID"), res);
-  return(res1);
+	Function f=REF_SLOT(a, "hello");
+	f();
+	return(R_NilValue);
 }
 
 
-SEXP createSharedMemory(SEXP R_x,SEXP R_type, SEXP R_total_size, SEXP R_pid){
-  ULLong total_size=asReal(R_total_size);
-  ULLong len = xlength(R_x);
-  PID pid=asReal(R_pid);
-  //Rprintf("total:%d\n",total_size);
+DID C_createSharedMemory(SEXP R_x,int R_type, ULLong total_size, PID R_pid){
+  R_xlen_t len = Rf_xlength(R_x);
+  //Rprintf("type: %d, total:%llu, pid: %llu\n", R_type,total_size, R_pid);
   void* data = nullptr;
   switch (TYPEOF(R_x)) {
   case LGLSXP:
@@ -29,135 +33,91 @@ SEXP createSharedMemory(SEXP R_x,SEXP R_type, SEXP R_total_size, SEXP R_pid){
   case REALSXP:
     data = REAL(R_x);
     break;
+  default:
+	  errorHandle("Unsupported data type\n");
   }
-  DID did=createSharedOBJ(data,asInteger(R_type), total_size, len, pid);
-  return(ScalarReal((double)did));
+  DID did=createSharedOBJ(data, R_type, total_size, len, R_pid);
+  return(did);
 }
 
-
-SEXP readSharedMemory(SEXP R_DID) {
-	void* p = readSharedOBJ(asInteger(R_DID));
+SEXP C_readSharedMemory(PID R_DID) {
+	void* p = readSharedOBJ(R_DID);
 	SEXP exter_p = R_MakeExternalPtr(p, R_NilValue, R_NilValue);
 	return(exter_p);
 }
 
 
-SEXP getValue_32(SEXP data, SEXP type_id,SEXP i){
-  void* p = R_ExternalPtrAddr(data);
-  //
-  int dataType=asInteger(type_id);
-  //printf("The value of p is: %p\n", p);
-  int* ind=INTEGER(i);
-  int n = length(i);
-  //Allocate the output vector
-  SEXP out;
-  switch(dataType){
-  case BOOL_TYPE:
-    out=PROTECT(allocVector(LGLSXP, n));
-    break;
-  case INT_TYPE:
-    out=PROTECT(allocVector(INTSXP, n));
-    break;
-  case REAL_TYPE:
-    out=PROTECT(allocVector(REALSXP, n));
-    break;
-  default:
-    errorHandle("Unexpected data type");
-  }
-
-  for(int j=0;j<n;j++){
-    switch (dataType) {
-    case BOOL_TYPE:
-      LOGICAL(out)[j]=((int*)p)[ind[j]];
-      break;
-    case INT_TYPE:
-      INTEGER(out)[j]=((int*)p)[ind[j]];
-      break;
-    case REAL_TYPE:
-      REAL(out)[j]=((double*)p)[ind[j]];
-      break;
-    }
-  }
-  UNPROTECT(1);
-   return(out);
-}
-
-
-
 //SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size
-SEXP createAltrep(SEXP SM_obj){
+SEXP C_createAltrep(SEXP SM_obj){
 	//Rprintf("creating state\n");
-  int type=asInteger(SM_DATA(SM_obj, type_id));
+  int type= Rf_asInteger(SM_DATA(SM_obj, type_id));
   R_altrep_class_t alt_class;
   switch(type) {
   case REAL_TYPE:
 	  alt_class = shared_real_class;
     break;
-  default: error("Type of %ul is not supported yet", type);
+  default: Rf_error("Type of %ul is not supported yet", type);
   }
 
-  SEXP res = PROTECT(R_new_altrep(alt_class, SM_obj, R_NilValue));
+  SEXP res = Rf_protect(R_new_altrep(alt_class, SM_obj, R_NilValue));
 
   //Rprintf("altrep generated\n");
 
-  UNPROTECT(1);
+  Rf_unprotect(1);
   return res;
 }
 
 
-SEXP clearAll(SEXP output) {
-	destroyAllObj(asLogical(output));
-	return(R_NilValue);
+void C_clearAll(bool verbose) {
+	destroyAllObj(verbose);
 }
-SEXP clearObj(SEXP objID) {
+void C_clearObj(DID did) {
 	try {
-		destroyObj(asReal(objID));
+		destroyObj(did);
 	}
 	catch (const std::exception& ex) {
 		errorHandle(string("Unexpected error in removing object: \n") + ex.what());
 	}
-	return(R_NilValue);
 }
 
 
-SEXP R_getDataCount() {
+double C_getDataCount() {
 	size_t count = getDataCount();
-	return(ScalarInteger(count));
+	return(count);
 }
 
-SEXP R_getFreedKeys() {
+SEXP C_getFreedKeys() {
 	size_t n = getFreedKeyNum();
-	SEXP res = PROTECT(allocVector(REALSXP, n));
+	SEXP res = Rf_protect(Rf_allocVector(REALSXP, n));
 	getFreedAllKeys(REAL(res));
-	UNPROTECT(1);
+	Rf_unprotect(1);
 	return(res);
 }
 
 
-SEXP R_getProcessIDs() {
+SEXP C_getProcessIDs() {
 	size_t n = getProcessNum();
-	SEXP processList = PROTECT(allocVector(REALSXP, n));
+	SEXP processList = Rf_protect(Rf_allocVector(REALSXP, n));
 	getProcessIDs(REAL(processList));
-	UNPROTECT(1);
+	Rf_unprotect(1);
 	return(processList);
 }
 
-SEXP R_getDataIDs(SEXP R_pid) {
-	PID pid = asReal(R_pid);
+SEXP C_getDataIDs(PID pid) {
 	size_t n = getDataNum(pid);
-	SEXP dataList = PROTECT(allocVector(REALSXP, n));
+	SEXP dataList = Rf_protect(Rf_allocVector(REALSXP, n));
 	getDataIDs(pid, REAL(dataList));
-	UNPROTECT(1);
+	Rf_unprotect(1);
 	return(dataList);
 }
-SEXP R_getProcessInfo() {
+SEXP C_getProcessInfo() {
 	size_t n = getProcessNum();
-	SEXP PIs = PROTECT(allocVector(VECSXP, 3));
-	SEXP pid = PROTECT(R_getProcessIDs());
-	SEXP dataNum = PROTECT(allocVector(REALSXP, n));
-	SEXP dataSize = PROTECT(allocVector(REALSXP, n));
+	SEXP PIs = Rf_protect(Rf_allocVector(VECSXP, 3));
+	SEXP pid = Rf_protect(C_getProcessIDs());
+	SEXP dataNum = Rf_protect(Rf_allocVector(REALSXP, n));
+	SEXP dataSize = Rf_protect(Rf_allocVector(REALSXP, n));
 	//getProcessInfo(REAL(pid), REAL(dataNum), REAL(dataSize));
-	for (int i = 0; i < n; i++) {
+	for (size_t i = 0; i < n; i++) {
 		const processInfo pi = getProcessInfo(REAL(pid)[i]);
 		REAL(dataNum)[i] = pi.object_num;
 		REAL(dataSize)[i] = pi.total_size;
@@ -166,18 +126,17 @@ SEXP R_getProcessInfo() {
 	SET_VECTOR_ELT(PIs, 0, pid);
 	SET_VECTOR_ELT(PIs, 1, dataNum);
 	SET_VECTOR_ELT(PIs, 2, dataSize);
-	UNPROTECT(4);
+	Rf_unprotect(4);
 	return(PIs);
 }
 
 
-SEXP R_getDataInfo(SEXP R_pid) {
-	PID pid = asReal(R_pid);
+SEXP C_getDataInfo(PID pid) {
 	size_t n = getDataNum(pid);
-	SEXP DIs= PROTECT(allocVector(VECSXP, 3));
-	SEXP did = PROTECT(R_getDataIDs(R_pid));
-	SEXP size = PROTECT(allocVector(REALSXP, n));
-	SEXP type = PROTECT(allocVector(REALSXP, n));
+	SEXP DIs= Rf_protect(Rf_allocVector(VECSXP, 3));
+	SEXP did = Rf_protect(C_getDataIDs(pid));
+	SEXP size = Rf_protect(Rf_allocVector(REALSXP, n));
+	SEXP type = Rf_protect(Rf_allocVector(REALSXP, n));
 
 	for (unsigned int i = 0; i < n; i++) {
 		const dataInfo di = getDataInfo(pid,REAL(did)[i]);
@@ -188,28 +147,30 @@ SEXP R_getDataInfo(SEXP R_pid) {
 	SET_VECTOR_ELT(DIs, 0, did);
 	SET_VECTOR_ELT(DIs, 1, size);
 	SET_VECTOR_ELT(DIs, 2, type);
-	UNPROTECT(4);
+	Rf_unprotect(4);
 	return(DIs);
 }
 
-SEXP R_getDataPID(SEXP R_did) {
-	return ScalarReal(getDataPID(asReal(R_did)));
+double C_getDataPID(DID did) {
+	return getDataPID(did);
 }
 
-SEXP R_recoverDataInfo(SEXP R_did) {
-	DID did = asReal(R_did);
+SEXP C_recoverDataInfo(DID did) {
 	PID pid = getDataPID(did);
 	dataInfo di = getDataInfo(pid, did);
 
-	SEXP info = PROTECT(allocVector(REALSXP, 2));
+	SEXP info = Rf_protect(Rf_allocVector(REALSXP, 3));
 	REAL(info)[0] = di.size;
-	REAL(info)[1] = di.type;
-	unprotect(1);
+	REAL(info)[1] = di.length;
+	REAL(info)[2] = di.type;
+	Rf_unprotect(1);
 	return info;
 }
 
-SEXP attachAttr(SEXP R_source, SEXP R_tag,SEXP R_attr) {
-	const char* tag = CHAR(asChar(R_tag));
-	setAttrib(R_source, install(tag), R_attr);
+SEXP C_attachAttr(SEXP R_source, SEXP R_tag,SEXP R_attr) {
+	const char* tag = R_CHAR(Rf_asChar(R_tag));
+	Rf_setAttrib(R_source, Rf_install(tag), R_attr);
 	return R_NilValue;
 }
+
+

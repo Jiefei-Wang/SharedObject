@@ -19,7 +19,7 @@ RM$setPID<-function(id){
 }
 
 RM$memoryUsage<-function(){
-  processList=.Call(C_getProcessList)
+  #processList=.Call(C_getProcessList)
   processInfo=matrix(0,nrow=length(processList),ncol=3)
 for(i in seq_along(processList)){
 curPID=processList[i]

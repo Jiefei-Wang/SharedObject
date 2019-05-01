@@ -3,18 +3,17 @@ sharedMemory=
   setRefClass("sharedMemory",
               fields = c("NID","PID","DID",
                          "length","type","type_id","total_size",
-                         "address","needPrint"))
+                         "address","address_NID","address_PID"))
 
 sharedMemory$methods(
   initialize = function(x=NULL) {
-    .self$needPrint=TRUE
+    .self$address_NID=0
+    .self$address_PID=0
     if(!is.null(x)){
       .self$initializeWithData(x)
     }
   },
   finalize=function(){
-    if(!"sharedObject"%in%loadedNamespaces())
-      message("package has been unloaded")
     if(!is.na(.self$NID)&&
        .self$NID==RM$getNID()&&
        .self$PID==RM$getPID()){
@@ -28,22 +27,21 @@ sharedMemory$methods(
     .self$type=typeof(x)
     .self$type_id=get_type_id(.self$type)
     .self$total_size=.self$length*type_size(.self$type)
-    .self$DID=.Call(C_createSharedMemory,x,.self$type_id,.self$total_size,.self$PID)
-    .self$loadMemObj()
+    .self$DID=C_createSharedMemory(x,.self$type_id,.self$total_size,.self$PID)
+    .self$updateAddress()
   },
-  initializeWithID=function(id){
-    .self$NID=NA
-    .self$DID=as.double(id)
-    .self$PID=as.double(.Call(C_getDataPID,.self$DID))
-    dataInfo=.Call(C_recoverDataInfo,.self$DID)
+  initializeWithID=function(nid,did){
+    .self$NID=nid
+    .self$DID=as.double(did)
+    .self$PID=C_getDataPID(.self$DID)
+    dataInfo=C_recoverDataInfo(.self$DID)
     .self$total_size=as.double(dataInfo[1])
-    .self$type_id=as.integer(dataInfo[2])
+    .self$length=as.double(dataInfo[2])
+    .self$type_id=as.integer(dataInfo[3])
     .self$type=get_type_name(.self$type_id)
-    .self$length=.self$total_size/type_size(.self$type)
-    .self$loadMemObj()
+    .self$updateAddress()
   },
   show = function(){
-    if(needPrint){
       flds <- getRefClass()$fields()
       cat("Shared memory object\n")
       for (fld in names(flds)){
@@ -54,10 +52,6 @@ sharedMemory$methods(
           cat( fld,': ', .self[[fld]], '\n')
         }
       }
-      #print.default(.self)
-    }else{
-      cat("Shared memory object\n")
-    }
   }
 )
 

@@ -4,27 +4,37 @@
 
 sharedMemory$methods(
   loadMemObj=function(){
-    .self$address=.Call(C_readSharedMemory,.self$DID)
+    .self$address=C_readSharedMemory(.self$DID)
   }
 )
 
 sharedMemory$methods(
   updateAddress=function(){
+      message("checking the address")
       if(!.self$AddressValid()){
-        message("Update the address")
+        message("Updating the address")
         .self$loadMemObj()
+        .self$address_NID=RM$getNID()
+        .self$address_PID=RM$getPID()
       }
   }
 )
 sharedMemory$methods(
   AddressValid=function(){
-    if((is.na(.self$NID)||.self$NID==RM$getNID())&&.self$PID==RM$getPID()){
+    if(.self$address_NID==RM$getNID()&&.self$address_PID==RM$getPID()){
       return(TRUE)
     }else{
       return(FALSE)
     }
   }
 )
+
+createSharedMemoryByID<-function(nid,did){
+ sm=sharedMemory()
+ sm$initializeWithID(nid,did)
+ sm
+}
+
 
 removeObject<-function(data_ids){
   sapply(as.double(data_ids),removeObject_single)
@@ -33,7 +43,7 @@ removeObject<-function(data_ids){
 
 
 removeObject_single<-function(id){
-  .Call("clearObj",id)
+  C_clearObj(id)
   invisible()
 }
 
@@ -41,40 +51,41 @@ removeObject_single<-function(id){
 
 
 removeAllObject<-function(verbose){
-  .Call(C_clearAll,as.logical(verbose))
+  C_clearAll(verbose)
   invisible()
 }
 
 
 getDataCount<-function(){
-  .Call(C_getDataCount)
+  C_getDataCount()
 }
 
 getFreedKeyList<-function(){
-  .Call(C_getFreedKeys)
+  C_getFreedKeys()
 }
 
 getProcessInfo<-function(){
- res=.Call(C_getProcessInfo)
+ res=C_getProcessInfo()
  res=as.data.frame(res)
  colnames(res)=c("processID","objectNum","totalSize")
  res
 }
 
 getDataInfo<-function(pid=NULL){
+  varNames=c("processID","dataID","size","type")
+  empTemplate=as.data.frame(matrix(nrow=0,ncol=length(varNames),
+                                   dimnames=list(NULL,col_names=varNames)))
 if(is.null(pid)){
   pid=getProcessInfo()$processID
 }
-  if(length(pid)==0)
-    return(NULL)
   pid=as.double(pid)
   res=lapply(pid,getDataInfo_single)
-  if(length(res)==0) return(NULL)
+  if(length(res)==0) return(empTemplate)
   res=list.rbind(res)
   res
 }
 getDataInfo_single<-function(pid){
-  res=.Call(C_getDataInfo,pid)
+  res=C_getDataInfo(pid)
   if(length(res[[1]])==0) return(NULL)
   res=as.data.frame(res)
   res=cbind(pid,res)
