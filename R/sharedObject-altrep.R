@@ -7,8 +7,8 @@ sharedObject<-function(x){
 
 
 #' @export
-sharedObjectById<-function(nid,did){
-  sm=createSharedMemoryByID(nid,did)
+sharedObjectById<-function(did){
+  sm=createSharedMemoryByID(did)
   obj=C_createAltrep(sm)
   obj
 }

@@ -11,40 +11,26 @@ void InitRealClass(DllInfo* dll);
 // [[Rcpp::export]]
 SEXP C_testFunc(S4 a);
 // [[Rcpp::export]]
-DID C_createSharedMemory(SEXP R_x, int R_type, ULLong total_size, PID R_pid);
+DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did);
 // [[Rcpp::export]]
-SEXP C_readSharedMemory(PID R_DID);
+SEXP C_readSharedMemory(double R_DID);
 //altrep
 // [[Rcpp::export]]
 SEXP C_createAltrep(SEXP SM_obj);
 
 
 // [[Rcpp::export]]
-void C_clearAll(bool verbose);
-// [[Rcpp::export]]
-void C_clearObj(DID did);
+void C_clearObj(double did);
 
 
 
 // [[Rcpp::export]]
-double C_getDataCount();
-
-// [[Rcpp::export]]
-SEXP C_getFreedKeys();
+std::vector<double> C_getDataID();
 
 
 // [[Rcpp::export]]
-SEXP C_getProcessIDs();
-// [[Rcpp::export]]
-SEXP C_getDataIDs(PID pid);
-// [[Rcpp::export]]
-SEXP C_getProcessInfo();
-// [[Rcpp::export]]
-SEXP C_getDataInfo(PID pid);
-// [[Rcpp::export]]
-double C_getDataPID(DID did);
-// [[Rcpp::export]]
-SEXP C_recoverDataInfo(DID did);
+NumericVector C_getDataInfo(DID did);
+
 
 // [[Rcpp::export]]
 SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr);

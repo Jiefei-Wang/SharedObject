@@ -1,6 +1,6 @@
 #include "altrep_macro.h"
 #include "tools.h"
-#include "Rcpp.h";
+#include "Rcpp.h"
 #include "R_ext/Altrep.h"
 
 #include "Rinternals.h"
@@ -43,13 +43,8 @@ void sharedObject_updateAd(SEXP x)
 
 SEXP sharedObject_serialized_state(SEXP x) {
 	printf("serialize state\n");
-	SEXP nid = SO_DATA(x, NID);
 	SEXP did = SO_DATA(x, DID);
-	SEXP state = PROTECT(Rf_allocVector(VECSXP, 2));
-	SET_VECTOR_ELT(state, 0, nid);
-	SET_VECTOR_ELT(state, 1, did);
-	UNPROTECT(1);
-	return(state);
+	return(did);
 }
 
 void loadLibrary() {
@@ -64,11 +59,10 @@ SEXP sharedObject_unserialize(SEXP R_class, SEXP state) {
 	//return R_class;
 	//return(Rf_ScalarInteger(1));
 	printf("unserializing data\n");
-	SEXP nid = VECTOR_ELT(state,0);
-	SEXP did = VECTOR_ELT(state, 1);
+	
 	loadLibrary();
 	Environment package_env("package:sharedObject");
 	Function so_constructor = package_env["sharedObjectById"];
-	SEXP so = so_constructor(nid, did);
+	SEXP so = so_constructor(state);
 	return so;
 }

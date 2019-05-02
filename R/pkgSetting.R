@@ -3,14 +3,13 @@
 #' @importFrom Rcpp sourceCpp
 ## usethis namespace: end
 NULL
-#' @importFrom stringr str_match
-#' @importFrom rlist list.rbind
+#' @importFrom extraDistr rdunif
 
 .onUnload <- function(libpath) {
   library.dynam.unload("sharedObject", libpath)
+  RM_data$unloaded=TRUE
 }
 
 
 
 globalSettings=new.env()
-globalSettings$supportLargeIndex=FALSE

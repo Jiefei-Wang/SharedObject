@@ -5,8 +5,8 @@ C_testFunc <- function(a) {
     .Call(`_sharedObject_C_testFunc`, a)
 }
 
-C_createSharedMemory <- function(R_x, R_type, total_size, R_pid) {
-    .Call(`_sharedObject_C_createSharedMemory`, R_x, R_type, total_size, R_pid)
+C_createSharedMemory <- function(R_x, type, total_size, pid, did) {
+    .Call(`_sharedObject_C_createSharedMemory`, R_x, type, total_size, pid, did)
 }
 
 C_readSharedMemory <- function(R_DID) {
@@ -17,44 +17,16 @@ C_createAltrep <- function(SM_obj) {
     .Call(`_sharedObject_C_createAltrep`, SM_obj)
 }
 
-C_clearAll <- function(verbose) {
-    invisible(.Call(`_sharedObject_C_clearAll`, verbose))
-}
-
 C_clearObj <- function(did) {
     invisible(.Call(`_sharedObject_C_clearObj`, did))
 }
 
-C_getDataCount <- function() {
-    .Call(`_sharedObject_C_getDataCount`)
+C_getDataID <- function() {
+    .Call(`_sharedObject_C_getDataID`)
 }
 
-C_getFreedKeys <- function() {
-    .Call(`_sharedObject_C_getFreedKeys`)
-}
-
-C_getProcessIDs <- function() {
-    .Call(`_sharedObject_C_getProcessIDs`)
-}
-
-C_getDataIDs <- function(pid) {
-    .Call(`_sharedObject_C_getDataIDs`, pid)
-}
-
-C_getProcessInfo <- function() {
-    .Call(`_sharedObject_C_getProcessInfo`)
-}
-
-C_getDataInfo <- function(pid) {
-    .Call(`_sharedObject_C_getDataInfo`, pid)
-}
-
-C_getDataPID <- function(did) {
-    .Call(`_sharedObject_C_getDataPID`, did)
-}
-
-C_recoverDataInfo <- function(did) {
-    .Call(`_sharedObject_C_recoverDataInfo`, did)
+C_getDataInfo <- function(did) {
+    .Call(`_sharedObject_C_getDataInfo`, did)
 }
 
 C_attachAttr <- function(R_source, R_tag, R_attr) {

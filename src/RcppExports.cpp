@@ -18,26 +18,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_createSharedMemory
-DID C_createSharedMemory(SEXP R_x, int R_type, ULLong total_size, PID R_pid);
-RcppExport SEXP _sharedObject_C_createSharedMemory(SEXP R_xSEXP, SEXP R_typeSEXP, SEXP total_sizeSEXP, SEXP R_pidSEXP) {
+DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did);
+RcppExport SEXP _sharedObject_C_createSharedMemory(SEXP R_xSEXP, SEXP typeSEXP, SEXP total_sizeSEXP, SEXP pidSEXP, SEXP didSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type R_x(R_xSEXP);
-    Rcpp::traits::input_parameter< int >::type R_type(R_typeSEXP);
-    Rcpp::traits::input_parameter< ULLong >::type total_size(total_sizeSEXP);
-    Rcpp::traits::input_parameter< PID >::type R_pid(R_pidSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_createSharedMemory(R_x, R_type, total_size, R_pid));
+    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< double >::type total_size(total_sizeSEXP);
+    Rcpp::traits::input_parameter< double >::type pid(pidSEXP);
+    Rcpp::traits::input_parameter< double >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_createSharedMemory(R_x, type, total_size, pid, did));
     return rcpp_result_gen;
 END_RCPP
 }
 // C_readSharedMemory
-SEXP C_readSharedMemory(PID R_DID);
+SEXP C_readSharedMemory(double R_DID);
 RcppExport SEXP _sharedObject_C_readSharedMemory(SEXP R_DIDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< PID >::type R_DID(R_DIDSEXP);
+    Rcpp::traits::input_parameter< double >::type R_DID(R_DIDSEXP);
     rcpp_result_gen = Rcpp::wrap(C_readSharedMemory(R_DID));
     return rcpp_result_gen;
 END_RCPP
@@ -53,107 +54,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// C_clearAll
-void C_clearAll(bool verbose);
-RcppExport SEXP _sharedObject_C_clearAll(SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    C_clearAll(verbose);
-    return R_NilValue;
-END_RCPP
-}
 // C_clearObj
-void C_clearObj(DID did);
+void C_clearObj(double did);
 RcppExport SEXP _sharedObject_C_clearObj(SEXP didSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    Rcpp::traits::input_parameter< double >::type did(didSEXP);
     C_clearObj(did);
     return R_NilValue;
 END_RCPP
 }
-// C_getDataCount
-double C_getDataCount();
-RcppExport SEXP _sharedObject_C_getDataCount() {
+// C_getDataID
+std::vector<double> C_getDataID();
+RcppExport SEXP _sharedObject_C_getDataID() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(C_getDataCount());
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getFreedKeys
-SEXP C_getFreedKeys();
-RcppExport SEXP _sharedObject_C_getFreedKeys() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(C_getFreedKeys());
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getProcessIDs
-SEXP C_getProcessIDs();
-RcppExport SEXP _sharedObject_C_getProcessIDs() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(C_getProcessIDs());
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getDataIDs
-SEXP C_getDataIDs(PID pid);
-RcppExport SEXP _sharedObject_C_getDataIDs(SEXP pidSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< PID >::type pid(pidSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getDataIDs(pid));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getProcessInfo
-SEXP C_getProcessInfo();
-RcppExport SEXP _sharedObject_C_getProcessInfo() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(C_getProcessInfo());
+    rcpp_result_gen = Rcpp::wrap(C_getDataID());
     return rcpp_result_gen;
 END_RCPP
 }
 // C_getDataInfo
-SEXP C_getDataInfo(PID pid);
-RcppExport SEXP _sharedObject_C_getDataInfo(SEXP pidSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< PID >::type pid(pidSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getDataInfo(pid));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getDataPID
-double C_getDataPID(DID did);
-RcppExport SEXP _sharedObject_C_getDataPID(SEXP didSEXP) {
+NumericVector C_getDataInfo(DID did);
+RcppExport SEXP _sharedObject_C_getDataInfo(SEXP didSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DID >::type did(didSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getDataPID(did));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_recoverDataInfo
-SEXP C_recoverDataInfo(DID did);
-RcppExport SEXP _sharedObject_C_recoverDataInfo(SEXP didSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_recoverDataInfo(did));
+    rcpp_result_gen = Rcpp::wrap(C_getDataInfo(did));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -173,19 +101,12 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_sharedObject_C_testFunc", (DL_FUNC) &_sharedObject_C_testFunc, 1},
-    {"_sharedObject_C_createSharedMemory", (DL_FUNC) &_sharedObject_C_createSharedMemory, 4},
+    {"_sharedObject_C_createSharedMemory", (DL_FUNC) &_sharedObject_C_createSharedMemory, 5},
     {"_sharedObject_C_readSharedMemory", (DL_FUNC) &_sharedObject_C_readSharedMemory, 1},
     {"_sharedObject_C_createAltrep", (DL_FUNC) &_sharedObject_C_createAltrep, 1},
-    {"_sharedObject_C_clearAll", (DL_FUNC) &_sharedObject_C_clearAll, 1},
     {"_sharedObject_C_clearObj", (DL_FUNC) &_sharedObject_C_clearObj, 1},
-    {"_sharedObject_C_getDataCount", (DL_FUNC) &_sharedObject_C_getDataCount, 0},
-    {"_sharedObject_C_getFreedKeys", (DL_FUNC) &_sharedObject_C_getFreedKeys, 0},
-    {"_sharedObject_C_getProcessIDs", (DL_FUNC) &_sharedObject_C_getProcessIDs, 0},
-    {"_sharedObject_C_getDataIDs", (DL_FUNC) &_sharedObject_C_getDataIDs, 1},
-    {"_sharedObject_C_getProcessInfo", (DL_FUNC) &_sharedObject_C_getProcessInfo, 0},
+    {"_sharedObject_C_getDataID", (DL_FUNC) &_sharedObject_C_getDataID, 0},
     {"_sharedObject_C_getDataInfo", (DL_FUNC) &_sharedObject_C_getDataInfo, 1},
-    {"_sharedObject_C_getDataPID", (DL_FUNC) &_sharedObject_C_getDataPID, 1},
-    {"_sharedObject_C_recoverDataInfo", (DL_FUNC) &_sharedObject_C_recoverDataInfo, 1},
     {"_sharedObject_C_attachAttr", (DL_FUNC) &_sharedObject_C_attachAttr, 3},
     {NULL, NULL, 0}
 };
