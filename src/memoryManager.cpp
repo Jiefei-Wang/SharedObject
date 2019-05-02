@@ -1,4 +1,4 @@
-#ifndef _WIN32
+#ifdef _WIN32
 #define WINDOWS_OS
 #endif
 #ifdef  WINDOWS_OS 

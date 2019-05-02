@@ -56,7 +56,7 @@ SEXP C_createAltrep(SEXP SM_obj){
   case REAL_TYPE:
 	  alt_class = shared_real_class;
     break;
-  default: Rf_error("Type of %ul is not supported yet", type);
+  default: Rf_error("Type of %d is not supported yet", type);
   }
 
   SEXP res = Rf_protect(R_new_altrep(alt_class, SM_obj, R_NilValue));

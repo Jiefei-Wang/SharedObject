@@ -4,6 +4,21 @@
 #include "R_ext/Altrep.h"
 
 #include "Rinternals.h"
+
+void* getPointer(SEXP x) {
+	switch (TYPEOF(x))
+	{
+	case INTSXP:
+		return INTEGER(x);
+	case REALSXP:
+		return REAL(x);
+	case LGLSXP:
+		return LOGICAL(x);
+	case RAWSXP:
+		return RAW(x);
+	}
+}
+
 Rboolean sharedObject_Inspect(SEXP x, int pre, int deep, int pvec,
                       void (*inspect_subtree)(SEXP, int, int, int))
 {
