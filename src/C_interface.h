@@ -5,11 +5,19 @@ using namespace Rcpp;
 
 
 //[[Rcpp::init]]
-void InitRealClass(DllInfo* dll);
+void init_real_class(DllInfo* dll);
+//[[Rcpp::init]]
+void init_integer_class(DllInfo* dll);
+
 
 
 // [[Rcpp::export]]
-SEXP C_testFunc(S4 a);
+SEXP peekSharedMemory(SEXP x);
+
+
+
+// [[Rcpp::export]]
+void C_testFunc(SEXP a);
 // [[Rcpp::export]]
 DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did);
 // [[Rcpp::export]]

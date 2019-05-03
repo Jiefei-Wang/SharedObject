@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include "sharedObject_types.h"
 #include <vector>

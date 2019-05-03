@@ -1,3 +1,4 @@
+#pragma once
 #define PGKNAME "sharedObject"
 
 #define SM_ENV(x) Rf_getAttrib(x,Rf_install(".xData"))

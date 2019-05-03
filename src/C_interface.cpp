@@ -1,21 +1,22 @@
 #include <Rcpp.h>
 using namespace Rcpp;
-#include "R_ext/libextern.h"
-#include <R.h>
 #include <Rinternals.h>
 #include "R_ext/Altrep.h"
 #include "tools.h"
 #include "memoryManager.h"
-#include "altrep_real_class.h"
+#include "altrep_common_func.h"
+
 using std::string;
 
+SEXP peekSharedMemory(SEXP x) {
+	messageHandle(Rf_type2char(TYPEOF(x)));
+	return(SO_ENV(x));
+}
 
-
-SEXP C_testFunc(S4 a)
+void C_testFunc(SEXP a)
 {
-	Function f=REF_SLOT(a, "hello");
-	f();
-	return(R_NilValue);
+	messageHandle("Type:%s\n", Rf_type2char(TYPEOF(a)));
+	Rf_PrintValue(a);
 }
 
 
@@ -40,6 +41,8 @@ DID C_createSharedMemory(SEXP R_x,int type, double total_size, double pid, doubl
   return(did);
 }
 
+
+
 SEXP C_readSharedMemory(double DID) {
 	void* p = readSharedOBJ(DID);
 	SEXP exter_p = R_MakeExternalPtr(p, R_NilValue, R_NilValue);
@@ -47,21 +50,14 @@ SEXP C_readSharedMemory(double DID) {
 }
 
 
+
+
 //SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size
 SEXP C_createAltrep(SEXP SM_obj){
-	//Rprintf("creating state\n");
   int type= Rf_asInteger(SM_DATA(SM_obj, type_id));
-  R_altrep_class_t alt_class;
-  switch(type) {
-  case REAL_TYPE:
-	  alt_class = shared_real_class;
-    break;
-  default: Rf_error("Type of %d is not supported yet", type);
-  }
-
+  R_altrep_class_t alt_class = getAltClass(type);
   SEXP res = Rf_protect(R_new_altrep(alt_class, SM_obj, R_NilValue));
-
-  //Rprintf("altrep generated\n");
+  Rprintf("altrep generated with type %d\n", type);
 
   Rf_unprotect(1);
   return res;

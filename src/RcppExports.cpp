@@ -6,15 +6,25 @@
 
 using namespace Rcpp;
 
-// C_testFunc
-SEXP C_testFunc(S4 a);
-RcppExport SEXP _sharedObject_C_testFunc(SEXP aSEXP) {
+// peekSharedMemory
+SEXP peekSharedMemory(SEXP x);
+RcppExport SEXP _sharedObject_peekSharedMemory(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< S4 >::type a(aSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_testFunc(a));
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(peekSharedMemory(x));
     return rcpp_result_gen;
+END_RCPP
+}
+// C_testFunc
+void C_testFunc(SEXP a);
+RcppExport SEXP _sharedObject_C_testFunc(SEXP aSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type a(aSEXP);
+    C_testFunc(a);
+    return R_NilValue;
 END_RCPP
 }
 // C_createSharedMemory
@@ -100,6 +110,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_sharedObject_peekSharedMemory", (DL_FUNC) &_sharedObject_peekSharedMemory, 1},
     {"_sharedObject_C_testFunc", (DL_FUNC) &_sharedObject_C_testFunc, 1},
     {"_sharedObject_C_createSharedMemory", (DL_FUNC) &_sharedObject_C_createSharedMemory, 5},
     {"_sharedObject_C_readSharedMemory", (DL_FUNC) &_sharedObject_C_readSharedMemory, 1},
@@ -111,9 +122,11 @@ static const R_CallMethodDef CallEntries[] = {
     {NULL, NULL, 0}
 };
 
-void InitRealClass(DllInfo* dll);
+void init_real_class(DllInfo* dll);
+void init_integer_class(DllInfo* dll);
 RcppExport void R_init_sharedObject(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
-    InitRealClass(dll);
+    init_real_class(dll);
+    init_integer_class(dll);
 }
