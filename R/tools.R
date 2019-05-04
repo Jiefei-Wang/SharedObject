@@ -1,7 +1,7 @@
-typeName=c("logical","integer","double")
+typeName=c("logical","integer","double","raw","character")
 availableType=data.frame(
   row.names=typeName,
-  size=as.integer(c(1,4,8)),
+  size=as.integer(c(4,4,8,1,1)),
   id=as.integer(seq_along(typeName)),
   stringsAsFactors = FALSE)
 

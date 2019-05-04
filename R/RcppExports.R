@@ -6,7 +6,7 @@ peekSharedMemory <- function(x) {
 }
 
 C_testFunc <- function(a) {
-    invisible(.Call(`_sharedObject_C_testFunc`, a))
+    .Call(`_sharedObject_C_testFunc`, a)
 }
 
 C_createSharedMemory <- function(R_x, type, total_size, pid, did) {

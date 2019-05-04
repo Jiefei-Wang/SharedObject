@@ -1,5 +1,6 @@
 #include "tools.h"
 #include "R.h"
+#include <Rinternals.h>
 #include <cstdarg>
 using namespace std;
 #define HANDLE_CHAR(FUNC) {\
@@ -37,11 +38,43 @@ int getTypeSize(unsigned int type){
   switch(type){
   case INT_TYPE:
     return 4;
-  case BOOL_TYPE:
+  case LOGICAL_TYPE:
     return 4;
   case REAL_TYPE:
     return 8;
+  case RAW_TYPE:
+	  return 1;
   }
   errorHandle("Unexpected data type");
   return 0;
+}
+
+/*
+data structure:
+offset to the ith string,i=1,...,n.(64bit offset)
+actual data
+*/
+
+void strCpy(void* target, void* R_str) {
+	SEXP str = (SEXP)R_str;
+	//printf("get string length\n");
+	ULLong n = XLENGTH(str);
+	ULLong* ptr = (ULLong*)target;
+	char* data = (char*)(ptr + n) ;
+	ULLong curOff = n * sizeof(ULLong);
+	for (ULLong i = 0; i < n; i++) {
+		//get an element from the string vector
+		SEXP ele = STRING_ELT(str, i);
+		//printf("getting length\n");
+		R_xlen_t ele_size = XLENGTH(ele);
+		//printf("substr %llu len:%llu\n",i, ele_size);
+		const char* ele_char = CHAR(ele);
+		//set the offset to the data
+		*ptr = curOff;
+		ptr = ptr + 1;
+		curOff = curOff + ele_size + 1;
+		//perform the memory copy
+		memcpy(data, ele_char, ele_size + 1);
+		data = data + ele_size + 1;
+	}
 }

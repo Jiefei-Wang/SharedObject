@@ -8,6 +8,12 @@ using namespace Rcpp;
 void init_real_class(DllInfo* dll);
 //[[Rcpp::init]]
 void init_integer_class(DllInfo* dll);
+//[[Rcpp::init]]
+void init_logical_class(DllInfo* dll);
+//[[Rcpp::init]]
+void init_raw_class(DllInfo* dll);
+//[[Rcpp::init]]
+void init_str_class(DllInfo* dll);
 
 
 
@@ -17,7 +23,7 @@ SEXP peekSharedMemory(SEXP x);
 
 
 // [[Rcpp::export]]
-void C_testFunc(SEXP a);
+SEXP C_testFunc(SEXP a);
 // [[Rcpp::export]]
 DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did);
 // [[Rcpp::export]]

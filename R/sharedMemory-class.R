@@ -27,7 +27,7 @@ sharedMemory$methods(
     .self$length=length(x)
     .self$type=typeof(x)
     .self$type_id=get_type_id(.self$type)
-    .self$total_size=.self$length*type_size(.self$type)
+    .self$total_size=getSharedMemerySize(x)
     .self$DID=C_createSharedMemory(x,.self$type_id,.self$total_size,.self$PID,.self$DID)
     .self$updateAddress()
   },
@@ -58,5 +58,13 @@ sharedMemory$methods(
 
 
 
-
+getSharedMemerySize<-function(x){
+  n=length(x)
+  if(typeof(x)=="character"){
+    char_size=sum(sapply(x,length))+n
+    return(n*8+char_size)
+  }else{
+    return(n*type_size(typeof(x)))
+  }
+}
 

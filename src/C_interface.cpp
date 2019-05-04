@@ -9,34 +9,23 @@ using namespace Rcpp;
 using std::string;
 
 SEXP peekSharedMemory(SEXP x) {
-	messageHandle(Rf_type2char(TYPEOF(x)));
-	return(SO_ENV(x));
+	SEXP sm = SO_ENV(x);
+	return(sm);
 }
 
-void C_testFunc(SEXP a)
+SEXP C_testFunc(SEXP a)
 {
-	messageHandle("Type:%s\n", Rf_type2char(TYPEOF(a)));
-	Rf_PrintValue(a);
+	SEXP res = STRING_ELT(a, 1);
+	messageHandle("len:%llu,true len: %llu\n", XLENGTH(res), XTRUELENGTH(res));
+	return(res);
 }
 
 
 DID C_createSharedMemory(SEXP R_x,int type, double total_size, double pid, double did){
   R_xlen_t len = Rf_xlength(R_x);
-  //Rprintf("type: %d, total:%llu, pid: %llu\n", R_type,total_size, R_pid);
-  void* data = nullptr;
-  switch (TYPEOF(R_x)) {
-  case LGLSXP:
-    data=LOGICAL(R_x);
-    break;
-  case INTSXP:
-    data = INTEGER(R_x);
-    break;
-  case REALSXP:
-    data = REAL(R_x);
-    break;
-  default:
-	  errorHandle("Unsupported data type\n");
-  }
+  //Rprintf("length:%d,type: %d, total:%f, pid: %llu\n", len, type,total_size, pid);
+  void* data = getPointer(R_x);
+  //printf("get pointer%p\n", data);
   did=createSharedOBJ(data, type, total_size, len, pid,did);
   return(did);
 }
@@ -55,7 +44,9 @@ SEXP C_readSharedMemory(double DID) {
 //SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size
 SEXP C_createAltrep(SEXP SM_obj){
   int type= Rf_asInteger(SM_DATA(SM_obj, type_id));
+  Rprintf("type %d\n", type);
   R_altrep_class_t alt_class = getAltClass(type);
+  Rprintf("get alt class\n");
   SEXP res = Rf_protect(R_new_altrep(alt_class, SM_obj, R_NilValue));
   Rprintf("altrep generated with type %d\n", type);
 

@@ -187,9 +187,14 @@ DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID 
 		sharedMem_list.insert(pair<DID, OS_shared_memory_object*>(did, sharedData));
 		//Map the whole shared memory in this process
 		mapped_region region(*sharedData, read_write);
-
 		//Write to shared memory
-		memcpy(region.get_address(), data, total_size);
+		switch (type) {
+		case STR_TYPE:
+			strCpy(region.get_address(), data);
+			break;
+		default:
+			memcpy(region.get_address(), data, total_size);
+		}
 
 	}
 	catch (const std::exception & ex) {

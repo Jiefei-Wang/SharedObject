@@ -4,19 +4,18 @@
 #include "R_ext/Altrep.h"
 
 #include "Rinternals.h"
-#include "altrep_numeric_registration.h"
+#include "altrep_registration.h"
 
 void* getPointer(SEXP x) {
 	switch (TYPEOF(x))
 	{
 	case INTSXP:
-		return INTEGER(x);
 	case REALSXP:
-		return REAL(x);
 	case LGLSXP:
-		return LOGICAL(x);
 	case RAWSXP:
-		return RAW(x);
+		return STDVEC_DATAPTR(x);
+	case STRSXP:
+		return x;
 	default:
 		errorHandle("Unexpected SEXP of type %d\n", TYPEOF(x));
 	}
@@ -29,6 +28,12 @@ R_altrep_class_t getAltClass(int type) {
 		return shared_real_class;
 	case INT_TYPE:
 		return shared_integer_class;
+	case LOGICAL_TYPE:
+		return shared_logical_class;
+	case RAW_TYPE:
+		return shared_raw_class;
+	case STR_TYPE:
+		return shared_str_class;
 	default: errorHandle("Type of %d is not supported yet", type);
 	}
 }
