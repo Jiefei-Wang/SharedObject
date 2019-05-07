@@ -3,11 +3,12 @@ sharedMemory=
   setRefClass("sharedMemory",
               fields = c("PID","DID","ownData",
                          "length","type","type_id","total_size",
-                         "address"))
+                         "address","duplicate"))
 
 sharedMemory$methods(
-  initialize = function(x=NULL) {
+  initialize = function(x=NULL,duplicate=sharedParms.duplicate()) {
     .self$ownData=FALSE
+    .self$duplicate=duplicate
     if(!is.null(x)){
       .self$initializeWithData(x)
     }

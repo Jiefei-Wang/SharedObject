@@ -1,7 +1,7 @@
 #pragma once
 #include "Rcpp.h"
 #include "altrep_common_func.h"
-#define TMP_PTR(x) ((T*)SO_PTR(x))
+#define TMP_PTR(x) ((T*)SV_PTR(x))
 template<class T>
 SEXP template_coerce(T* x, R_xlen_t len, int type)
 {
@@ -41,7 +41,7 @@ T numeric_Elt(SEXP x, R_xlen_t i) {
 template<class T>
 R_xlen_t numeric_region(SEXP x, R_xlen_t start, R_xlen_t size, T* out) {
 	DEBUG(Rprintf("accessing numeric region\n"));
-	R_xlen_t rest_len = SO_LENGTH(x) - start;
+	R_xlen_t rest_len = SV_LENGTH(x) - start;
 	R_xlen_t ncopy = rest_len > size ? size : rest_len;
 	memcpy(out, TMP_PTR(x) + start, ncopy * sizeof(T));
 	return ncopy;
@@ -75,10 +75,10 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 	C_TYPE* result = (C_TYPE*) malloc(len*sizeof(C_TYPE));
 	switch (TYPEOF(indx)) {
 	case INTSXP:
-		template_subset_assignment(result, (C_TYPE*)SO_PTR(x), INTEGER(indx), Rf_xlength(x), Rf_xlength(indx));
+		template_subset_assignment(result, (C_TYPE*)SV_PTR(x), INTEGER(indx), Rf_xlength(x), Rf_xlength(indx));
 		break;
 	case REALSXP:
-		template_subset_assignment(result, (C_TYPE*)SO_PTR(x), REAL(indx), Rf_xlength(x), Rf_xlength(indx));
+		template_subset_assignment(result, (C_TYPE*)SV_PTR(x), REAL(indx), Rf_xlength(x), Rf_xlength(indx));
 		break;
 	}
 

@@ -13,3 +13,14 @@ NULL
 
 
 globalSettings=new.env()
+globalSettings$duplicate=TRUE
+
+#' @export
+sharedParms.duplicate<-function(x=NULL){
+  if(is.null(x)){
+    return(globalSettings$duplicate)
+  }
+  tmp=globalSettings$duplicate
+  globalSettings$duplicate=x
+  tmp
+}

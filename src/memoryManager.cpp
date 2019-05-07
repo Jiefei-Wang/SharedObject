@@ -258,11 +258,11 @@ void destroyObj(DID did) {
 			bool removed = removeSharedMemory(dataKey.c_str());
 			if (!removed) printf("fail to remove the data\n");
 			//remove the key from the data info map
-			printf("removing data key\n");
+			//printf("removing data key\n");
 			removeDID(did);
-			printf("removing memory mapped address\n");
+			//printf("removing memory mapped address\n");
 			removeDataIfExist(segment_list, did);
-			printf("removing share memory object");
+			//printf("removing share memory object\n");
 			removeDataIfExist(sharedMem_list, did);
 		}
 	}

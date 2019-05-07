@@ -5,16 +5,16 @@
 #define ALT_NUM_COMMOM_REG(ALT_CLASS,ALT_TYPE,C_TYPE,R_TYPE)\
 	ALT_CLASS =R_make_##ALT_TYPE##_class(class_name, PGKNAME, dll);\
 	/* override ALTREP methods */\
-	R_set_altrep_Inspect_method(ALT_CLASS, sharedObject_Inspect);\
-	R_set_altrep_Length_method(ALT_CLASS, sharedObject_length);\
-	R_set_altrep_Duplicate_method(ALT_CLASS, sharedObject_dulplicate);\
+	R_set_altrep_Inspect_method(ALT_CLASS, sharedVector_Inspect);\
+	R_set_altrep_Length_method(ALT_CLASS, sharedVector_length);\
+	R_set_altrep_Duplicate_method(ALT_CLASS, sharedVector_dulplicate);\
 	/*R_set_altrep_Coerce_method(ALT_CLASS, real_coerce);*/\
-	R_set_altrep_Unserialize_method(ALT_CLASS, sharedObject_unserialize);\
-	R_set_altrep_Serialized_state_method(ALT_CLASS, sharedObject_serialized_state);\
+	R_set_altrep_Unserialize_method(ALT_CLASS, sharedVector_unserialize);\
+	R_set_altrep_Serialized_state_method(ALT_CLASS, sharedVector_serialized_state);\
 \
 	/* override ALTVEC methods */\
-	R_set_altvec_Dataptr_method(ALT_CLASS, sharedObject_dataptr);\
-	R_set_altvec_Dataptr_or_null_method(ALT_CLASS, sharedObject_dataptr_or_null);\
+	R_set_altvec_Dataptr_method(ALT_CLASS, sharedVector_dataptr);\
+	R_set_altvec_Dataptr_or_null_method(ALT_CLASS, sharedVector_dataptr_or_null);\
 	R_set_altvec_Extract_subset_method(ALT_CLASS, numeric_subset<R_TYPE, C_TYPE>);\
 /* override ALTREAL methods */\
 R_set_##ALT_TYPE##_Elt_method(ALT_CLASS, numeric_Elt<C_TYPE>);\
@@ -80,12 +80,12 @@ R_altrep_class_t shared_str_class;
 void init_str_class(DllInfo* dll) {
 	shared_str_class = R_make_altstring_class("shared_str", PGKNAME, dll); 
 	/* override ALTREP methods */
-	R_set_altrep_Inspect_method(shared_str_class, sharedObject_Inspect);
-	R_set_altrep_Length_method(shared_str_class, sharedObject_length);
-	R_set_altrep_Duplicate_method(shared_str_class, sharedObject_dulplicate);
+	R_set_altrep_Inspect_method(shared_str_class, sharedVector_Inspect);
+	R_set_altrep_Length_method(shared_str_class, sharedVector_length);
+	R_set_altrep_Duplicate_method(shared_str_class, sharedVector_dulplicate);
 	/*R_set_altrep_Coerce_method(ALT_CLASS, real_coerce);*/
-	R_set_altrep_Unserialize_method(shared_str_class, sharedObject_unserialize);
-	R_set_altrep_Serialized_state_method(shared_str_class, sharedObject_serialized_state);
+	R_set_altrep_Unserialize_method(shared_str_class, sharedVector_unserialize);
+	R_set_altrep_Serialized_state_method(shared_str_class, sharedVector_serialized_state);
 
 	/* override ALTVEC methods */
 	R_set_altvec_Dataptr_method(shared_str_class, altstring_dataptr);
@@ -97,7 +97,7 @@ void init_str_class(DllInfo* dll) {
 
 SEXP altstring_elt(SEXP x, R_xlen_t i) {
 	messageHandle("string subset:%llu\n", i);
-	char* source = (char*)SO_PTR(x);
+	char* source = (char*)SV_PTR(x);
 	ULLong* offset = (ULLong*)source;
 	ULLong curOffset = *(offset + i);
 	char* data = source + curOffset;
@@ -105,7 +105,7 @@ SEXP altstring_elt(SEXP x, R_xlen_t i) {
 }
 
 void* altstring_dataptr(SEXP x, Rboolean writable) {
-	ULLong n=SO_LENGTH(x);
+	ULLong n=SV_LENGTH(x);
 	SEXP* res = (SEXP*)malloc(n * sizeof(SEXP*));
 	SEXP char_res = Rf_mkChar("NA");
 	for (ULLong i = 0; i < n; i++) {

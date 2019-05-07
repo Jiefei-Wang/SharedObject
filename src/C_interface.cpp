@@ -9,7 +9,7 @@ using namespace Rcpp;
 using std::string;
 
 SEXP peekSharedMemory(SEXP x) {
-	SEXP sm = SO_ENV(x);
+	SEXP sm = SV_ENV(x);
 	return(sm);
 }
 
