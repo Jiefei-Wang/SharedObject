@@ -1,15 +1,24 @@
-
+sharedOption=c("copyOnWrite","sharedSub")
+sharedOptionType=c("logical","logical")
 sharedMemory=
   setRefClass("sharedMemory",
               fields = c("PID","DID","ownData",
                          "length","type","type_id","total_size",
-                         "address","duplicate"))
+                         "address",
+                         "copyOnWrite","sharedSub"))
 
 sharedMemory$methods(
-  initialize = function(x=NULL,duplicate=sharedParms.duplicate()) {
+  initialize = function(x=NULL,opt=list()) {
     .self$ownData=FALSE
-    .self$duplicate=duplicate
     if(!is.null(x)){
+      for(i in seq_along(sharedOption)){
+        name=sharedOption[i]
+        if(is.null(opt[[name]])){
+          .self[[name]]=globalSettings[[name]]
+        }else{
+          .self[[name]]=as(opt[[name]],sharedOptionType[i])
+        }
+      }
       .self$initializeWithData(x)
     }
   },
@@ -24,12 +33,13 @@ sharedMemory$methods(
   initializeWithData=function(x){
     .self$ownData=TRUE
     .self$PID=RM$getPID()
-    .self$DID=rdunif(1,min=0,max=2^53)
+    .self$DID=generateKey()
     .self$length=length(x)
     .self$type=typeof(x)
     .self$type_id=get_type_id(.self$type)
     .self$total_size=getSharedMemerySize(x)
-    .self$DID=C_createSharedMemory(x,.self$type_id,.self$total_size,.self$PID,.self$DID)
+    .self$DID=C_createSharedMemory(x,.self$type_id,.self$total_size,.self$PID,.self$DID,
+                                   .self$copyOnWrite,.self$sharedSub)
     .self$updateAddress()
   },
   initializeWithID=function(did){
@@ -40,6 +50,8 @@ sharedMemory$methods(
     .self$total_size=dataInfo$size
     .self$length=dataInfo$length
     .self$type_id=dataInfo$type
+    .self$copyOnWrite=as.logical(dataInfo$copyOnWrite)
+    .self$sharedSub=as.logical(dataInfo$sharedSub)
     .self$type=get_type_name(.self$type_id)
     .self$updateAddress()
   },
@@ -50,7 +62,6 @@ sharedMemory$methods(
         if(fld%in%c("address")){
           cat( fld,': ', capture.output(.self[[fld]]), '\n')
         }else{
-
           cat( fld,': ', .self[[fld]], '\n')
         }
       }

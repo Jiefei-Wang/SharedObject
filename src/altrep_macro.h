@@ -18,4 +18,5 @@
 #define SV_SIZE(x) Rf_asReal(SV_DATA(x,total_size))
 #define SV_TYPE(x) Rf_asInteger(SV_DATA(x, type_id))
 #define SV_TYPE_CHAR(x) CHAR(Rf_asChar((SV_DATA(x, type))))
-#define SV_DUPLICATE(x) Rf_asLogical(SV_DATA(x, duplicate))
+#define SV_COW(x) Rf_asLogical(SV_DATA(x, copyOnWrite))
+#define SV_SHAREDSUB(x) Rf_asLogical(SV_DATA(x, sharedSub))

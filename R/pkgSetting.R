@@ -3,7 +3,6 @@
 #' @importFrom Rcpp sourceCpp
 ## usethis namespace: end
 NULL
-#' @importFrom extraDistr rdunif
 
 .onUnload <- function(libpath) {
   library.dynam.unload("sharedObject", libpath)
@@ -13,14 +12,26 @@ NULL
 
 
 globalSettings=new.env()
-globalSettings$duplicate=TRUE
+globalSettings$copyOnWrite=TRUE
+globalSettings$sharedSub=FALSE
+
+
+setGlobal<-function(name,x){
+  if(is.null(x)){
+    return(globalSettings[[name]])
+  }
+  tmp=globalSettings[[name]]
+  globalSettings[[name]]=x
+  tmp
+}
+
 
 #' @export
-sharedParms.duplicate<-function(x=NULL){
-  if(is.null(x)){
-    return(globalSettings$duplicate)
-  }
-  tmp=globalSettings$duplicate
-  globalSettings$duplicate=x
-  tmp
+sharedParms.copyOnWrite<-function(x=NULL){
+  setGlobal("copyOnWrite",x)
+}
+
+
+sharedParms.sharedSub<-function(x=NULL){
+  setGlobal("sharedSub",x)
 }

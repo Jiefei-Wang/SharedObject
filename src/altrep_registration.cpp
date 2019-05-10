@@ -76,6 +76,7 @@ typedef int (*R_altstring_No_NA_method_t)(SEXP);
 */
 SEXP altstring_elt(SEXP x, R_xlen_t i);
 void* altstring_dataptr(SEXP x, Rboolean writable);
+const void* altstring_dataptr_or_null(SEXP x);
 R_altrep_class_t shared_str_class;
 void init_str_class(DllInfo* dll) {
 	shared_str_class = R_make_altstring_class("shared_str", PGKNAME, dll); 
@@ -89,14 +90,14 @@ void init_str_class(DllInfo* dll) {
 
 	/* override ALTVEC methods */
 	R_set_altvec_Dataptr_method(shared_str_class, altstring_dataptr);
-	//R_set_altvec_Dataptr_or_null_method(shared_str_class, altstring_dataptr);
+	R_set_altvec_Dataptr_or_null_method(shared_str_class, altstring_dataptr_or_null);
 	//R_set_altvec_Extract_subset_method(shared_str_class, numeric_subset<R_TYPE, C_TYPE>);
 	R_set_altstring_Elt_method(shared_str_class, altstring_elt);
 }
 
 
 SEXP altstring_elt(SEXP x, R_xlen_t i) {
-	messageHandle("string subset:%llu\n", i);
+	DEBUG(messageHandle("string subset:%llu\n", i));
 	char* source = (char*)SV_PTR(x);
 	ULLong* offset = (ULLong*)source;
 	ULLong curOffset = *(offset + i);
@@ -105,6 +106,8 @@ SEXP altstring_elt(SEXP x, R_xlen_t i) {
 }
 
 void* altstring_dataptr(SEXP x, Rboolean writable) {
+	DEBUG(messageHandle("accessing string pointer\n"));
+
 	ULLong n=SV_LENGTH(x);
 	SEXP* res = (SEXP*)malloc(n * sizeof(SEXP*));
 	SEXP char_res = Rf_mkChar("NA");
@@ -112,4 +115,9 @@ void* altstring_dataptr(SEXP x, Rboolean writable) {
 		res[i] = char_res;
 	}
 	return(res);
+}
+
+const void* altstring_dataptr_or_null(SEXP x) {
+	DEBUG(messageHandle("accessing string pointer or null\n"));
+	return(NULL);
 }

@@ -10,10 +10,14 @@ void* getPointer(SEXP x) {
 	switch (TYPEOF(x))
 	{
 	case INTSXP:
+		return INTEGER(x);
 	case REALSXP:
+		return REAL(x);
 	case LGLSXP:
+		return LOGICAL(x);
 	case RAWSXP:
-		return STDVEC_DATAPTR(x);
+		return RAW(x);
+		//return STDVEC_DATAPTR(x);
 	case STRSXP:
 		return x;
 	default:
@@ -43,7 +47,7 @@ R_altrep_class_t getAltClass(int type) {
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
                       void (*inspect_subtree)(SEXP, int, int, int))
 {
-  Rprintf(" shareObject of type %s", SV_TYPE_CHAR(x));
+	DEBUG(Rprintf(" shareObject of type %s", SV_TYPE_CHAR(x)));
   return TRUE;
 }
 
@@ -63,8 +67,8 @@ const void *sharedVector_dataptr_or_null(SEXP x)
 	return sharedVector_dataptr(x, Rboolean::TRUE);
 }
 SEXP sharedVector_dulplicate(SEXP x, Rboolean deep) {
-	DEBUG(Rprintf("Duplicating data, deep: %d, dulplicate: %d \n",deep, SV_DUPLICATE(x)));
-	if (SV_DUPLICATE(x)) {
+	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d \n",deep, SV_COW(x)));
+	if (SV_COW(x)) {
 		return(NULL);
 	}
 	else {
@@ -84,8 +88,10 @@ void sharedVector_updateAd(SEXP x)
 
 
 SEXP sharedVector_serialized_state(SEXP x) {
-	printf("serialize state\n");
-	SEXP did = SV_DATA(x, DID);
+	DEBUG(Rprintf("serialize state\n");)
+	SEXP e = Rf_protect( Rf_lang2(Rf_install("serializeSO"),x));
+	SEXP did= R_tryEval(e, R_GlobalEnv, NULL);
+	Rf_unprotect(1);
 	return(did);
 }
 
@@ -100,11 +106,11 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP state) {
 	//Rf_PrintValue(R_class);
 	//return R_class;
 	//return(Rf_ScalarInteger(1));
-	printf("unserializing data\n");
+	DEBUG(Rprintf("unserializing data\n");)
 	
 	loadLibrary();
 	Environment package_env("package:sharedObject");
-	Function so_constructor = package_env["sharedVectorById"];
+	Function so_constructor = package_env["unserializeSO"];
 	SEXP so = so_constructor(state);
 	return so;
 }

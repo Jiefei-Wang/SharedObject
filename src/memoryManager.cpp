@@ -172,7 +172,7 @@ obj->truncate(size);
 
 
 
-DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID pid,DID did) {
+DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID pid,DID did,bool COW, bool sharedSub) {
 	initialSharedMemory();
 	while (dataInfoMap->find(did) != dataInfoMap->end()) {
 		did += 1;
@@ -211,6 +211,8 @@ DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID 
 		di.length=length;
 		di.size = total_size;
 		di.type = type;
+		di.copyOnWrite = COW;
+		di.sharedSub = sharedSub;
 		dataInfoMap->insert(dataInfoPair(did, di));
 	}
 	catch (const std::exception & ex) {
@@ -253,7 +255,7 @@ void destroyObj(DID did) {
 		}
 		else {
 			string dataKey = getDataMemKey(did);
-			printf("removing data %llu\n", did);
+			DEBUG(printf("removing data %llu\n", did));
 			//remove the data
 			bool removed = removeSharedMemory(dataKey.c_str());
 			if (!removed) printf("fail to remove the data\n");

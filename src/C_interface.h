@@ -18,14 +18,14 @@ void init_str_class(DllInfo* dll);
 
 
 // [[Rcpp::export]]
-SEXP peekSharedMemory(SEXP x);
+SEXP C_peekSharedMemory(SEXP x);
 
 
 
 // [[Rcpp::export]]
 SEXP C_testFunc(SEXP a);
 // [[Rcpp::export]]
-DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did);
+DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did, bool COW, bool sharedSub);
 // [[Rcpp::export]]
 SEXP C_readSharedMemory(double R_DID);
 //altrep
@@ -48,3 +48,6 @@ NumericVector C_getDataInfo(DID did);
 
 // [[Rcpp::export]]
 SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr);
+
+// [[Rcpp::export]]
+bool C_ALTREP(SEXP x);

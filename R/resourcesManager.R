@@ -40,10 +40,10 @@ getDataInfo<-function(did=NULL){
   if(is.null(did)){
     did=getDataID()
   }
-  res=vapply(did, getDataInfo_single,numeric(5))
+  res=sapply(did, getDataInfo_single)
   res=as.data.frame(t(res))
   res$DID=as.character(res$DID)
-  colnames(res)=c("DID","PID","type","length","size")
+  #colnames(res)=c("DID","PID","type","length","size")
   res
 }
 

@@ -6,14 +6,14 @@
 
 using namespace Rcpp;
 
-// peekSharedMemory
-SEXP peekSharedMemory(SEXP x);
-RcppExport SEXP _sharedObject_peekSharedMemory(SEXP xSEXP) {
+// C_peekSharedMemory
+SEXP C_peekSharedMemory(SEXP x);
+RcppExport SEXP _sharedObject_C_peekSharedMemory(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(peekSharedMemory(x));
+    rcpp_result_gen = Rcpp::wrap(C_peekSharedMemory(x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -29,8 +29,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_createSharedMemory
-DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did);
-RcppExport SEXP _sharedObject_C_createSharedMemory(SEXP R_xSEXP, SEXP typeSEXP, SEXP total_sizeSEXP, SEXP pidSEXP, SEXP didSEXP) {
+DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did, bool COW, bool sharedSub);
+RcppExport SEXP _sharedObject_C_createSharedMemory(SEXP R_xSEXP, SEXP typeSEXP, SEXP total_sizeSEXP, SEXP pidSEXP, SEXP didSEXP, SEXP COWSEXP, SEXP sharedSubSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -39,7 +39,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type total_size(total_sizeSEXP);
     Rcpp::traits::input_parameter< double >::type pid(pidSEXP);
     Rcpp::traits::input_parameter< double >::type did(didSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_createSharedMemory(R_x, type, total_size, pid, did));
+    Rcpp::traits::input_parameter< bool >::type COW(COWSEXP);
+    Rcpp::traits::input_parameter< bool >::type sharedSub(sharedSubSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_createSharedMemory(R_x, type, total_size, pid, did, COW, sharedSub));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -109,17 +111,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_ALTREP
+bool C_ALTREP(SEXP x);
+RcppExport SEXP _sharedObject_C_ALTREP(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_ALTREP(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_sharedObject_peekSharedMemory", (DL_FUNC) &_sharedObject_peekSharedMemory, 1},
+    {"_sharedObject_C_peekSharedMemory", (DL_FUNC) &_sharedObject_C_peekSharedMemory, 1},
     {"_sharedObject_C_testFunc", (DL_FUNC) &_sharedObject_C_testFunc, 1},
-    {"_sharedObject_C_createSharedMemory", (DL_FUNC) &_sharedObject_C_createSharedMemory, 5},
+    {"_sharedObject_C_createSharedMemory", (DL_FUNC) &_sharedObject_C_createSharedMemory, 7},
     {"_sharedObject_C_readSharedMemory", (DL_FUNC) &_sharedObject_C_readSharedMemory, 1},
     {"_sharedObject_C_createAltrep", (DL_FUNC) &_sharedObject_C_createAltrep, 1},
     {"_sharedObject_C_clearObj", (DL_FUNC) &_sharedObject_C_clearObj, 1},
     {"_sharedObject_C_getDataID", (DL_FUNC) &_sharedObject_C_getDataID, 0},
     {"_sharedObject_C_getDataInfo", (DL_FUNC) &_sharedObject_C_getDataInfo, 1},
     {"_sharedObject_C_attachAttr", (DL_FUNC) &_sharedObject_C_attachAttr, 3},
+    {"_sharedObject_C_ALTREP", (DL_FUNC) &_sharedObject_C_ALTREP, 1},
     {NULL, NULL, 0}
 };
 

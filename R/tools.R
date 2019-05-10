@@ -27,3 +27,51 @@ get_type_name<-function(id){
   typeName[ind]
 }
 
+#' @export
+peekSharedMemory<-function(x){
+  C_peekSharedMemory(x)
+}
+
+
+copyAttribute<-function(source,target){
+  att=attributes(source)
+  for(i in names(att)){
+    C_attachAttr(target,i,att[[i]])
+  }
+  target
+}
+
+generateKey<-function(){
+  key=round(runif(1,0,2^53))
+  key
+}
+
+#' @export
+serializeSO<-function(x){
+res=attributes(x)
+did=peekSharedMemory(x)$DID
+state=list(DID=did,attr=res)
+#message(state)
+return(state)
+}
+
+#' @export
+unserializeSO<-function(x){
+ # message(x)
+  did=x[["DID"]]
+  sv=sharedVectorById(did)
+  attr_name=names(x[["attr"]])
+  for(i in seq_along(x[["attr"]])){
+    C_attachAttr(sv,attr_name[i],x[["attr"]][[i]])
+  }
+  return(sv)
+}
+
+
+
+
+
+
+
+
+
