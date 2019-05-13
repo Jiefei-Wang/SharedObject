@@ -72,7 +72,6 @@ typedef SEXP (*R_altstring_Elt_method_t)(SEXP, R_xlen_t);
 typedef void (*R_altstring_Set_elt_method_t)(SEXP, R_xlen_t, SEXP);
 typedef int (*R_altstring_Is_sorted_method_t)(SEXP);
 typedef int (*R_altstring_No_NA_method_t)(SEXP);
-
 */
 SEXP altstring_elt(SEXP x, R_xlen_t i);
 void* altstring_dataptr(SEXP x, Rboolean writable);

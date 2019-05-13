@@ -1,3 +1,6 @@
+#' A fundamental tool to share an R object.
+#' @param x An automic object
+#' @param opt options
 #' @export
 sharedVector<-function(x,opt){
   sm=sharedMemory(x,opt)
@@ -14,18 +17,18 @@ sharedVectorById<-function(did){
 }
 
 #' @export
-sharedObject<-function(x,copyOnWrite=sharedParms.copyOnWrite(),sharedSub=sharedParms.sharedSub(),options=NULL){
-  if(is.null(options)){
-    opt=list(copyOnWrite=copyOnWrite,sharedSub=sharedSub)
-  }else{
-    opt=options
-  }
+sharedObject<-function(x,copyOnWrite=sharedParms.copyOnWrite(),sharedSub=sharedParms.sharedSub()){
+ opt=list(copyOnWrite=copyOnWrite,sharedSub=sharedSub)
+ sharedObject_hidden(x,opt)
+}
+
+sharedObject_hidden<-function(x,options){
   if(is.atomic(x)){
-    obj=sharedAtomic(x,opt)
+    obj=sharedAtomic(x,options)
     return(obj)
   }
   if(is.data.frame(x)){
-    obj=sharedDataFrame(x,opt)
+    obj=sharedDataFrame(x,options)
     return(obj)
   }
   error("Unsupported data structure")
@@ -44,7 +47,7 @@ sharedAtomic<-function(x,opt){
 sharedDataFrame<-function(x,opt){
   obj=vector("list",length=length(x))
   for(i in seq_along(obj)){
-      sm=sharedObject(x[[i]],options=opt)
+      sm=sharedObject_hidden(x[[i]],options=opt)
       obj[[i]]=sm
   }
   obj=copyAttribute(x,obj)

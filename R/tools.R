@@ -68,9 +68,58 @@ unserializeSO<-function(x){
 }
 
 
+#' @export
+is.altrep<-function(x){
+  C_ALTREP(x)
+}
 
+#' @export
+copyOnwriteProp<-function(x){
+  if(is.altrep(x)){
+    sm=peekSharedMemory(x)
+    return(sm$copyOnWrite)
+  }
 
+  if(is.data.frame(x)){
+    res=logical(ncol(x))
+    for(i in seq_len(ncol(x))){
+      if(is.altrep(x)){
+        sm=peekSharedMemory(x[,i])
+        res[i]=sm$copyOnWrite
+      }else{
+        res[i]=TRUE
+      }
+    }
+    return(all(res))
+  }
 
+  message("The object is not a shared object")
+}
+#' @export
+copyOnwrite_on<-function(x){
+  copyOnWrite_hidden(x,TRUE)
+}
+#' @export
+copyOnwrite_off<-function(x){
+  copyOnWrite_hidden(x,FALSE)
+}
+
+copyOnWrite_hidden<-function(x,opt){
+  if(is.altrep(x)){
+  sm=peekSharedMemory(x)
+  sm$copyOnWrite=opt
+  return(x)
+  }
+  if(is.data.frame(x)){
+    for(i in seq_len(ncol(x))){
+      if(is.altrep(x)){
+        sm=peekSharedMemory(x[,i])
+        sm$copyOnWrite=opt
+      }
+    }
+    return(x)
+  }
+}
 
 
 

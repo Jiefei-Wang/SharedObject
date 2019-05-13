@@ -93,3 +93,4 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag,SEXP R_attr) {
 bool C_ALTREP(SEXP x) {
 	return ALTREP(x);
 }
+

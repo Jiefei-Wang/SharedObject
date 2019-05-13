@@ -50,9 +50,9 @@ R_xlen_t numeric_region(SEXP x, R_xlen_t start, R_xlen_t size, T* out) {
 template<class T1, class T2>
 void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_len, R_xlen_t ind_len) {
 	source = source - 1L;
-	messageHandle("Index:");
+	DEBUG(messageHandle("Index:"));
 	for (R_xlen_t i = 0; i < ind_len; i++) {
-		messageHandle("%d,", (int)indx[i]);
+		DEBUG(messageHandle("%d,", (int)indx[i]));
 		if (indx[i] <= src_len&& indx[i]>0) {
 			if (std::is_same<T2, double>::value) {
 				target[i] = source[(R_xlen_t)indx[i]];
