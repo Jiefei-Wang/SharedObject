@@ -47,7 +47,7 @@ R_altrep_class_t getAltClass(int type) {
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
                       void (*inspect_subtree)(SEXP, int, int, int))
 {
-	DEBUG(Rprintf(" shareObject of type %s", SV_TYPE_CHAR(x)));
+  Rprintf(" Share object of type %s\n", SV_TYPE_CHAR(x));
   return TRUE;
 }
 
