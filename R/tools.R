@@ -96,11 +96,11 @@ copyOnwriteProp<-function(x){
   message("The object is not a shared object")
 }
 #' @export
-copyOnwrite_on<-function(x){
+setCopyOnwrite<-function(x){
   copyOnWrite_hidden(x,TRUE)
 }
 #' @export
-copyOnwrite_off<-function(x){
+unsetCopyOnwrite<-function(x){
   copyOnWrite_hidden(x,FALSE)
 }
 

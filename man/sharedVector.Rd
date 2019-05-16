@@ -12,5 +12,5 @@ sharedVector(x, opt)
 \item{opt}{options}
 }
 \description{
-A fundamental tool to share an R object.
+This function only handles an automic object and does not attach the object's attributes, Please call the function `sharedObject` instead
 }
