@@ -1,6 +1,6 @@
 Package: sharedObject
-Title: What the Package Does (one line, title case)
-Version: 0.0.0.9000
+Title: Sharing R objects across multiple R processes
+Version: 0.0.99
 Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
 Depends: R (>= 3.6.0),
@@ -24,4 +24,6 @@ Collate:
     'sharedObject-altrep.R'
     'tools.R'
 Suggests: 
-    testthat
+    testthat,
+    parallel
+

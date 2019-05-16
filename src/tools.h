@@ -1,7 +1,7 @@
 #include <string>
 #include "sharedObject_types.h"
 
-#define DEBUG(x);
+#define DEBUG(x) x;
 #define asString(x) std::string(CHAR(asChar(x)))
 #define LOGICAL_TYPE 1L
 #define INT_TYPE 2L

@@ -48,17 +48,19 @@ test_that(paste0("Testing cluster export for type ",typeName[i]),{
 )
 }
 test_that("Copy on write switch",{
-  so=sharedObject(data,copyOnWrite = TRUE)
-  expect_equal(copyOnwriteProp(so),TRUE)
-  so2=copyOnwrite_off(so)
-  expect_equal(copyOnwriteProp(so),FALSE)
+  so1=sharedObject(data,copyOnWrite = TRUE)
+  expect_equal(copyOnwriteProp(so1),TRUE)
+  unsetCopyOnwrite(so1)
+  so2=so1
+  expect_equal(copyOnwriteProp(so1),FALSE)
   expect_equal(copyOnwriteProp(so2),FALSE)
   so2[1]=10
   data[1]=10
-  expect_equal(so,data)
+  expect_equal(so1,data)
   expect_equal(so2,data)
-  so3=copyOnwrite_on(so2)
-  expect_equal(copyOnwriteProp(so),TRUE)
+  setCopyOnwrite(so1)
+  so3=so1
+  expect_equal(copyOnwriteProp(so1),TRUE)
   expect_equal(copyOnwriteProp(so2),TRUE)
   expect_equal(copyOnwriteProp(so3),TRUE)
   so3[2]=11

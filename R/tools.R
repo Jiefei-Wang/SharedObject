@@ -45,7 +45,11 @@ generateKey<-function(){
   key=round(runif(1,0,2^53))
   key
 }
-
+#' Serialize a shared Object
+#'
+#' Internal usage only
+#'
+#' @param x A shared object
 #' @export
 serializeSO<-function(x){
 res=attributes(x)
@@ -54,7 +58,11 @@ state=list(DID=did,attr=res)
 #message(state)
 return(state)
 }
-
+#' Unserialize a shared Object
+#'
+#' Internal usage only
+#'
+#' @param x A shared object
 #' @export
 unserializeSO<-function(x){
  # message(x)
@@ -67,12 +75,21 @@ unserializeSO<-function(x){
   return(sv)
 }
 
-
+#' Is an Object ALTREP?
+#'
+#' @param x an R object
 #' @export
 is.altrep<-function(x){
   C_ALTREP(x)
 }
 
+#' Get or set the copy-on-write feature
+#'
+#' Get or set the copy-on-write feature for a shared object
+#'
+#' @param x A shared object
+#' @return 'copyOnwriteProp': A copy-on-write property
+#' @rdname copyOnWrite
 #' @export
 copyOnwriteProp<-function(x){
   if(is.altrep(x)){
@@ -95,20 +112,26 @@ copyOnwriteProp<-function(x){
 
   message("The object is not a shared object")
 }
+#' @return 'setCopyOnwrite': No return value
+#' @rdname copyOnWrite
 #' @export
 setCopyOnwrite<-function(x){
   copyOnWrite_hidden(x,TRUE)
+  invisible()
 }
+#' @return 'unsetCopyOnwrite': No return value
+#' @rdname copyOnWrite
 #' @export
 unsetCopyOnwrite<-function(x){
   copyOnWrite_hidden(x,FALSE)
+  invisible()
 }
 
 copyOnWrite_hidden<-function(x,opt){
   if(is.altrep(x)){
   sm=peekSharedMemory(x)
   sm$copyOnWrite=opt
-  return(x)
+  #return(x)
   }
   if(is.data.frame(x)){
     for(i in seq_len(ncol(x))){
@@ -117,7 +140,7 @@ copyOnWrite_hidden<-function(x,opt){
         sm$copyOnWrite=opt
       }
     }
-    return(x)
+    #return(x)
   }
 }
 
