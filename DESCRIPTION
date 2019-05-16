@@ -8,9 +8,7 @@ Authors@R: c(
 Description: This package is developed for facilitating parallel computing in R. 
   It is capable to create an R object in the shared memory space and share the data across multiple R processes. 
   It avoids the overhead of memory dulplication and data transfer, which make sharing big data object across many clusters possible.
-Depends: R (>= 3.6.0),
-    rlist,
-    stringr
+Depends: R (>= 3.6.0)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
