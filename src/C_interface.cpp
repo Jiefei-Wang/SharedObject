@@ -9,15 +9,16 @@ using namespace Rcpp;
 using std::string;
 
 SEXP C_peekSharedMemory(SEXP x) {
-	SEXP sm = R_altrep_data1(x);
-	return(sm);
+	while (ALTREP(x)) {
+		x = R_altrep_data1(x);
+	}
+	return(x);
 }
 
 SEXP C_testFunc(SEXP a)
 {
-	SEXP res = STRING_ELT(a, 0);
-	messageHandle("len:%llu,true len: %llu\n", XLENGTH(res), XTRUELENGTH(res));
-	return(res);
+	STDVEC_DATAPTR(a);
+	return(a);
 }
 
 

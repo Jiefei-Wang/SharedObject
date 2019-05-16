@@ -1,8 +1,13 @@
 Package: sharedObject
 Title: Sharing R objects across multiple R processes
 Version: 0.0.99
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+  person("Jiefei", "Wang", email = "jwang96@buffalo.edu", role = c("aut", "cre")),
+  person("Martin", "Morgan", email = "martin.morgan@roswellpark.org", role = "aut")
+  )
+Description: This package is developed for facilitating parallel computing in R. 
+  It is capable to create an R object in the shared memory space and share the data across multiple R processes. 
+  It avoids the overhead of memory dulplication and data transfer, which make sharing big data object across many clusters possible.
 Depends: R (>= 3.6.0),
     rlist,
     stringr
