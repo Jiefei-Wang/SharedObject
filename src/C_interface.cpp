@@ -9,6 +9,9 @@ using namespace Rcpp;
 using std::string;
 
 SEXP C_peekSharedMemory(SEXP x) {
+	if (!ALTREP(x)) {
+		return R_NilValue;
+	}
 	while (ALTREP(x)) {
 		x = R_altrep_data1(x);
 	}
@@ -21,15 +24,21 @@ SEXP C_testFunc(SEXP a)
 	return(a);
 }
 
+DID C_findAvailableKey(DID did) {
+	return findAvailableKey(did);
+}
 
-DID C_createSharedMemory(SEXP R_x,int type, double total_size, double pid, double did,bool COW,bool sharedSub){
+void C_createSharedMemory(SEXP R_x,SEXP R_dataInfo){
   R_xlen_t len = Rf_xlength(R_x);
   //Rprintf("length:%d,type: %d, total:%f, pid: %llu\n", len, type,total_size, pid);
   //Rf_PrintValue(R_x);
+  dataInfo di;
+#define X(id,type, name) di.name=REAL(R_dataInfo)[id];
+  DATAINFO_FIELDS
+#undef X
   void* data = getPointer(R_x);
   //printf("get pointer%p\n", data);
-  did=createSharedOBJ(data, type, total_size, len, pid,did, COW, sharedSub);
-  return(did);
+  createSharedOBJ(data, di);
 }
 
 
@@ -45,7 +54,7 @@ SEXP C_readSharedMemory(double DID) {
 
 //SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size
 SEXP C_createAltrep(SEXP SM_obj){
-  int type= Rf_asInteger(SM_DATA(SM_obj, type_id));
+  int type=SM_DATAINFO(SM_obj, type_id);
   DEBUG(Rprintf("type %d\n", type));
   R_altrep_class_t alt_class = getAltClass(type);
   DEBUG(Rprintf("get alt class\n"));
@@ -71,15 +80,10 @@ std::vector<double> C_getDataID() {
 }
 NumericVector C_getDataInfo(DID did) {
 	dataInfo info= getDataInfo(did);
-	NumericVector v = NumericVector::create(
-		Named("DID") = did,
-		Named("PID") = info.pid,
-		Named("type") = info.type,
-		Named("length") = info.length,
-		Named("size") = info.size,
-		Named("copyOnWrite")=info.copyOnWrite,
-		Named("sharedSub")=info.sharedSub
-		);
+	NumericVector v(DATAINFO_FIELDS_NUMBER);
+#define X(id,type, name) v[id]=info.name;
+	DATAINFO_FIELDS
+#undef X
 	return v;
 }
 

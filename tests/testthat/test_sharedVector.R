@@ -71,6 +71,26 @@ test_that("Copy on write switch",{
 }
 )
 
+test_that("type check",{
+  data=matrix(0,2,2)
+  so=sharedObject(data)
+  expect_equal(is.altrep(so),TRUE)
+  expect_equal(is.sharedMemory(so),TRUE)
+  expect_equal(is.sharedObject(so),TRUE)
+  expect_equal(is.altrep(data),FALSE)
+  expect_equal(is.sharedMemory(data),FALSE)
+  expect_equal(is.sharedObject(data),FALSE)
+
+  data=as.data.frame(data)
+  so=sharedObject(data)
+  expect_equal(is.altrep(so),FALSE)
+  expect_equal(is.sharedMemory(so),FALSE)
+  expect_equal(is.sharedObject(so),TRUE)
+  expect_equal(is.altrep(data),FALSE)
+  expect_equal(is.sharedMemory(data),FALSE)
+  expect_equal(is.sharedObject(data),FALSE)
+}
+)
 
 
 stopCluster(cl)

@@ -28,5 +28,7 @@ Collate:
     'tools.R'
 Suggests: 
     testthat,
-    parallel
-
+    parallel,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

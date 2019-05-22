@@ -4,7 +4,7 @@
 #' @param x An automic object
 #' @param opt options
 #' @export
-sharedVector<-function(x,opt){
+sharedVector<-function(x,opt=list()){
   sm=sharedMemory(x,opt)
   obj=C_createAltrep(sm)
   obj
@@ -143,5 +143,16 @@ sharedDataFrame<-function(x,opt){
 
 
 
+
+is.sharedObject<-function(x){
+  if(is.atomic(x)){
+    return(is.sharedMemory(x))
+  }
+  if(is.data.frame(x)){
+    res=apply(x, 2,is.sharedMemory)
+    return(all(res))
+  }
+  return(FALSE)
+}
 
 

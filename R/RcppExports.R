@@ -9,8 +9,12 @@ C_testFunc <- function(a) {
     .Call(`_sharedObject_C_testFunc`, a)
 }
 
-C_createSharedMemory <- function(R_x, type, total_size, pid, did, COW, sharedSub) {
-    .Call(`_sharedObject_C_createSharedMemory`, R_x, type, total_size, pid, did, COW, sharedSub)
+C_findAvailableKey <- function(did) {
+    .Call(`_sharedObject_C_findAvailableKey`, did)
+}
+
+C_createSharedMemory <- function(R_x, R_dataInfo) {
+    invisible(.Call(`_sharedObject_C_createSharedMemory`, R_x, R_dataInfo))
 }
 
 C_readSharedMemory <- function(R_DID) {

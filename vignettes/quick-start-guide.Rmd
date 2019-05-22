@@ -1,0 +1,116 @@
+---
+title: "Package Quick Start Guide"
+author: 
+- name: Jiefei Wang
+  affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
+date: "`r Sys.Date()`"
+output:
+    BiocStyle::html_document:
+        toc: true
+        toc_float: true
+vignette: >
+  %\VignetteIndexEntry{quickStart}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+package: sharedObject
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library("sharedObject")
+```
+# Introduction
+The `sharedObject` package is designed for sharing data across multiple R threads, where all threads can read the data located in the same memory location. This sharing mechanism is capable to save the memory usage and reduce the overhead of data preparation in the parallel computing. The use of the package arises from many data-science subjects such as gene data analysis, in which case A paralle computing is desirable and the data used in the parallel computing is very large. Blindly calling an export function such as `clusterExport` will duplicate the data for each process and it is obviously unnecessary if the data is read-only in the parallel computing. The `sharedObject` package can share the data without duplications and A new set of APIs called `ALTREP` is used to provide a seamless experience in the parallel computing.
+
+#Quick example
+We first illustrate the package with an example. Suppose we have a cluster with 4 cores and want to share a n-by-n matrix `A` across all cores without dulplicating it. Here is the code:
+
+```{r}
+library(parallel)
+#Initiate the cluster
+cl=makeCluster(4)
+#create data
+n=3
+A=matrix(runif(n^2),n,n)
+#create shared object
+A_shr=sharedObject(A)
+#export the shared object
+clusterExport(cl,"A_shr")
+```
+As the code shows above, the procedure is very similar to what people usually do in the parallel computing, except that instead of sharing the matrix `A`, we first create a shared object `A_shr` and call `clusterExport` to share it. Notably, the shared object `A_shr` is not an S3 or S4 class. Its behavior is the same as the matrix `A`, so there is no need to change the existing code to work with the shared object. We can verify this through
+```{r}
+#data
+A
+A_shr
+#properties
+attributes(A)
+attributes(A_shr)
+#class
+class(A)
+class(A_shr)
+```
+As far as only R code is concerned, there is no differences between A and A_shr, the only way to check if an object is a shared object is to call `is.altrep`.
+
+```{r}
+is.altrep(A)
+is.altrep(A_shr)
+```
+
+#Advanced topic: Copy-On-Write
+
+Because all cores are using the shared object `A_shr` located in the same memory location, a reckless change made on the matrix `A_shr` in one process will immediately affect the value of the matrix in the other process. To prevent users from changing the values of a shared object without awareness, a shared object will duplicate itself if a change of its value is required. Therefore, the code like
+
+```{r}
+A_shr2=A_shr
+A_shr[1,1]=10
+
+A_shr
+A_shr2
+```
+will result in a memory dulplication. The matrix `A_shr2` is not affected. This default behavior can be turned off by passing an argument `copyOnWrite` to the function `sharedObject`.
+
+```{r}
+A_shr=sharedObject(A,copyOnWrite=FALSE)
+A_shr2=A_shr
+A_shr[1,1]=10
+
+A_shr
+A_shr2
+```
+As the result shows, a change in the matrix `A_shr` cause a change in `A_shr2`. This feature could be potentially useful to return the result from each R process without memory copy, so `A_shr` can be both the initial data and the final result. However, due to the limitation of R, only copy-on-write feature is fully supported, not the reverse. We are able to change the value of a shared object even we do not intent to do so.
+
+```{r}
+-A_shr
+A_shr
+```
+The obove bad example shows how dangerous it could be if we turn off copy-on-write feature. Simply calling an unary function can change the values of a shared object. Therefore, to provide a safe package for the naive user and advanced features for the experienced user, the package provide `setCopyOnwrite` and `unsetCopyOnwrite` functions to turn copy-on-write feature on and off. There is no return value of the functions.
+
+```{r}
+A_shr=sharedObject(A,copyOnWrite=FALSE)
+
+A_shr2=A_shr
+A_shr[1]=10
+
+A_shr
+A_shr2
+
+unsetCopyOnwrite(A)
+
+-A
+A
+
+copyOnwriteProp(A_shr)
+```
+The flexibility provide us a way to do safe operations during the computation and return the results without memory dulplication.
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,7 @@
 #pragma once
 #include "Rcpp.h"
 #include "altrep_common_func.h"
+
 #define TMP_PTR(x) ((T*)SV_PTR(x))
 template<class T>
 SEXP template_coerce(T* x, R_xlen_t len, int type)
@@ -24,6 +25,7 @@ SEXP template_coerce(T* x, R_xlen_t len, int type)
 	default:
 		errorHandle("Unknown type: %d\n", type);
 	}
+	DEBUG(messageHandle("coerce\n"));
 	UNPROTECT(1);
 	return(result);
 }
@@ -70,17 +72,35 @@ void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_l
 
 template<int SXP_TYPE, class C_TYPE>
 SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
+	using namespace Rcpp;
 	DEBUG(Rprintf("accessing subset\n"));
-	R_xlen_t len = Rf_xlength(indx);
-	C_TYPE* result = (C_TYPE*) malloc(len*sizeof(C_TYPE));
-	switch (TYPEOF(indx)) {
-	case INTSXP:
-		template_subset_assignment(result, (C_TYPE*)SV_PTR(x), INTEGER(indx), Rf_xlength(x), Rf_xlength(indx));
-		break;
-	case REALSXP:
-		template_subset_assignment(result, (C_TYPE*)SV_PTR(x), REAL(indx), Rf_xlength(x), Rf_xlength(indx));
-		break;
-	}
+	Environment package_env("package:sharedObject");
 
-	return Rcpp::wrap(Rcpp::Vector<SXP_TYPE>(result, result + len));
+
+		R_xlen_t len = Rf_xlength(indx);
+		C_TYPE* result = Calloc(len ,C_TYPE);
+		switch (TYPEOF(indx)) {
+		case INTSXP:
+			template_subset_assignment(result, (C_TYPE*)SV_PTR(x), INTEGER(indx), Rf_xlength(x), Rf_xlength(indx));
+			break;
+		case REALSXP:
+			template_subset_assignment(result, (C_TYPE*)SV_PTR(x), REAL(indx), Rf_xlength(x), Rf_xlength(indx));
+			break;
+		}
+		SEXP res= wrap(Vector<SXP_TYPE>(result, result + len));
+		Rprintf("sharedSubset:%d\n", SV_SHAREDSUB(x));
+		if (SV_SHAREDSUB(x)) {
+			List opt = List::create(Named("copyOnWrite") = SV_COW(x), Named("copyOnWrite") = SV_SHAREDSUB(x));
+			Function sv_constructor = package_env["sharedVector"];
+			SEXP so = sv_constructor(res, opt);
+			return so;
+		}
+		else {
+			return res;
+
+		}
+	
+	
+
+
 }

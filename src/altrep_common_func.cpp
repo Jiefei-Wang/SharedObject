@@ -66,8 +66,9 @@ const void *sharedVector_dataptr_or_null(SEXP x)
 	DEBUG(Rprintf("accessing data pointer or null\n"));
 	return sharedVector_dataptr(x, Rboolean::TRUE);
 }
-SEXP sharedVector_dulplicate(SEXP x, Rboolean deep) {
+SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d \n",deep, SV_COW(x)));
+	//Rf_PrintValue(SV_DATA(x, dataInfo));
 	if (SV_COW(x)) {
 		return(NULL);
 	}
@@ -75,6 +76,7 @@ SEXP sharedVector_dulplicate(SEXP x, Rboolean deep) {
 		return(x);
 	}
 }
+
 
 using namespace Rcpp;
 void sharedVector_updateAd(SEXP x)

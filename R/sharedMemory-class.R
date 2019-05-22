@@ -1,70 +1,68 @@
 sharedOption=c("copyOnWrite","sharedSub")
-sharedOptionType=c("logical","logical")
+
+dataInfoName=c("DID","PID","type_id","length","total_size","copyOnWrite","sharedSub")
+
+
 sharedMemory=
   setRefClass("sharedMemory",
-              fields = c("PID","DID","ownData",
-                         "length","type","type_id","total_size",
-                         "address",
-                         "copyOnWrite","sharedSub"))
+              fields = c("ownData","type","address","dataInfo"))
 
 sharedMemory$methods(
   initialize = function(x=NULL,opt=list()) {
-    .self$ownData=FALSE
+    DI=rep(0.0,length(dataInfoName))
+    names(DI)=dataInfoName
+    .self$dataInfo=DI
+    setOwnData(.self,FALSE)
     if(!is.null(x)){
       for(i in seq_along(sharedOption)){
         name=sharedOption[i]
-        if(is.null(opt[[name]])){
-          .self[[name]]=globalSettings[[name]]
-        }else{
-          .self[[name]]=as(opt[[name]],sharedOptionType[i])
-        }
+        .self$dataInfo[name]=ifelse(is.null(opt[[name]]),
+                                    globalSettings[[name]],
+                                    as.numeric(opt[[name]])
+        )
       }
       .self$initializeWithData(x)
     }
   },
   finalize=function(){
     if(ownData&&!RM_data$unloaded){
-      removeObject(.self$DID)
+      removeObject(.self$dataInfo["DID"])
     }
     if(RM_data$unloaded){
       message("Fail to release data: The package has been unloaded.")
     }
   },
   initializeWithData=function(x){
+    DI=.self$dataInfo
+    DI["PID"]=RM$getPID()
+    DI["DID"]=generateKey()
+    DI["length"]=length(x)
+    DI["type_id"]=get_type_id(typeof(x))
+    DI["total_size"]=getSharedMemerySize(x)
+    C_createSharedMemory(x,DI)
+
     .self$ownData=TRUE
-    .self$PID=RM$getPID()
-    .self$DID=generateKey()
-    .self$length=length(x)
     .self$type=typeof(x)
-    .self$type_id=get_type_id(.self$type)
-    .self$total_size=getSharedMemerySize(x)
-    .self$DID=C_createSharedMemory(x,.self$type_id,.self$total_size,.self$PID,.self$DID,
-                                   .self$copyOnWrite,.self$sharedSub)
+    .self$dataInfo=DI
     .self$updateAddress()
   },
   initializeWithID=function(did){
+    DI=getDataInfo_single(did)
+    for(i in seq_along(DI)){
+      .self$dataInfo[i]=DI[i]
+    }
     .self$ownData=FALSE
-    .self$DID=as.double(did)
-    dataInfo=getDataInfo(.self$DID)
-    .self$PID=dataInfo$PID
-    .self$total_size=dataInfo$size
-    .self$length=dataInfo$length
-    .self$type_id=dataInfo$type
-    .self$copyOnWrite=as.logical(dataInfo$copyOnWrite)
-    .self$sharedSub=as.logical(dataInfo$sharedSub)
-    .self$type=get_type_name(.self$type_id)
+    .self$type=get_type_name(.self$dataInfo['type_id'])
     .self$updateAddress()
   },
   show = function(){
-      flds <- getRefClass()$fields()
       cat("Shared memory object\n")
-      for (fld in names(flds)){
-        if(fld%in%c("address")){
-          cat( fld,': ', capture.output(.self[[fld]]), '\n')
-        }else{
-          cat( fld,': ', .self[[fld]], '\n')
-        }
+      for(i in dataInfoName){
+        cat("",i,': ', .self$dataInfo[i], '\n')
       }
+    cat("",'Type: ', .self$type, '\n')
+    cat("",'Own data: ', .self$ownData, '\n')
+      cat("",'Address: ', capture.output(.self[["address"]]), '\n')
   }
 )
 

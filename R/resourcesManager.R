@@ -56,14 +56,23 @@ getDataID<-function(){
 #'
 #' @examples
 #' getDataInfo()
+#' @export
 getDataInfo<-function(data_ids=NULL){
   if(is.null(data_ids)){
     data_ids=getDataID()
   }
   res=sapply(data_ids, getDataInfo_single)
+  if(length(res)==0){
+    res=data.frame(matrix(vector(), 0, length(dataInfoName),
+                          dimnames=list(c(), dataInfoName)),
+                   stringsAsFactors=F)
+    return(res)
+  }
   res=as.data.frame(t(res))
+
+  colnames(res)=dataInfoName
   res$DID=as.character(res$DID)
-  #colnames(res)=c("DID","PID","type","length","size")
+
   res
 }
 

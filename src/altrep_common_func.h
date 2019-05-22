@@ -14,7 +14,7 @@ void* getPointer(SEXP x);
 R_xlen_t sharedVector_length(SEXP x);
 void *sharedVector_dataptr(SEXP x, Rboolean writeable);
 const void *sharedVector_dataptr_or_null(SEXP x);
-SEXP sharedVector_dulplicate(SEXP x, Rboolean deep);
+SEXP sharedVector_duplicate(SEXP x, Rboolean deep);
 //void sharedVector_updateAd(SEXP x);
 SEXP sharedVector_serialized_state(SEXP x);
 SEXP sharedVector_unserialize(SEXP R_class, SEXP state);

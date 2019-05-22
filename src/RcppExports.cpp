@@ -28,21 +28,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// C_createSharedMemory
-DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did, bool COW, bool sharedSub);
-RcppExport SEXP _sharedObject_C_createSharedMemory(SEXP R_xSEXP, SEXP typeSEXP, SEXP total_sizeSEXP, SEXP pidSEXP, SEXP didSEXP, SEXP COWSEXP, SEXP sharedSubSEXP) {
+// C_findAvailableKey
+DID C_findAvailableKey(DID did);
+RcppExport SEXP _sharedObject_C_findAvailableKey(SEXP didSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type R_x(R_xSEXP);
-    Rcpp::traits::input_parameter< int >::type type(typeSEXP);
-    Rcpp::traits::input_parameter< double >::type total_size(total_sizeSEXP);
-    Rcpp::traits::input_parameter< double >::type pid(pidSEXP);
-    Rcpp::traits::input_parameter< double >::type did(didSEXP);
-    Rcpp::traits::input_parameter< bool >::type COW(COWSEXP);
-    Rcpp::traits::input_parameter< bool >::type sharedSub(sharedSubSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_createSharedMemory(R_x, type, total_size, pid, did, COW, sharedSub));
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_findAvailableKey(did));
     return rcpp_result_gen;
+END_RCPP
+}
+// C_createSharedMemory
+void C_createSharedMemory(SEXP R_x, SEXP R_dataInfo);
+RcppExport SEXP _sharedObject_C_createSharedMemory(SEXP R_xSEXP, SEXP R_dataInfoSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type R_x(R_xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type R_dataInfo(R_dataInfoSEXP);
+    C_createSharedMemory(R_x, R_dataInfo);
+    return R_NilValue;
 END_RCPP
 }
 // C_readSharedMemory
@@ -126,7 +131,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_sharedObject_C_peekSharedMemory", (DL_FUNC) &_sharedObject_C_peekSharedMemory, 1},
     {"_sharedObject_C_testFunc", (DL_FUNC) &_sharedObject_C_testFunc, 1},
-    {"_sharedObject_C_createSharedMemory", (DL_FUNC) &_sharedObject_C_createSharedMemory, 7},
+    {"_sharedObject_C_findAvailableKey", (DL_FUNC) &_sharedObject_C_findAvailableKey, 1},
+    {"_sharedObject_C_createSharedMemory", (DL_FUNC) &_sharedObject_C_createSharedMemory, 2},
     {"_sharedObject_C_readSharedMemory", (DL_FUNC) &_sharedObject_C_readSharedMemory, 1},
     {"_sharedObject_C_createAltrep", (DL_FUNC) &_sharedObject_C_createAltrep, 1},
     {"_sharedObject_C_clearObj", (DL_FUNC) &_sharedObject_C_clearObj, 1},

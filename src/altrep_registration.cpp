@@ -7,7 +7,7 @@
 	/* override ALTREP methods */\
 	R_set_altrep_Inspect_method(ALT_CLASS, sharedVector_Inspect);\
 	R_set_altrep_Length_method(ALT_CLASS, sharedVector_length);\
-	R_set_altrep_Duplicate_method(ALT_CLASS, sharedVector_dulplicate);\
+	R_set_altrep_Duplicate_method(ALT_CLASS, sharedVector_duplicate);\
 	/*R_set_altrep_Coerce_method(ALT_CLASS, real_coerce);*/\
 	R_set_altrep_Unserialize_method(ALT_CLASS, sharedVector_unserialize);\
 	R_set_altrep_Serialized_state_method(ALT_CLASS, sharedVector_serialized_state);\
@@ -82,7 +82,7 @@ void init_str_class(DllInfo* dll) {
 	/* override ALTREP methods */
 	R_set_altrep_Inspect_method(shared_str_class, sharedVector_Inspect);
 	R_set_altrep_Length_method(shared_str_class, sharedVector_length);
-	R_set_altrep_Duplicate_method(shared_str_class, sharedVector_dulplicate);
+	R_set_altrep_Duplicate_method(shared_str_class, sharedVector_duplicate);
 	/*R_set_altrep_Coerce_method(ALT_CLASS, real_coerce);*/
 	R_set_altrep_Unserialize_method(shared_str_class, sharedVector_unserialize);
 	R_set_altrep_Serialized_state_method(shared_str_class, sharedVector_serialized_state);

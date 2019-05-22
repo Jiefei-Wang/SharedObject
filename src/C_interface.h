@@ -25,7 +25,9 @@ SEXP C_peekSharedMemory(SEXP x);
 // [[Rcpp::export]]
 SEXP C_testFunc(SEXP a);
 // [[Rcpp::export]]
-DID C_createSharedMemory(SEXP R_x, int type, double total_size, double pid, double did, bool COW, bool sharedSub);
+DID C_findAvailableKey(DID did);
+// [[Rcpp::export]]
+void C_createSharedMemory(SEXP R_x, SEXP R_dataInfo);
 // [[Rcpp::export]]
 SEXP C_readSharedMemory(double R_DID);
 //altrep

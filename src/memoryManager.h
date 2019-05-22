@@ -3,18 +3,21 @@
 #include "sharedObject_types.h"
 #include <vector>
 
+
+
+
+
 struct dataInfo {
-	PID pid;
-	ULLong length;
-	ULLong size;
-	int type;
-	bool copyOnWrite;
-	bool sharedSub;
+#define X(id,type, name) type name;
+	DATAINFO_FIELDS
+#undef X
 };
 
 
-
-DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID pid, DID did,bool COW,bool sharedSub);
+DID findAvailableKey(DID did);
+void* reserveSpace(DID did,ULLong size);
+void insertDataInfo(const dataInfo di);
+void createSharedOBJ(void* data,const dataInfo di);
 void* readSharedOBJ(DID did);
 void destroyObj(DID did);
 std::string getDataMemKey(DID did);

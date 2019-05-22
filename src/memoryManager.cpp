@@ -34,6 +34,11 @@ using std::to_string;
 //The name of data info map
 #define DATA_INFO_MAP_NAME OS_DATA_INFO_MAP_NAME
 
+#define X(id,type, name) const ULLong dataInfo_##name=id;
+DATAINFO_FIELDS
+#undef X
+
+
 
 
 #define DATA_LIST_SIZE 1024*1024*8
@@ -158,7 +163,13 @@ void initialSharedMemory() {
 
 
 
-
+DID findAvailableKey(DID did) {
+	initialSharedMemory();
+	while (dataInfoMap->find(did) != dataInfoMap->end()) {
+		did += 1;
+	}
+	return did;
+}
 
 
 #ifdef WINDOWS_OS
@@ -171,55 +182,65 @@ obj->truncate(size);
 #endif
 
 
-
-DID createSharedOBJ(void* data, int type, ULLong total_size, ULLong length, PID pid,DID did,bool COW, bool sharedSub) {
-	initialSharedMemory();
-	while (dataInfoMap->find(did) != dataInfoMap->end()) {
-		did += 1;
-	}
+void* reserveSpace(DID did, ULLong size) {
 	//Write the data into shared space
 	string dataKey = getDataMemKey(did);
 	try
 	{
 		boost::interprocess::permissions perm;
 		perm.set_unrestricted();
-		CREATE_SHARED_MEM(sharedData, create_only, dataKey.c_str(), read_write, perm, total_size);
+		CREATE_SHARED_MEM(sharedData, create_only, dataKey.c_str(), read_write, perm, size);
 		sharedMem_list.insert(pair<DID, OS_shared_memory_object*>(did, sharedData));
-		//Map the whole shared memory in this process
-		mapped_region region(*sharedData, read_write);
+		//mapped_region region(*sharedData, read_write);
+		mapped_region* region = new mapped_region(*sharedData, read_write);
+		//segment_list
+		segment_list.insert(pair<DID, mapped_region*>(did, region));
+		return(region->get_address());
+	}
+	catch (const std::exception& ex) {
+		removeSharedMemory(dataKey.c_str());
+		removeDataIfExist(sharedMem_list, did);
+		segment_list.erase(did);
+		errorHandle(string("Can't open shared object,\n") + ex.what());
+	}
+	return nullptr;
+}
+
+void insertDataInfo(const dataInfo di) {
+	try
+	{
+		//Insert the data info into the record
+		dataInfoMap->insert(dataInfoPair(di.did, di));
+	}
+	catch (const std::exception & ex) {
+		errorHandle("error in recording a shared memory info\n");
+	}
+}
+
+
+void createSharedOBJ(void* data, const dataInfo di) {
+	initialSharedMemory();
+	
+	//Write the data into shared space
+	string dataKey = getDataMemKey(di.did);
+	try
+	{
+		void* dataPtr=reserveSpace(di.did, di.total_size);
 		//Write to shared memory
-		switch (type) {
+		switch (di.type_id) {
 		case STR_TYPE:
-			strCpy(region.get_address(), data);
+			strCpy(dataPtr, data);
 			break;
 		default:
-			memcpy(region.get_address(), data, total_size);
+			memcpy(dataPtr, data, di.total_size);
 		}
 
 	}
 	catch (const std::exception & ex) {
-		removeSharedMemory(dataKey.c_str());
-		removeDataIfExist(sharedMem_list, did);
-		errorHandle(string("Can't open shared object,\n") + ex.what());
+		errorHandle(string("Can't assign values to the shared memory,\n") + ex.what());
 	}
 	//Record the data info
-	try
-	{
-		//Insert the data info into the record
-		dataInfo di;
-		di.pid=pid;
-		di.length=length;
-		di.size = total_size;
-		di.type = type;
-		di.copyOnWrite = COW;
-		di.sharedSub = sharedSub;
-		dataInfoMap->insert(dataInfoPair(did, di));
-	}
-	catch (const std::exception & ex) {
-		errorHandle("error in record a shared memory\n");
-	}
-	return(did);
-
+	insertDataInfo(di);
 }
 
 

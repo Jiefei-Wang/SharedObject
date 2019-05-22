@@ -13,6 +13,9 @@ type_size<-function(x){
     stop("The type has not been defined: ", x)
   availableType[x,"size"]
 }
+type_size_id<-function(x){
+  type_size(get_type_name(x))
+}
 
 get_type_id<-function(x){
   if(!x%in%typeName)
@@ -43,6 +46,7 @@ copyAttribute<-function(source,target){
 
 generateKey<-function(){
   key=round(runif(1,0,2^53))
+  key=C_findAvailableKey(key)
   key
 }
 #' Serialize a shared Object
@@ -53,8 +57,8 @@ generateKey<-function(){
 #' @export
 serializeSO<-function(x){
 res=attributes(x)
-did=peekSharedMemory(x)$DID
-state=list(DID=did,attr=res)
+did=peekSharedMemory(x)$dataInfo["DID"]
+state=did
 #message(state)
 return(state)
 }
@@ -64,16 +68,23 @@ return(state)
 #'
 #' @param x A shared object
 #' @export
-unserializeSO<-function(x){
+unserializeSO<-function(did){
  # message(x)
-  did=x[["DID"]]
   sv=sharedVectorById(did)
-  attr_name=names(x[["attr"]])
-  for(i in seq_along(x[["attr"]])){
-    C_attachAttr(sv,attr_name[i],x[["attr"]][[i]])
-  }
   return(sv)
 }
+
+dataInfoName=c("DID","PID","type_id","length","total_size","copyOnWrite","sharedSub")
+makeSubsetProperty<-function(x,sub_len){
+  prop=peekSharedMemory(x)
+  dataInfo=prop$dataInfo
+  dataInfo["length"]=sub_len
+  dataInfo["total_size"]=sub_len*type_size_id(dataInfo["type_id"])
+  return(dataInfo)
+}
+
+
+
 
 #' Is an Object ALTREP?
 #'
@@ -94,7 +105,7 @@ is.altrep<-function(x){
 copyOnwriteProp<-function(x){
   if(is.altrep(x)){
     sm=peekSharedMemory(x)
-    return(sm$copyOnWrite)
+    return(sm$dataInfo['copyOnWrite'])
   }
 
   if(is.data.frame(x)){
@@ -102,7 +113,7 @@ copyOnwriteProp<-function(x){
     for(i in seq_len(ncol(x))){
       if(is.altrep(x)){
         sm=peekSharedMemory(x[,i])
-        res[i]=sm$copyOnWrite
+        res[i]=sm$dataInfo['copyOnWrite']
       }else{
         res[i]=TRUE
       }
@@ -130,14 +141,14 @@ unsetCopyOnwrite<-function(x){
 copyOnWrite_hidden<-function(x,opt){
   if(is.altrep(x)){
   sm=peekSharedMemory(x)
-  sm$copyOnWrite=opt
+  sm$dataInfo['copyOnWrite']=opt
   #return(x)
   }
   if(is.data.frame(x)){
     for(i in seq_len(ncol(x))){
       if(is.altrep(x)){
         sm=peekSharedMemory(x[,i])
-        sm$copyOnWrite=opt
+        sm$dataInfo['copyOnWrite']=opt
       }
     }
     #return(x)
