@@ -1,6 +1,8 @@
 sharedOption=c("copyOnWrite","sharedSub")
 
 dataInfoName=c("DID","PID","type_id","length","total_size","copyOnWrite","sharedSub")
+dataInfoTemplate=rep(0.0,length(dataInfoName))
+names(dataInfoTemplate)=dataInfoName
 
 
 sharedMemory=
@@ -9,10 +11,8 @@ sharedMemory=
 
 sharedMemory$methods(
   initialize = function(x=NULL,opt=list()) {
-    DI=rep(0.0,length(dataInfoName))
-    names(DI)=dataInfoName
-    .self$dataInfo=DI
-    setOwnData(.self,FALSE)
+    .self$dataInfo=dataInfoTemplate
+    .self$ownData=FALSE
     if(!is.null(x)){
       for(i in seq_along(sharedOption)){
         name=sharedOption[i]

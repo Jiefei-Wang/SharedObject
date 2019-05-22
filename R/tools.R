@@ -57,10 +57,9 @@ generateKey<-function(){
 #' @export
 serializeSO<-function(x){
 res=attributes(x)
-did=peekSharedMemory(x)$dataInfo["DID"]
-state=did
+did=getVecDID(x)
 #message(state)
-return(state)
+return(did)
 }
 #' Unserialize a shared Object
 #'
@@ -73,17 +72,6 @@ unserializeSO<-function(did){
   sv=sharedVectorById(did)
   return(sv)
 }
-
-dataInfoName=c("DID","PID","type_id","length","total_size","copyOnWrite","sharedSub")
-makeSubsetProperty<-function(x,sub_len){
-  prop=peekSharedMemory(x)
-  dataInfo=prop$dataInfo
-  dataInfo["length"]=sub_len
-  dataInfo["total_size"]=sub_len*type_size_id(dataInfo["type_id"])
-  return(dataInfo)
-}
-
-
 
 
 #' Is an Object ALTREP?
@@ -103,17 +91,15 @@ is.altrep<-function(x){
 #' @rdname copyOnWrite
 #' @export
 copyOnwriteProp<-function(x){
-  if(is.altrep(x)){
-    sm=peekSharedMemory(x)
-    return(sm$dataInfo['copyOnWrite'])
+  if(is.sharedVector(x)){
+    return(getVecCopyOnWrite(x))
   }
 
   if(is.data.frame(x)){
     res=logical(ncol(x))
     for(i in seq_len(ncol(x))){
-      if(is.altrep(x)){
-        sm=peekSharedMemory(x[,i])
-        res[i]=sm$dataInfo['copyOnWrite']
+      if(is.sharedVector(x)){
+        res[i]=getVecCopyOnWrite(x[,i])
       }else{
         res[i]=TRUE
       }
@@ -139,16 +125,14 @@ unsetCopyOnwrite<-function(x){
 }
 
 copyOnWrite_hidden<-function(x,opt){
-  if(is.altrep(x)){
-  sm=peekSharedMemory(x)
-  sm$dataInfo['copyOnWrite']=opt
+  if(is.sharedVector(x)){
+    setVecCopyOnwrite(x,opt)
   #return(x)
   }
   if(is.data.frame(x)){
     for(i in seq_len(ncol(x))){
       if(is.altrep(x)){
-        sm=peekSharedMemory(x[,i])
-        sm$dataInfo['copyOnWrite']=opt
+        setVecCopyOnwrite(x[,i],opt)
       }
     }
     #return(x)

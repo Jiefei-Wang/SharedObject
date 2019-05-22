@@ -146,13 +146,100 @@ sharedDataFrame<-function(x,opt){
 
 is.sharedObject<-function(x){
   if(is.atomic(x)){
-    return(is.sharedMemory(x))
+    return(is.sharedVector(x))
   }
   if(is.data.frame(x)){
-    res=apply(x, 2,is.sharedMemory)
+    res=vapply(x, is.sharedVector,logical(1))
     return(all(res))
   }
   return(FALSE)
 }
 
+is.sharedVector<-function(x){
+  if(is.atomic(x)){
+    sm=peekSharedMemory(x)
+    if(!is.null(sm)&&is(sm,"sharedMemory")){
+      return(TRUE)
+    }
+  }
+  return(FALSE)
+}
+
+
+getSharedProperty<-function(x,prop){
+  if(is.sharedVector(x)){
+    sm=peekSharedMemory(x)
+    if(prop%in%dataInfoName){
+      return(sm$dataInfo[prop])
+    }else{
+      return(sm[[prop]])
+    }
+  }else{
+    error("The object is not of shared memory class")
+  }
+}
+
+setSharedProperty<-function(x,prop,value){
+  if(is.sharedVector(x)){
+    sm=peekSharedMemory(x)
+    if(prop%in%dataInfoName){
+      sm$dataInfo[prop]=value
+    }else{
+      sm[[prop]]=value
+    }
+  }else{
+    error("The object is not of shared memory class")
+  }
+}
+
+getVecDID<-function(x){
+  getSharedProperty(x,"DID")
+}
+getVecPID<-function(x){
+  getSharedProperty(x,"PID")
+}
+getVecType<-function(x){
+  getSharedProperty(x,"type")
+}
+getVecTypeID<-function(x){
+  getSharedProperty(x,"type_id")
+}
+getVecTotalSize<-function(x){
+  getSharedProperty(x,"total_size")
+}
+getVecCopyOnWrite<-function(x){
+  as.logical(getSharedProperty(x,"copyOnWrite"))
+}
+getVecSharedSub<-function(x){
+  as.logical(getSharedProperty(x,"sharedSub"))
+}
+getVecOwnData<-function(x){
+  getSharedProperty(x,"ownData")
+}
+
+setVecDID<-function(x,value){
+  setSharedProperty(x,"DID",value)
+  x
+}
+setVecPID<-function(x,value){
+  setSharedProperty(x,"PID",value)
+}
+setVecType<-function(x,value){
+  setSharedProperty(x,"type",value)
+}
+setVecTypeID<-function(x,value){
+  setSharedProperty(x,"type_id",value)
+}
+setVecTotalSize<-function(x,value){
+  setSharedProperty(x,"total_size",value)
+}
+setVecCopyOnwrite<-function(x,value){
+  setSharedProperty(x,"copyOnWrite",value)
+}
+setVecSharedSub<-function(x,value){
+  setSharedProperty(x,"sharedSub",value)
+}
+setVecOwnData<-function(x,value){
+  setSharedProperty(x,"ownData",value)
+}
 
