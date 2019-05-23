@@ -29,14 +29,14 @@ DID C_findAvailableKey(DID did) {
 }
 
 void C_createSharedMemory(SEXP R_x,SEXP R_dataInfo){
-  R_xlen_t len = Rf_xlength(R_x);
+  //R_xlen_t len = Rf_xlength(R_x);
   //Rprintf("length:%d,type: %d, total:%f, pid: %llu\n", len, type,total_size, pid);
   //Rf_PrintValue(R_x);
   dataInfo di;
 #define X(id,type, name) di.name=REAL(R_dataInfo)[id];
   DATAINFO_FIELDS
 #undef X
-  void* data = getPointer(R_x);
+  const void* data = getPointer(R_x);
   //printf("get pointer%p\n", data);
   createSharedOBJ(data, di);
 }
@@ -79,7 +79,7 @@ std::vector<double> C_getDataID() {
 	return getDataID();
 }
 NumericVector C_getDataInfo(DID did) {
-	dataInfo info= getDataInfo(did);
+	dataInfo& info= getDataInfo(did);
 	NumericVector v(DATAINFO_FIELDS_NUMBER);
 #define X(id,type, name) v[id]=info.name;
 	DATAINFO_FIELDS
@@ -99,3 +99,29 @@ bool C_ALTREP(SEXP x) {
 	return ALTREP(x);
 }
 
+
+bool C_getCopyOnWrite(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.copyOnWrite;
+}
+bool C_getSharedSub(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.sharedSub;
+}
+bool C_getSharedDuplicate(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.sharedDuplicate;
+}
+
+void C_setCopyOnWrite(DID did, bool value) {
+	dataInfo& info = getDataInfo(did);
+	info.copyOnWrite = value;
+}
+void C_setSharedSub(DID did, bool value) {
+	dataInfo& info = getDataInfo(did);
+	info.sharedSub = value;
+}
+void C_setSharedDuplicate(DID did, bool value) {
+	dataInfo& info = getDataInfo(did);
+	info.sharedDuplicate = value;
+}

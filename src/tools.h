@@ -1,7 +1,7 @@
 #include <string>
 #include "sharedObject_types.h"
 
-#define DEBUG(x);
+#define DEBUG(x) x;
 #define asString(x) std::string(CHAR(asChar(x)))
 #define LOGICAL_TYPE 1L
 #define INT_TYPE 2L
@@ -19,7 +19,8 @@
     X(3,ULLong, length) \
     X(4,ULLong, total_size) \
     X(5,bool, copyOnWrite) \
-    X(6,bool, sharedSub) 
+    X(6,bool, sharedSub)\
+	X(7,bool, sharedDuplicate)
 
 #define X(id,type, name) extern const ULLong dataInfo_##name;
 DATAINFO_FIELDS
@@ -35,7 +36,7 @@ void messageHandle(std::string msg);
 void messageHandle(const char* fmt, ...);
 int getTypeSize(unsigned int type);
 
-void strCpy(void* target, void* R_str);
+void strCpy(const void* target, const void* R_str);
 
 
 

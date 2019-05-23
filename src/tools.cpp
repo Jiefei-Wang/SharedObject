@@ -55,7 +55,7 @@ offset to the ith string,i=1,...,n.(64bit offset)
 actual data
 */
 
-void strCpy(void* target, void* R_str) {
+void strCpy(const void* target,const void* R_str) {
 	SEXP str = (SEXP)R_str;
 	//printf("get string length\n");
 	ULLong n = XLENGTH(str);

@@ -45,3 +45,31 @@ C_ALTREP <- function(x) {
     .Call(`_sharedObject_C_ALTREP`, x)
 }
 
+C_getCopyOnWrite <- function(did) {
+    .Call(`_sharedObject_C_getCopyOnWrite`, did)
+}
+
+C_getSharedSub <- function(did) {
+    .Call(`_sharedObject_C_getSharedSub`, did)
+}
+
+C_getSharedDuplicate <- function(did) {
+    .Call(`_sharedObject_C_getSharedDuplicate`, did)
+}
+
+C_setCopyOnWrite <- function(did, value) {
+    invisible(.Call(`_sharedObject_C_setCopyOnWrite`, did, value))
+}
+
+C_setSharedSub <- function(did, value) {
+    invisible(.Call(`_sharedObject_C_setSharedSub`, did, value))
+}
+
+C_setSharedDuplicate <- function(did, value) {
+    invisible(.Call(`_sharedObject_C_setSharedDuplicate`, did, value))
+}
+
+sharedVector_duplicate <- function(x) {
+    .Call(`_sharedObject_sharedVector_duplicate`, x)
+}
+

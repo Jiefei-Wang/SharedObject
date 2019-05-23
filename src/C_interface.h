@@ -53,3 +53,17 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr);
 
 // [[Rcpp::export]]
 bool C_ALTREP(SEXP x);
+
+
+// [[Rcpp::export]]
+bool C_getCopyOnWrite(DID did);
+// [[Rcpp::export]]
+bool C_getSharedSub(DID did);
+// [[Rcpp::export]]
+bool C_getSharedDuplicate(DID did);
+// [[Rcpp::export]]
+void C_setCopyOnWrite(DID did, bool value);
+// [[Rcpp::export]]
+void C_setSharedSub(DID did, bool value);
+// [[Rcpp::export]]
+void C_setSharedDuplicate(DID did, bool value);

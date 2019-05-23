@@ -20,9 +20,17 @@
 #define SV_EPTR(x) SV_DATA(x,address)
 #define SV_PTR(x) R_ExternalPtrAddr(SV_EPTR(x))
 #define SV_UPDATE_FUN(x) SV_FUN(x,updateAddress)
+#define SV_DID(x) (SV_DATAINFO(x,did))
 #define SV_LENGTH(x) (SV_DATAINFO(x,length))
 #define SV_SIZE(x) (SV_DATAINFO(x,total_size))
 #define SV_TYPE(x) ((int)(SV_DATAINFO(x, type_id)))
 #define SV_TYPE_CHAR(x) CHAR(Rf_asChar((SV_DATA(x, type))))
-#define SV_COW(x) ((SV_DATAINFO(x, copyOnWrite))!=0.0)
-#define SV_SHAREDSUB(x) ((SV_DATAINFO(x, sharedSub))!=0.0)
+
+
+#include "sharedObject_types.h"
+bool C_getCopyOnWrite(DID did);
+bool C_getSharedSub(DID did);
+bool C_getSharedDuplicate(DID did);
+#define SV_COW(x) C_getCopyOnWrite(SV_DID(x))
+#define SV_SHAREDSUB(x)  C_getSharedSub(SV_DID(x))
+#define SV_SHARED_DUPLICATE(x)  C_getSharedDuplicate(SV_DID(x))

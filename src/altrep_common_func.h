@@ -9,7 +9,7 @@ Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
                       void (*inspect_subtree)(SEXP, int, int, int));
 R_altrep_class_t getAltClass(int type);
 
-void* getPointer(SEXP x);
+const void* getPointer(SEXP x);
 
 R_xlen_t sharedVector_length(SEXP x);
 void *sharedVector_dataptr(SEXP x, Rboolean writeable);

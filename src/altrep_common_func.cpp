@@ -6,18 +6,29 @@
 #include "Rinternals.h"
 #include "altrep_registration.h"
 
-void* getPointer(SEXP x) {
+const void* getPointer(SEXP x) {
+	const void* ptr;
 	switch (TYPEOF(x))
 	{
-	case INTSXP:
+	/*case INTSXP:
 		return INTEGER(x);
 	case REALSXP:
 		return REAL(x);
 	case LGLSXP:
 		return LOGICAL(x);
 	case RAWSXP:
-		return RAW(x);
-		//return STDVEC_DATAPTR(x);
+		return RAW(x);*/
+	case INTSXP:
+	case REALSXP:
+	case LGLSXP:
+	case RAWSXP:
+		ptr = DATAPTR_OR_NULL(x);
+		if (ptr == NULL) {
+			return DATAPTR(x);
+		}
+		else {
+			return ptr;
+		}
 	case STRSXP:
 		return x;
 	default:
@@ -66,17 +77,48 @@ const void *sharedVector_dataptr_or_null(SEXP x)
 	DEBUG(Rprintf("accessing data pointer or null\n"));
 	return sharedVector_dataptr(x, Rboolean::TRUE);
 }
+
 SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
-	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d \n",deep, SV_COW(x)));
+	using namespace Rcpp;
+	/*DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n",deep, SV_COW(x),SV_SHARED_DUPLICATE(x)));
 	//Rf_PrintValue(SV_DATA(x, dataInfo));
 	if (SV_COW(x)) {
-		return(NULL);
+		if (SV_SHARED_DUPLICATE(x)) {
+			Environment package_env("package:sharedObject");
+			Function getSharedParms = package_env["createInheritedParms"];
+			List opt = getSharedParms(x);
+			Rprintf("options generated\n");
+			Function sv_constructor = package_env["sharedVector"];
+			SEXP so = sv_constructor(x, opt);
+			Rprintf("shared object generated\n");
+			Rf_PrintValue(so);
+			return(so);
+		}
+		else {
+			return(NULL);
+		}
 	}
 	else {
 		return(x);
-	}
-}
+	}*/
+	Environment package_env("package:sharedObject");
+	Function getSharedParms = package_env["createInheritedParms"];
+	List opt = getSharedParms(x);
+	Rprintf("options generated\n");
+	Function sv_constructor = package_env["sharedVector"];
+	SEXP so = sv_constructor(x, opt);
+	Rprintf("shared object generated\n");
+	Environment env("package:base");
+	Function f = env["sys.calls"]; 
+	Rf_PrintValue(f());
+	//Rf_PrintValue(so);
 
+	return(so);
+}
+// [[Rcpp::export]]
+SEXP sharedVector_duplicate(SEXP x) {
+	return(sharedVector_duplicate(x, (Rboolean)0L));
+}
 
 using namespace Rcpp;
 void sharedVector_updateAd(SEXP x)

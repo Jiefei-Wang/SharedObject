@@ -17,11 +17,11 @@ struct dataInfo {
 DID findAvailableKey(DID did);
 void* reserveSpace(DID did,ULLong size);
 void insertDataInfo(const dataInfo di);
-void createSharedOBJ(void* data,const dataInfo di);
+void createSharedOBJ(const void* data,const dataInfo di);
 void* readSharedOBJ(DID did);
 void destroyObj(DID did);
 std::string getDataMemKey(DID did);
-dataInfo getDataInfo(DID did);
+dataInfo& getDataInfo(DID did);
 std::vector<double> getDataID();
 
 

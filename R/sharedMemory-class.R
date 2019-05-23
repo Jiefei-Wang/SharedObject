@@ -1,9 +1,7 @@
-sharedOption=c("copyOnWrite","sharedSub")
-
-dataInfoName=c("DID","PID","type_id","length","total_size","copyOnWrite","sharedSub")
+dataInfoName=c("DID","PID","type_id","length","total_size","copyOnWrite","sharedSub","sharedDuplicate")
+sharedOption=c("copyOnWrite","sharedSub","sharedDuplicate")
 dataInfoTemplate=rep(0.0,length(dataInfoName))
 names(dataInfoTemplate)=dataInfoName
-
 
 sharedMemory=
   setRefClass("sharedMemory",

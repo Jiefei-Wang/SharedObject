@@ -139,6 +139,16 @@ copyOnWrite_hidden<-function(x,opt){
   }
 }
 
+#Get the parameters that will be inherit by the child of a shared object
+createInheritedParms<-function(x){
+parms=sapply(sharedOption,function(x,data)getSharedProperty(data,x),data=x)
 
+  parms=list(
+    copyOnWrite=getVecCopyOnWrite(x),
+    sharedSub=getVecSharedSub(x),
+    sharedDuplicate=getVecSharedDuplicate(x)
+  )
+  parms
+}
 
 

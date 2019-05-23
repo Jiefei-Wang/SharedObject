@@ -104,8 +104,9 @@ sharedVectorById<-function(did){
 #' #but the dulplicate function will return so1 itself, so the value in so1 also get changed.
 #'
 #' @export
-sharedObject<-function(x,copyOnWrite=sharedParms.copyOnWrite(),sharedSub=sharedParms.sharedSub()){
- opt=list(copyOnWrite=copyOnWrite,sharedSub=sharedSub)
+sharedObject<-function(x,copyOnWrite=sharedParms.copyOnWrite(),sharedSub=sharedParms.sharedSub(),
+                       sharedDuplicate=sharedParms.sharedDuplicate()){
+ opt=list(copyOnWrite=copyOnWrite,sharedSub=sharedSub,sharedDuplicate=sharedDuplicate)
  sharedObject_hidden(x,opt)
 }
 
@@ -169,6 +170,14 @@ is.sharedVector<-function(x){
 getSharedProperty<-function(x,prop){
   if(is.sharedVector(x)){
     sm=peekSharedMemory(x)
+    if(prop%in%sharedOption){
+      res=switch(prop,
+                 copyOnWrite=C_getCopyOnWrite(getVecDID(x)),
+                 sharedSub=C_getSharedSub(getVecDID(x)),
+                 sharedDuplicate=C_getSharedDuplicate(getVecDID(x))
+             )
+      return(res)
+    }
     if(prop%in%dataInfoName){
       return(sm$dataInfo[prop])
     }else{
@@ -182,6 +191,14 @@ getSharedProperty<-function(x,prop){
 setSharedProperty<-function(x,prop,value){
   if(is.sharedVector(x)){
     sm=peekSharedMemory(x)
+    if(prop%in%sharedOption){
+      res=switch(prop,
+                 copyOnWrite=C_setCopyOnWrite(getVecDID(x),value),
+                 sharedSub=C_setSharedSub(getVecDID(x),value),
+                 sharedDuplicate=C_setSharedDuplicate(getVecDID(x),value)
+      )
+      sm$dataInfo[prop]=value
+    }
     if(prop%in%dataInfoName){
       sm$dataInfo[prop]=value
     }else{
@@ -213,31 +230,22 @@ getVecCopyOnWrite<-function(x){
 getVecSharedSub<-function(x){
   as.logical(getSharedProperty(x,"sharedSub"))
 }
+getVecSharedDuplicate<-function(x){
+  as.logical(getSharedProperty(x,"sharedDuplicate"))
+}
 getVecOwnData<-function(x){
   getSharedProperty(x,"ownData")
 }
 
-setVecDID<-function(x,value){
-  setSharedProperty(x,"DID",value)
-  x
-}
-setVecPID<-function(x,value){
-  setSharedProperty(x,"PID",value)
-}
-setVecType<-function(x,value){
-  setSharedProperty(x,"type",value)
-}
-setVecTypeID<-function(x,value){
-  setSharedProperty(x,"type_id",value)
-}
-setVecTotalSize<-function(x,value){
-  setSharedProperty(x,"total_size",value)
-}
+
 setVecCopyOnwrite<-function(x,value){
-  setSharedProperty(x,"copyOnWrite",value)
+  getSharedProperty(x,"copyOnwrite",value)
 }
 setVecSharedSub<-function(x,value){
-  setSharedProperty(x,"sharedSub",value)
+  getSharedProperty(x,"sharedSub",value)
+}
+setVecSharedDuplicate<-function(x,value){
+  getSharedProperty(x,"sharedDuplicate",value)
 }
 setVecOwnData<-function(x,value){
   setSharedProperty(x,"ownData",value)

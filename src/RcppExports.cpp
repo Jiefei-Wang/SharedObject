@@ -127,6 +127,83 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_getCopyOnWrite
+bool C_getCopyOnWrite(DID did);
+RcppExport SEXP _sharedObject_C_getCopyOnWrite(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getCopyOnWrite(did));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getSharedSub
+bool C_getSharedSub(DID did);
+RcppExport SEXP _sharedObject_C_getSharedSub(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getSharedSub(did));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getSharedDuplicate
+bool C_getSharedDuplicate(DID did);
+RcppExport SEXP _sharedObject_C_getSharedDuplicate(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getSharedDuplicate(did));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_setCopyOnWrite
+void C_setCopyOnWrite(DID did, bool value);
+RcppExport SEXP _sharedObject_C_setCopyOnWrite(SEXP didSEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    Rcpp::traits::input_parameter< bool >::type value(valueSEXP);
+    C_setCopyOnWrite(did, value);
+    return R_NilValue;
+END_RCPP
+}
+// C_setSharedSub
+void C_setSharedSub(DID did, bool value);
+RcppExport SEXP _sharedObject_C_setSharedSub(SEXP didSEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    Rcpp::traits::input_parameter< bool >::type value(valueSEXP);
+    C_setSharedSub(did, value);
+    return R_NilValue;
+END_RCPP
+}
+// C_setSharedDuplicate
+void C_setSharedDuplicate(DID did, bool value);
+RcppExport SEXP _sharedObject_C_setSharedDuplicate(SEXP didSEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    Rcpp::traits::input_parameter< bool >::type value(valueSEXP);
+    C_setSharedDuplicate(did, value);
+    return R_NilValue;
+END_RCPP
+}
+// sharedVector_duplicate
+SEXP sharedVector_duplicate(SEXP x);
+RcppExport SEXP _sharedObject_sharedVector_duplicate(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(sharedVector_duplicate(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_sharedObject_C_peekSharedMemory", (DL_FUNC) &_sharedObject_C_peekSharedMemory, 1},
@@ -140,6 +217,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_sharedObject_C_getDataInfo", (DL_FUNC) &_sharedObject_C_getDataInfo, 1},
     {"_sharedObject_C_attachAttr", (DL_FUNC) &_sharedObject_C_attachAttr, 3},
     {"_sharedObject_C_ALTREP", (DL_FUNC) &_sharedObject_C_ALTREP, 1},
+    {"_sharedObject_C_getCopyOnWrite", (DL_FUNC) &_sharedObject_C_getCopyOnWrite, 1},
+    {"_sharedObject_C_getSharedSub", (DL_FUNC) &_sharedObject_C_getSharedSub, 1},
+    {"_sharedObject_C_getSharedDuplicate", (DL_FUNC) &_sharedObject_C_getSharedDuplicate, 1},
+    {"_sharedObject_C_setCopyOnWrite", (DL_FUNC) &_sharedObject_C_setCopyOnWrite, 2},
+    {"_sharedObject_C_setSharedSub", (DL_FUNC) &_sharedObject_C_setSharedSub, 2},
+    {"_sharedObject_C_setSharedDuplicate", (DL_FUNC) &_sharedObject_C_setSharedDuplicate, 2},
+    {"_sharedObject_sharedVector_duplicate", (DL_FUNC) &_sharedObject_sharedVector_duplicate, 1},
     {NULL, NULL, 0}
 };
 

@@ -218,7 +218,7 @@ void insertDataInfo(const dataInfo di) {
 }
 
 
-void createSharedOBJ(void* data, const dataInfo di) {
+void createSharedOBJ(const void* data, const dataInfo di) {
 	initialSharedMemory();
 	
 	//Write the data into shared space
@@ -295,7 +295,7 @@ void destroyObj(DID did) {
 	}
 }
 
-dataInfo getDataInfo(DID did) {
+dataInfo& getDataInfo(DID did) {
 	initialSharedMemory();
 	try {
 		if (!hasDID(did)) {

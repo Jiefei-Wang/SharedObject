@@ -88,9 +88,10 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 			break;
 		}
 		SEXP res= wrap(Vector<SXP_TYPE>(result, result + len));
-		Rprintf("sharedSubset:%d\n", SV_SHAREDSUB(x));
+		DEBUG(Rprintf("sharedSubset:%d\n", SV_SHAREDSUB(x));)
 		if (SV_SHAREDSUB(x)) {
-			List opt = List::create(Named("copyOnWrite") = SV_COW(x), Named("copyOnWrite") = SV_SHAREDSUB(x));
+			Function getSharedParms = package_env["createInheritedParms"];
+			List opt = getSharedParms(x);
 			Function sv_constructor = package_env["sharedVector"];
 			SEXP so = sv_constructor(res, opt);
 			return so;

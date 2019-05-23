@@ -13,7 +13,7 @@ NULL
 globalSettings=new.env()
 globalSettings$copyOnWrite=TRUE
 globalSettings$sharedSub=TRUE
-
+globalSettings$sharedDuplicate=TRUE
 
 setGlobal<-function(name,x){
   if(is.null(x)){
@@ -34,3 +34,9 @@ sharedParms.copyOnWrite<-function(x=NULL){
 sharedParms.sharedSub<-function(x=NULL){
   setGlobal("sharedSub",x)
 }
+
+sharedParms.sharedDuplicate<-function(x=NULL){
+  setGlobal("sharedDuplicate",x)
+}
+
+
