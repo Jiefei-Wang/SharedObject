@@ -45,10 +45,7 @@ sharedMemory$methods(
     .self$updateAddress()
   },
   initializeWithID=function(did){
-    DI=getDataInfo_single(did)
-    for(i in seq_along(DI)){
-      .self$dataInfo[i]=DI[i]
-    }
+    .self$dataInfo=getDataInfo_single(did)
     .self$ownData=FALSE
     .self$type=get_type_name(.self$dataInfo['type_id'])
     .self$updateAddress()
@@ -56,7 +53,17 @@ sharedMemory$methods(
   show = function(){
       cat("Shared memory object\n")
       for(i in dataInfoName){
-        cat("",i,': ', .self$dataInfo[i], '\n')
+        if(i%in%sharedOption){
+          did=.self$dataInfo["DID"]
+          info=switch(i,
+                     copyOnWrite=C_getCopyOnWrite(did),
+                     sharedSub=C_getSharedSub(did),
+                     sharedDuplicate=C_getSharedDuplicate(did)
+          )
+        }else{
+          info=.self$dataInfo[i]
+        }
+        cat("",i,': ', info, '\n')
       }
     cat("",'Type: ', .self$type, '\n')
     cat("",'Own data: ', .self$ownData, '\n')

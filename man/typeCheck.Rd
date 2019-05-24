@@ -2,13 +2,19 @@
 % Please edit documentation in R/tools.R
 \name{is.altrep}
 \alias{is.altrep}
-\title{Is an Object ALTREP?}
+\alias{is.sharedObject}
+\alias{is.sharedVector}
+\title{Is an Object a desired type?}
 \usage{
 is.altrep(x)
+
+is.sharedObject(x)
+
+is.sharedVector(x)
 }
 \arguments{
 \item{x}{an R object}
 }
 \description{
-Is an Object ALTREP?
+Is an Object a desired type?
 }

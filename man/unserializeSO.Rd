@@ -4,10 +4,10 @@
 \alias{unserializeSO}
 \title{Unserialize a shared Object}
 \usage{
-unserializeSO(x)
+unserializeSO(did)
 }
 \arguments{
-\item{x}{A shared object}
+\item{did}{A data ID for a shared object}
 }
 \description{
 Internal usage only

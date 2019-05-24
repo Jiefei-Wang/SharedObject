@@ -4,7 +4,7 @@
 \alias{sharedVector}
 \title{A fundamental tool to share an R object.}
 \usage{
-sharedVector(x, opt)
+sharedVector(x, opt = list())
 }
 \arguments{
 \item{x}{An automic object}

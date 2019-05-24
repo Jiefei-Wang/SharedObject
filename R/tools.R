@@ -56,30 +56,52 @@ generateKey<-function(){
 #' @param x A shared object
 #' @export
 serializeSO<-function(x){
-res=attributes(x)
 did=getVecDID(x)
-#message(state)
 return(did)
 }
 #' Unserialize a shared Object
 #'
 #' Internal usage only
 #'
-#' @param x A shared object
+#' @param did A data ID for a shared object
 #' @export
 unserializeSO<-function(did){
- # message(x)
   sv=sharedVectorById(did)
   return(sv)
 }
 
 
-#' Is an Object ALTREP?
+#' Is an Object a desired type?
 #'
 #' @param x an R object
+#' @rdname typeCheck
 #' @export
 is.altrep<-function(x){
   C_ALTREP(x)
+}
+#' @rdname typeCheck
+#' @export
+is.sharedObject<-function(x){
+  if(is.atomic(x)){
+    return(is.sharedVector(x))
+  }
+  if(is.data.frame(x)){
+    res=vapply(x, is.sharedVector,logical(1))
+    return(all(res))
+  }
+  return(FALSE)
+}
+
+#' @rdname typeCheck
+#' @export
+is.sharedVector<-function(x){
+  if(is.atomic(x)){
+    sm=peekSharedMemory(x)
+    if(!is.null(sm)&&is(sm,"sharedMemory")){
+      return(TRUE)
+    }
+  }
+  return(FALSE)
 }
 
 #' Get or set the copy-on-write feature
@@ -140,6 +162,7 @@ copyOnWrite_hidden<-function(x,opt){
 }
 
 #Get the parameters that will be inherit by the child of a shared object
+#' @export
 createInheritedParms<-function(x){
 parms=sapply(sharedOption,function(x,data)getSharedProperty(data,x),data=x)
 

@@ -1,7 +1,7 @@
 #include <string>
 #include "sharedObject_types.h"
 
-#define DEBUG(x) x;
+#define DEBUG(x);
 #define asString(x) std::string(CHAR(asChar(x)))
 #define LOGICAL_TYPE 1L
 #define INT_TYPE 2L
@@ -11,7 +11,7 @@
 #define REF_SLOT(x,name) ((Environment)x.attr(".xData"))[name]
 #define ADDRESS_BYTE 8L
 
-#define DATAINFO_FIELDS_NUMBER 7
+#define DATAINFO_FIELDS_NUMBER 8
 #define DATAINFO_FIELDS \
     X(0,DID, did) \
     X(1,PID, pid) \

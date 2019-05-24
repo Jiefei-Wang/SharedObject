@@ -80,18 +80,15 @@ const void *sharedVector_dataptr_or_null(SEXP x)
 
 SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 	using namespace Rcpp;
-	/*DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n",deep, SV_COW(x),SV_SHARED_DUPLICATE(x)));
+	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n",deep, SV_COW(x),SV_SHARED_DUPLICATE(x)));
 	//Rf_PrintValue(SV_DATA(x, dataInfo));
 	if (SV_COW(x)) {
 		if (SV_SHARED_DUPLICATE(x)) {
 			Environment package_env("package:sharedObject");
 			Function getSharedParms = package_env["createInheritedParms"];
 			List opt = getSharedParms(x);
-			Rprintf("options generated\n");
 			Function sv_constructor = package_env["sharedVector"];
 			SEXP so = sv_constructor(x, opt);
-			Rprintf("shared object generated\n");
-			Rf_PrintValue(so);
 			return(so);
 		}
 		else {
@@ -100,20 +97,7 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 	}
 	else {
 		return(x);
-	}*/
-	Environment package_env("package:sharedObject");
-	Function getSharedParms = package_env["createInheritedParms"];
-	List opt = getSharedParms(x);
-	Rprintf("options generated\n");
-	Function sv_constructor = package_env["sharedVector"];
-	SEXP so = sv_constructor(x, opt);
-	Rprintf("shared object generated\n");
-	Environment env("package:base");
-	Function f = env["sys.calls"]; 
-	Rf_PrintValue(f());
-	//Rf_PrintValue(so);
-
-	return(so);
+	}
 }
 // [[Rcpp::export]]
 SEXP sharedVector_duplicate(SEXP x) {
@@ -153,6 +137,7 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP state) {
 	DEBUG(Rprintf("unserializing data\n");)
 	
 	loadLibrary();
+	DEBUG(Rprintf("Library loaded\n");)
 	Environment package_env("package:sharedObject");
 	Function so_constructor = package_env["unserializeSO"];
 	SEXP so = so_constructor(state);

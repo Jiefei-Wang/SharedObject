@@ -145,28 +145,6 @@ sharedDataFrame<-function(x,opt){
 
 
 
-is.sharedObject<-function(x){
-  if(is.atomic(x)){
-    return(is.sharedVector(x))
-  }
-  if(is.data.frame(x)){
-    res=vapply(x, is.sharedVector,logical(1))
-    return(all(res))
-  }
-  return(FALSE)
-}
-
-is.sharedVector<-function(x){
-  if(is.atomic(x)){
-    sm=peekSharedMemory(x)
-    if(!is.null(sm)&&is(sm,"sharedMemory")){
-      return(TRUE)
-    }
-  }
-  return(FALSE)
-}
-
-
 getSharedProperty<-function(x,prop){
   if(is.sharedVector(x)){
     sm=peekSharedMemory(x)
@@ -209,27 +187,48 @@ setSharedProperty<-function(x,prop,value){
   }
 }
 
+#' Get/Set the property of a shared vector
+#'
+#' These function works for atomic shared vector only, it does not work for data.frame and list type.
+#'
+#' @param x a shared vector object
+#' @rdname sharedVectorProps
+#' @export
 getVecDID<-function(x){
   getSharedProperty(x,"DID")
 }
+#' @rdname sharedVectorProps
+#' @export
 getVecPID<-function(x){
   getSharedProperty(x,"PID")
 }
+#' @rdname sharedVectorProps
+#' @export
 getVecType<-function(x){
   getSharedProperty(x,"type")
 }
+#' @rdname sharedVectorProps
+#' @export
 getVecTypeID<-function(x){
   getSharedProperty(x,"type_id")
 }
+#' @rdname sharedVectorProps
+#' @export
 getVecTotalSize<-function(x){
   getSharedProperty(x,"total_size")
 }
+#' @rdname sharedVectorProps
+#' @export
 getVecCopyOnWrite<-function(x){
   as.logical(getSharedProperty(x,"copyOnWrite"))
 }
+#' @rdname sharedVectorProps
+#' @export
 getVecSharedSub<-function(x){
   as.logical(getSharedProperty(x,"sharedSub"))
 }
+#' @rdname sharedVectorProps
+#' @export
 getVecSharedDuplicate<-function(x){
   as.logical(getSharedProperty(x,"sharedDuplicate"))
 }
@@ -238,15 +237,25 @@ getVecOwnData<-function(x){
 }
 
 
+
+#' @param value the value you want to change
+#' @rdname sharedVectorProps
+#' @export
 setVecCopyOnwrite<-function(x,value){
-  getSharedProperty(x,"copyOnwrite",value)
+  setSharedProperty(x,"copyOnWrite",value)
 }
+#' @rdname sharedVectorProps
+#' @export
 setVecSharedSub<-function(x,value){
-  getSharedProperty(x,"sharedSub",value)
+  setSharedProperty(x,"sharedSub",value)
 }
+#' @rdname sharedVectorProps
+#' @export
 setVecSharedDuplicate<-function(x,value){
-  getSharedProperty(x,"sharedDuplicate",value)
+  setSharedProperty(x,"sharedDuplicate",value)
 }
+#' @rdname sharedVectorProps
+#' @export
 setVecOwnData<-function(x,value){
   setSharedProperty(x,"ownData",value)
 }

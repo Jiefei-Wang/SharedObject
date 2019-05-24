@@ -70,14 +70,15 @@ getDataInfo<-function(data_ids=NULL){
   }
   res=as.data.frame(t(res))
 
-  colnames(res)=dataInfoName
   res$DID=as.character(res$DID)
 
   res
 }
 
 getDataInfo_single<-function(data_ids){
-  C_getDataInfo(data_ids)
+  res=C_getDataInfo(data_ids)
+  names(res)=dataInfoName
+  res
 }
 
 

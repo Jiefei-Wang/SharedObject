@@ -5,7 +5,8 @@
 \title{Create an R object in the shared memory}
 \usage{
 sharedObject(x, copyOnWrite = sharedParms.copyOnWrite(),
-  sharedSub = sharedParms.sharedSub())
+  sharedSub = sharedParms.sharedSub(),
+  sharedDuplicate = sharedParms.sharedDuplicate())
 }
 \arguments{
 \item{x}{An R object that you want to shared. The data type can be `vector`,
