@@ -13,7 +13,7 @@ NULL
 globalSettings=new.env()
 globalSettings$copyOnWrite=TRUE
 globalSettings$sharedSub=TRUE
-globalSettings$sharedDuplicate=TRUE
+globalSettings$sharedDuplicate=FALSE
 
 setGlobal<-function(name,x){
   if(is.null(x)){
