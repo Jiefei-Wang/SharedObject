@@ -12,6 +12,11 @@ va_end(args);\
 FUNC(buf);\
 }
 
+#define X(id,type, name) const ULLong dataInfo_##name=id;
+DATAINFO_FIELDS
+#undef X
+
+
 void errorHandle(string msg){
   errorHandle(msg.c_str());
 

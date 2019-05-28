@@ -4,10 +4,12 @@ using namespace Rcpp;
 #include "R_ext/Altrep.h"
 #include "tools.h"
 #include "memoryManager.h"
-#include "altrep_common_func.h"
+#include "altrepMacro.h"
+#include "altrepCommonFunc.h"
 
 using std::string;
 
+// [[Rcpp::export]]
 SEXP C_peekSharedMemory(SEXP x) {
 	if (!ALTREP(x)) {
 		return R_NilValue;
@@ -18,16 +20,19 @@ SEXP C_peekSharedMemory(SEXP x) {
 	return(x);
 }
 
+// [[Rcpp::export]]
 SEXP C_testFunc(SEXP a)
 {
 	STDVEC_DATAPTR(a);
 	return(a);
 }
 
+// [[Rcpp::export]]
 DID C_findAvailableKey(DID did) {
 	return findAvailableKey(did);
 }
 
+// [[Rcpp::export]]
 void C_createSharedMemory(SEXP R_x,SEXP R_dataInfo){
   //R_xlen_t len = Rf_xlength(R_x);
   //Rprintf("length:%d,type: %d, total:%f, pid: %llu\n", len, type,total_size, pid);
@@ -38,13 +43,14 @@ void C_createSharedMemory(SEXP R_x,SEXP R_dataInfo){
 #undef X
   const void* data = getPointer(R_x);
   //printf("get pointer%p\n", data);
-  createSharedOBJ(data, di);
+  createSharedObject(data, di);
 }
 
 
 
-SEXP C_readSharedMemory(double DID) {
-	void* p = readSharedOBJ(DID);
+// [[Rcpp::export]]
+SEXP C_readSharedMemory(DID dataID) {
+	void* p = readSharedObject(dataID);
 	SEXP exter_p = R_MakeExternalPtr(p, R_NilValue, R_NilValue);
 	return(exter_p);
 }
@@ -52,9 +58,9 @@ SEXP C_readSharedMemory(double DID) {
 
 
 
-//SEXP R_address,SEXP R_type,SEXP R_length,SEXP R_size
+// [[Rcpp::export]]
 SEXP C_createAltrep(SEXP SM_obj){
-  int type=SM_DATAINFO(SM_obj, type_id);
+  int type= Rf_asInteger(SM_DATA(SM_obj, typeID));
   DEBUG(Rprintf("type %d\n", type));
   R_altrep_class_t alt_class = getAltClass(type);
   DEBUG(Rprintf("get alt class\n"));
@@ -66,17 +72,19 @@ SEXP C_createAltrep(SEXP SM_obj){
 }
 
 
+// [[Rcpp::export]]
 void C_clearObj(double did) {
 	try {
-		destroyObj(did);
+		destroyObject(did);
 	}
 	catch (const std::exception& ex) {
 		errorHandle("Unexpected error in removing object: \n%s" , ex.what());
 	}
 }
 
-std::vector<double> C_getDataID() {
-	return getDataID();
+// [[Rcpp::export]]
+std::vector<double> C_getDataIDList() {
+	return getDataIDList();
 }
 NumericVector C_getDataInfo(DID did) {
 	dataInfo& info= getDataInfo(did);
@@ -88,6 +96,7 @@ NumericVector C_getDataInfo(DID did) {
 }
 
 
+// [[Rcpp::export]]
 SEXP C_attachAttr(SEXP R_source, SEXP R_tag,SEXP R_attr) {
 	const char* tag = R_CHAR(Rf_asChar(R_tag));
 	Rf_setAttrib(R_source, Rf_install(tag), R_attr);
@@ -95,33 +104,8 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag,SEXP R_attr) {
 }
 
 
+// [[Rcpp::export]]
 bool C_ALTREP(SEXP x) {
 	return ALTREP(x);
 }
 
-
-bool C_getCopyOnWrite(DID did) {
-	dataInfo& info = getDataInfo(did);
-	return info.copyOnWrite;
-}
-bool C_getSharedSub(DID did) {
-	dataInfo& info = getDataInfo(did);
-	return info.sharedSub;
-}
-bool C_getSharedDuplicate(DID did) {
-	dataInfo& info = getDataInfo(did);
-	return info.sharedDuplicate;
-}
-
-void C_setCopyOnWrite(DID did, bool value) {
-	dataInfo& info = getDataInfo(did);
-	info.copyOnWrite = value;
-}
-void C_setSharedSub(DID did, bool value) {
-	dataInfo& info = getDataInfo(did);
-	info.sharedSub = value;
-}
-void C_setSharedDuplicate(DID did, bool value) {
-	dataInfo& info = getDataInfo(did);
-	info.sharedDuplicate = value;
-}

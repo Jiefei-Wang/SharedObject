@@ -5,8 +5,6 @@
 
 
 
-
-
 struct dataInfo {
 #define X(id,type, name) type name;
 	DATAINFO_FIELDS
@@ -14,14 +12,15 @@ struct dataInfo {
 };
 
 
-DID findAvailableKey(DID did);
-void* reserveSpace(DID did,ULLong size);
-void insertDataInfo(const dataInfo di);
-void createSharedOBJ(const void* data,const dataInfo di);
-void* readSharedOBJ(DID did);
-void destroyObj(DID did);
-std::string getDataMemKey(DID did);
-dataInfo& getDataInfo(DID did);
-std::vector<double> getDataID();
+DID findAvailableKey(DID dataID);
+void* reserveSpace(DID dataID,ULLong size);
+void insertDataInfo(const dataInfo DI);
+void copyRData(void* target, const void* RData, int typeID, ULLong size);
+void createSharedObject(const void* data,const dataInfo DI);
+void* readSharedObject(DID dataID);
+void destroyObject(DID dataID);
+std::string getDataMemoryKey(DID dataID);
+dataInfo& getDataInfo(DID dataID);
+std::vector<double> getDataIDList();
 
 

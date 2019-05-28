@@ -51,13 +51,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_readSharedMemory
-SEXP C_readSharedMemory(double R_DID);
-RcppExport SEXP _sharedObject_C_readSharedMemory(SEXP R_DIDSEXP) {
+SEXP C_readSharedMemory(DID dataID);
+RcppExport SEXP _sharedObject_C_readSharedMemory(SEXP dataIDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type R_DID(R_DIDSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_readSharedMemory(R_DID));
+    Rcpp::traits::input_parameter< DID >::type dataID(dataIDSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_readSharedMemory(dataID));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -82,24 +82,13 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// C_getDataID
-std::vector<double> C_getDataID();
-RcppExport SEXP _sharedObject_C_getDataID() {
+// C_getDataIDList
+std::vector<double> C_getDataIDList();
+RcppExport SEXP _sharedObject_C_getDataIDList() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(C_getDataID());
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getDataInfo
-NumericVector C_getDataInfo(DID did);
-RcppExport SEXP _sharedObject_C_getDataInfo(SEXP didSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getDataInfo(did));
+    rcpp_result_gen = Rcpp::wrap(C_getDataIDList());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -127,6 +116,61 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_getDataID
+DID C_getDataID(DID did);
+RcppExport SEXP _sharedObject_C_getDataID(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getDataID(did));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getProcessID
+PID C_getProcessID(DID did);
+RcppExport SEXP _sharedObject_C_getProcessID(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getProcessID(did));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getTypeID
+int C_getTypeID(DID did);
+RcppExport SEXP _sharedObject_C_getTypeID(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getTypeID(did));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getLength
+ULLong C_getLength(DID did);
+RcppExport SEXP _sharedObject_C_getLength(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getLength(did));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getTotalSize
+ULLong C_getTotalSize(DID did);
+RcppExport SEXP _sharedObject_C_getTotalSize(SEXP didSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getTotalSize(did));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_getCopyOnWrite
 bool C_getCopyOnWrite(DID did);
 RcppExport SEXP _sharedObject_C_getCopyOnWrite(SEXP didSEXP) {
@@ -138,14 +182,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// C_getSharedSub
-bool C_getSharedSub(DID did);
-RcppExport SEXP _sharedObject_C_getSharedSub(SEXP didSEXP) {
+// C_getSharedSubset
+bool C_getSharedSubset(DID did);
+RcppExport SEXP _sharedObject_C_getSharedSubset(SEXP didSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DID >::type did(didSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getSharedSub(did));
+    rcpp_result_gen = Rcpp::wrap(C_getSharedSubset(did));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -193,17 +237,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// sharedVector_duplicate
-SEXP sharedVector_duplicate(SEXP x);
-RcppExport SEXP _sharedObject_sharedVector_duplicate(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(sharedVector_duplicate(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_sharedObject_C_peekSharedMemory", (DL_FUNC) &_sharedObject_C_peekSharedMemory, 1},
@@ -213,17 +246,20 @@ static const R_CallMethodDef CallEntries[] = {
     {"_sharedObject_C_readSharedMemory", (DL_FUNC) &_sharedObject_C_readSharedMemory, 1},
     {"_sharedObject_C_createAltrep", (DL_FUNC) &_sharedObject_C_createAltrep, 1},
     {"_sharedObject_C_clearObj", (DL_FUNC) &_sharedObject_C_clearObj, 1},
-    {"_sharedObject_C_getDataID", (DL_FUNC) &_sharedObject_C_getDataID, 0},
-    {"_sharedObject_C_getDataInfo", (DL_FUNC) &_sharedObject_C_getDataInfo, 1},
+    {"_sharedObject_C_getDataIDList", (DL_FUNC) &_sharedObject_C_getDataIDList, 0},
     {"_sharedObject_C_attachAttr", (DL_FUNC) &_sharedObject_C_attachAttr, 3},
     {"_sharedObject_C_ALTREP", (DL_FUNC) &_sharedObject_C_ALTREP, 1},
+    {"_sharedObject_C_getDataID", (DL_FUNC) &_sharedObject_C_getDataID, 1},
+    {"_sharedObject_C_getProcessID", (DL_FUNC) &_sharedObject_C_getProcessID, 1},
+    {"_sharedObject_C_getTypeID", (DL_FUNC) &_sharedObject_C_getTypeID, 1},
+    {"_sharedObject_C_getLength", (DL_FUNC) &_sharedObject_C_getLength, 1},
+    {"_sharedObject_C_getTotalSize", (DL_FUNC) &_sharedObject_C_getTotalSize, 1},
     {"_sharedObject_C_getCopyOnWrite", (DL_FUNC) &_sharedObject_C_getCopyOnWrite, 1},
-    {"_sharedObject_C_getSharedSub", (DL_FUNC) &_sharedObject_C_getSharedSub, 1},
+    {"_sharedObject_C_getSharedSubset", (DL_FUNC) &_sharedObject_C_getSharedSubset, 1},
     {"_sharedObject_C_getSharedDuplicate", (DL_FUNC) &_sharedObject_C_getSharedDuplicate, 1},
     {"_sharedObject_C_setCopyOnWrite", (DL_FUNC) &_sharedObject_C_setCopyOnWrite, 2},
     {"_sharedObject_C_setSharedSub", (DL_FUNC) &_sharedObject_C_setSharedSub, 2},
     {"_sharedObject_C_setSharedDuplicate", (DL_FUNC) &_sharedObject_C_setSharedDuplicate, 2},
-    {"_sharedObject_sharedVector_duplicate", (DL_FUNC) &_sharedObject_sharedVector_duplicate, 1},
     {NULL, NULL, 0}
 };
 

@@ -1,6 +1,7 @@
-#include "altrep_numeric_common_func.h"
-#include "altrep_registration.h"
-
+#include "altrepNumericCommonFunc.h"
+#include "altrepRegistration.h"
+#include "altrepMacro.h"
+#include "tools.h"
 
 #define ALT_NUM_COMMOM_REG(ALT_CLASS,ALT_TYPE,C_TYPE,R_TYPE)\
 	ALT_CLASS =R_make_##ALT_TYPE##_class(class_name, PGKNAME, dll);\
@@ -25,6 +26,7 @@ R_set_##ALT_TYPE##_Get_region_method(ALT_CLASS, numeric_region<C_TYPE>);
 R_altrep_class_t shared_real_class;
 #define C_TYPE double
 #define R_TYPE REALSXP
+//[[Rcpp::init]]
 void init_real_class(DllInfo* dll)
 {
 	char class_name[] = "shared_real";
@@ -37,6 +39,7 @@ void init_real_class(DllInfo* dll)
 R_altrep_class_t shared_integer_class;
 #define C_TYPE int
 #define R_TYPE INTSXP
+//[[Rcpp::init]]
 void init_integer_class(DllInfo* dll) {
 	char class_name[] = "shared_int";
 	ALT_NUM_COMMOM_REG(shared_integer_class,altinteger, C_TYPE, R_TYPE)
@@ -49,6 +52,7 @@ void init_integer_class(DllInfo* dll) {
 R_altrep_class_t shared_logical_class;
 #define C_TYPE int
 #define R_TYPE LGLSXP
+//[[Rcpp::init]]
 void init_logical_class(DllInfo* dll) {
 	char class_name[] = "shared_logical";
 	ALT_NUM_COMMOM_REG(shared_logical_class, altlogical, C_TYPE, R_TYPE)
@@ -60,6 +64,7 @@ void init_logical_class(DllInfo* dll) {
 R_altrep_class_t shared_raw_class;
 #define C_TYPE Rbyte
 #define R_TYPE RAWSXP
+//[[Rcpp::init]]
 void init_raw_class(DllInfo* dll) {
 	char class_name[] = "shared_raw";
 	ALT_NUM_COMMOM_REG(shared_raw_class, altraw, C_TYPE, R_TYPE)
@@ -77,6 +82,7 @@ SEXP altstring_elt(SEXP x, R_xlen_t i);
 void* altstring_dataptr(SEXP x, Rboolean writable);
 const void* altstring_dataptr_or_null(SEXP x);
 R_altrep_class_t shared_str_class;
+//[[Rcpp::init]]
 void init_str_class(DllInfo* dll) {
 	shared_str_class = R_make_altstring_class("shared_str", PGKNAME, dll); 
 	/* override ALTREP methods */

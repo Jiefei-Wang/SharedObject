@@ -1,85 +1,71 @@
-dataInfoName=c("DID","PID","type_id","length","total_size","copyOnWrite","sharedSub","sharedDuplicate")
-sharedOption=c("copyOnWrite","sharedSub","sharedDuplicate")
+dataInfoPropName=c("DataID","ProcessID","typeID","length","totalSize")
+sharedOptions=c("copyOnWrite","sharedSubset","sharedDuplicate")
+dataInfoName=c(dataInfoPropName,sharedOptions)
 dataInfoTemplate=rep(0.0,length(dataInfoName))
 names(dataInfoTemplate)=dataInfoName
 
 sharedMemory=
   setRefClass("sharedMemory",
-              fields = c("ownData","type","address","dataInfo"))
+              fields = c("DataID","ownData","typeName","address"))
+
 
 sharedMemory$methods(
-  initialize = function(x=NULL,opt=list()) {
-    .self$dataInfo=dataInfoTemplate
-    .self$ownData=FALSE
+  initialize = function(x=NULL,options=list()) {
+    ownData<<-FALSE
     if(!is.null(x)){
-      for(i in seq_along(sharedOption)){
-        name=sharedOption[i]
-        .self$dataInfo[name]=ifelse(is.null(opt[[name]]),
-                                    globalSettings[[name]],
-                                    as.numeric(opt[[name]])
-        )
+      for(i in seq_along(sharedOptions)){
+        name=sharedOptions[i]
+        if(is.null(options[[name]])){
+          options[[name]]=globalSettings[[name]]
+        }
       }
-      .self$initializeWithData(x)
+      .self$initializeWithData(x,options)
     }
   },
   finalize=function(){
     if(ownData&&!RM_data$unloaded){
-      removeObject(.self$dataInfo["DID"])
+      removeObject(.self$dataInfo["DataID"])
     }
     if(RM_data$unloaded){
       message("Fail to release data: The package has been unloaded.")
     }
   },
-  initializeWithData=function(x){
-    DI=.self$dataInfo
-    DI["PID"]=RM$getPID()
-    DI["DID"]=generateKey()
-    DI["length"]=length(x)
-    DI["type_id"]=get_type_id(typeof(x))
-    DI["total_size"]=getSharedMemerySize(x)
-    C_createSharedMemory(x,DI)
+  initializeWithData=function(x,options){
+    dataInfo=dataInfoTemplate
 
+    if(!is.null(options$DataID)){
+      dataInfo["DataID"]=options$DataID
+    }else{
+      dataInfo=generateKey()
+    }
+
+    dataInfo["ProcessID"]=RM$getPID()
+    dataInfo["typeID"]=get_type_id(typeof(x))
+    dataInfo["length"]=length(x)
+    dataInfo["totalSize"]=calculateSharedMemerySize(x)
+    for(i in sharedOptions){
+      dataInfo[i]=options[[i]]
+    }
+
+    C_createSharedMemory(x,dataInfo)
+
+    .self$DataID=dataInfo["DataID"]
     .self$ownData=TRUE
-    .self$type=typeof(x)
-    .self$dataInfo=DI
+    .self$typeName=typeof(x)
     .self$updateAddress()
+  },
+  initializeWithPtr=function(ptr,options){
+
   },
   initializeWithID=function(did){
-    .self$dataInfo=getDataInfo_single(did)
+    dataInfo=getDataInfo_single(did)
+    .self$DataID=dataInfo["DataID"]
     .self$ownData=FALSE
-    .self$type=get_type_name(.self$dataInfo['type_id'])
+    .self$type=get_type_name(dataInfo['typeID'])
     .self$updateAddress()
-  },
-  show = function(){
-      cat("Shared memory object\n")
-      for(i in dataInfoName){
-        if(i%in%sharedOption){
-          did=.self$dataInfo["DID"]
-          info=switch(i,
-                     copyOnWrite=C_getCopyOnWrite(did),
-                     sharedSub=C_getSharedSub(did),
-                     sharedDuplicate=C_getSharedDuplicate(did)
-          )
-        }else{
-          info=.self$dataInfo[i]
-        }
-        cat("",i,': ', info, '\n')
-      }
-    cat("",'Type: ', .self$type, '\n')
-    cat("",'Own data: ', .self$ownData, '\n')
-      cat("",'Address: ', capture.output(.self[["address"]]), '\n')
   }
 )
 
 
 
-getSharedMemerySize<-function(x){
-  n=length(x)
-  if(typeof(x)=="character"){
-    char_size=sum(sapply(x,length))+n
-    return(n*8+char_size)
-  }else{
-    return(n*type_size(typeof(x)))
-  }
-}
 

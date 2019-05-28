@@ -17,8 +17,8 @@ C_createSharedMemory <- function(R_x, R_dataInfo) {
     invisible(.Call(`_sharedObject_C_createSharedMemory`, R_x, R_dataInfo))
 }
 
-C_readSharedMemory <- function(R_DID) {
-    .Call(`_sharedObject_C_readSharedMemory`, R_DID)
+C_readSharedMemory <- function(dataID) {
+    .Call(`_sharedObject_C_readSharedMemory`, dataID)
 }
 
 C_createAltrep <- function(SM_obj) {
@@ -29,12 +29,8 @@ C_clearObj <- function(did) {
     invisible(.Call(`_sharedObject_C_clearObj`, did))
 }
 
-C_getDataID <- function() {
-    .Call(`_sharedObject_C_getDataID`)
-}
-
-C_getDataInfo <- function(did) {
-    .Call(`_sharedObject_C_getDataInfo`, did)
+C_getDataIDList <- function() {
+    .Call(`_sharedObject_C_getDataIDList`)
 }
 
 C_attachAttr <- function(R_source, R_tag, R_attr) {
@@ -45,12 +41,32 @@ C_ALTREP <- function(x) {
     .Call(`_sharedObject_C_ALTREP`, x)
 }
 
+C_getDataID <- function(did) {
+    .Call(`_sharedObject_C_getDataID`, did)
+}
+
+C_getProcessID <- function(did) {
+    .Call(`_sharedObject_C_getProcessID`, did)
+}
+
+C_getTypeID <- function(did) {
+    .Call(`_sharedObject_C_getTypeID`, did)
+}
+
+C_getLength <- function(did) {
+    .Call(`_sharedObject_C_getLength`, did)
+}
+
+C_getTotalSize <- function(did) {
+    .Call(`_sharedObject_C_getTotalSize`, did)
+}
+
 C_getCopyOnWrite <- function(did) {
     .Call(`_sharedObject_C_getCopyOnWrite`, did)
 }
 
-C_getSharedSub <- function(did) {
-    .Call(`_sharedObject_C_getSharedSub`, did)
+C_getSharedSubset <- function(did) {
+    .Call(`_sharedObject_C_getSharedSubset`, did)
 }
 
 C_getSharedDuplicate <- function(did) {
@@ -67,9 +83,5 @@ C_setSharedSub <- function(did, value) {
 
 C_setSharedDuplicate <- function(did, value) {
     invisible(.Call(`_sharedObject_C_setSharedDuplicate`, did, value))
-}
-
-sharedVector_duplicate <- function(x) {
-    .Call(`_sharedObject_sharedVector_duplicate`, x)
 }
 

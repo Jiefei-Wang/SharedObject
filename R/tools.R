@@ -175,3 +175,14 @@ parms=sapply(sharedOption,function(x,data)getSharedProperty(data,x),data=x)
 }
 
 
+
+calculateSharedMemerySize<-function(x){
+  n=length(x)
+  if(typeof(x)=="character"){
+    char_size=sum(sapply(x,length))+n
+    return(n*8+char_size)
+  }else{
+    return(n*type_size(typeof(x)))
+  }
+}
+

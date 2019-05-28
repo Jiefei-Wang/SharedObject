@@ -1,10 +1,8 @@
-#include "altrep_macro.h"
-#include "tools.h"
 #include "Rcpp.h"
-#include "R_ext/Altrep.h"
-
 #include "Rinternals.h"
-#include "altrep_registration.h"
+#include "tools.h"
+#include "altrepRegistration.h"
+#include "altrepMacro.h"
 
 const void* getPointer(SEXP x) {
 	const void* ptr;
@@ -48,7 +46,7 @@ R_altrep_class_t getAltClass(int type) {
 	case RAW_TYPE:
 		return shared_raw_class;
 	case STR_TYPE:
-		return shared_str_class;
+		//return shared_str_class;
 	default: errorHandle("Type of %d is not supported yet", type);
 	}
 }
@@ -58,7 +56,7 @@ R_altrep_class_t getAltClass(int type) {
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
                       void (*inspect_subtree)(SEXP, int, int, int))
 {
-  Rprintf(" Share object of type %s\n", SV_TYPE_CHAR(x));
+  Rprintf(" Share object of type %s\n", SV_TYPE_NAME(x));
   return TRUE;
 }
 
@@ -80,9 +78,9 @@ const void *sharedVector_dataptr_or_null(SEXP x)
 
 SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 	using namespace Rcpp;
-	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n",deep, SV_COW(x),SV_SHARED_DUPLICATE(x)));
+	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n",deep, SV_COPY_ON_WRITE(x),SV_SHARED_DUPLICATE(x)));
 	//Rf_PrintValue(SV_DATA(x, dataInfo));
-	if (SV_COW(x)) {
+	if (SV_COPY_ON_WRITE(x)) {
 		if (SV_SHARED_DUPLICATE(x)) {
 			Environment package_env("package:sharedObject");
 			Function getSharedParms = package_env["createInheritedParms"];
@@ -99,21 +97,6 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 		return(x);
 	}
 }
-// [[Rcpp::export]]
-SEXP sharedVector_duplicate(SEXP x) {
-	return(sharedVector_duplicate(x, (Rboolean)0L));
-}
-
-using namespace Rcpp;
-void sharedVector_updateAd(SEXP x)
-{
-	/*Environment env = SV_ENV(x);
-	Rcout << env.ls(true)<< "\n";
-	Rf_PrintValue(env.ls(true));*/
-	Function fun = SV_UPDATE_FUN(x);
-	fun();
-}
-
 
 SEXP sharedVector_serialized_state(SEXP x) {
 	DEBUG(Rprintf("serialize state\n");)
@@ -131,9 +114,7 @@ void loadLibrary() {
 }
 
 SEXP sharedVector_unserialize(SEXP R_class, SEXP state) {
-	//Rf_PrintValue(R_class);
-	//return R_class;
-	//return(Rf_ScalarInteger(1));
+	using namespace Rcpp;
 	DEBUG(Rprintf("unserializing data\n");)
 	
 	loadLibrary();

@@ -13,13 +13,13 @@
 
 #define DATAINFO_FIELDS_NUMBER 8
 #define DATAINFO_FIELDS \
-    X(0,DID, did) \
-    X(1,PID, pid) \
-    X(2,int, type_id) \
+    X(0,DID, dataID) \
+    X(1,PID, processID) \
+    X(2,int, typeID) \
     X(3,ULLong, length) \
-    X(4,ULLong, total_size) \
+    X(4,ULLong, totalSize) \
     X(5,bool, copyOnWrite) \
-    X(6,bool, sharedSub)\
+    X(6,bool, sharedSubset)\
 	X(7,bool, sharedDuplicate)
 
 #define X(id,type, name) extern const ULLong dataInfo_##name;

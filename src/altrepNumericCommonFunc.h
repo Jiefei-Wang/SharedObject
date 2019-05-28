@@ -1,6 +1,8 @@
 #pragma once
 #include "Rcpp.h"
-#include "altrep_common_func.h"
+#include "altrepCommonFunc.h"
+#include "altrepMacro.h"
+
 
 #define TMP_PTR(x) ((T*)SV_PTR(x))
 template<class T>
@@ -88,8 +90,8 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 			break;
 		}
 		SEXP res= wrap(Vector<SXP_TYPE>(result, result + len));
-		DEBUG(Rprintf("sharedSubset:%d\n", SV_SHAREDSUB(x));)
-		if (SV_SHAREDSUB(x)) {
+		DEBUG(Rprintf("sharedSubset:%d\n", SV_SHARED_SUBSET(x));)
+		if (SV_SHARED_SUBSET(x)) {
 			Function getSharedParms = package_env["createInheritedParms"];
 			List opt = getSharedParms(x);
 			Function sv_constructor = package_env["sharedVector"];
