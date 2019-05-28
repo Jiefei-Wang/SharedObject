@@ -61,3 +61,4 @@ void C_setSharedDuplicate(DID did, bool value) {
 	dataInfo& info = getDataInfo(did);
 	info.sharedDuplicate = value;
 }
+

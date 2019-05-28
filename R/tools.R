@@ -8,22 +8,22 @@ availableType=data.frame(
 
 
 #the size of the type
-type_size<-function(x){
+typeSize<-function(x){
   if(!x%in%typeName)
     stop("The type has not been defined: ", x)
   availableType[x,"size"]
 }
-type_size_id<-function(x){
-  type_size(get_type_name(x))
+typeSizeByID<-function(x){
+  typeSize(getTypeNameByID(x))
 }
 
-get_type_id<-function(x){
+getTypeIDByName<-function(x){
   if(!x%in%typeName)
     stop("The type has not been defined: ", x)
   availableType[x,"id"]
 }
 
-get_type_name<-function(id){
+getTypeNameByID<-function(id){
   ind=which(availableType[,"id"]%in%id)
   if(length(ind)==0)
     stop("The id does not correspond to any type: ", id)
@@ -49,27 +49,6 @@ generateKey<-function(){
   key=C_findAvailableKey(key)
   key
 }
-#' Serialize a shared Object
-#'
-#' Internal usage only
-#'
-#' @param x A shared object
-#' @export
-serializeSO<-function(x){
-did=getVecDID(x)
-return(did)
-}
-#' Unserialize a shared Object
-#'
-#' Internal usage only
-#'
-#' @param did A data ID for a shared object
-#' @export
-unserializeSO<-function(did){
-  sv=sharedVectorById(did)
-  return(sv)
-}
-
 
 #' Is an Object a desired type?
 #'
@@ -164,12 +143,11 @@ copyOnWrite_hidden<-function(x,opt){
 #Get the parameters that will be inherit by the child of a shared object
 #' @export
 createInheritedParms<-function(x){
-parms=sapply(sharedOption,function(x,data)getSharedProperty(data,x),data=x)
-
+  sm=peekSharedMemory(x)
   parms=list(
-    copyOnWrite=getVecCopyOnWrite(x),
-    sharedSub=getVecSharedSub(x),
-    sharedDuplicate=getVecSharedDuplicate(x)
+    copyOnWrite=sm$getCopyOnWrite(),
+    sharedSubset=sm$getSharedSubset(),
+    sharedDuplicate=sm$getSharedDuplicate()
   )
   parms
 }
@@ -182,7 +160,7 @@ calculateSharedMemerySize<-function(x){
     char_size=sum(sapply(x,length))+n
     return(n*8+char_size)
   }else{
-    return(n*type_size(typeof(x)))
+    return(n*typeSize(typeof(x)))
   }
 }
 

@@ -1,4 +1,4 @@
-dataInfoPropName=c("DataID","ProcessID","typeID","length","totalSize")
+dataInfoPropName=c("dataID","processID","typeID","length","totalSize")
 sharedOptions=c("copyOnWrite","sharedSubset","sharedDuplicate")
 dataInfoName=c(dataInfoPropName,sharedOptions)
 dataInfoTemplate=rep(0.0,length(dataInfoName))
@@ -6,7 +6,7 @@ names(dataInfoTemplate)=dataInfoName
 
 sharedMemory=
   setRefClass("sharedMemory",
-              fields = c("DataID","ownData","typeName","address"))
+              fields = c("dataID","ownData","typeName","address"))
 
 
 sharedMemory$methods(
@@ -24,7 +24,7 @@ sharedMemory$methods(
   },
   finalize=function(){
     if(ownData&&!RM_data$unloaded){
-      removeObject(.self$dataInfo["DataID"])
+      removeObject(.self$getDataID())
     }
     if(RM_data$unloaded){
       message("Fail to release data: The package has been unloaded.")
@@ -33,14 +33,14 @@ sharedMemory$methods(
   initializeWithData=function(x,options){
     dataInfo=dataInfoTemplate
 
-    if(!is.null(options$DataID)){
-      dataInfo["DataID"]=options$DataID
+    if(!is.null(options$dataID)){
+      dataInfo["dataID"]=options$dataID
     }else{
-      dataInfo=generateKey()
+      dataInfo["dataID"]=generateKey()
     }
 
-    dataInfo["ProcessID"]=RM$getPID()
-    dataInfo["typeID"]=get_type_id(typeof(x))
+    dataInfo["processID"]=RM$getPID()
+    dataInfo["typeID"]=getTypeIDByName(typeof(x))
     dataInfo["length"]=length(x)
     dataInfo["totalSize"]=calculateSharedMemerySize(x)
     for(i in sharedOptions){
@@ -49,7 +49,7 @@ sharedMemory$methods(
 
     C_createSharedMemory(x,dataInfo)
 
-    .self$DataID=dataInfo["DataID"]
+    .self$dataID=dataInfo["dataID"]
     .self$ownData=TRUE
     .self$typeName=typeof(x)
     .self$updateAddress()
@@ -59,9 +59,9 @@ sharedMemory$methods(
   },
   initializeWithID=function(did){
     dataInfo=getDataInfo_single(did)
-    .self$DataID=dataInfo["DataID"]
+    .self$dataID=dataInfo["dataID"]
     .self$ownData=FALSE
-    .self$type=get_type_name(dataInfo['typeID'])
+    .self$typeName=getTypeNameByID(dataInfo['typeID'])
     .self$updateAddress()
   }
 )

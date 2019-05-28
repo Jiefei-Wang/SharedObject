@@ -100,10 +100,11 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 
 SEXP sharedVector_serialized_state(SEXP x) {
 	DEBUG(Rprintf("serialize state\n");)
-	SEXP e = Rf_protect( Rf_lang2(Rf_install("serializeSO"),x));
-	SEXP did= R_tryEval(e, R_GlobalEnv, NULL);
-	Rf_unprotect(1);
-	return(did);
+	//SEXP e = Rf_protect( Rf_lang2(Rf_install("serializeSO"),x));
+	//SEXP did= R_tryEval(e, R_GlobalEnv, NULL);
+	//Rf_unprotect(1);
+
+	return(Rf_ScalarReal(SV_DATAID(x)));
 }
 
 void loadLibrary() {
@@ -120,7 +121,7 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP state) {
 	loadLibrary();
 	DEBUG(Rprintf("Library loaded\n");)
 	Environment package_env("package:sharedObject");
-	Function so_constructor = package_env["unserializeSO"];
+	Function so_constructor = package_env["sharedVectorById"];
 	SEXP so = so_constructor(state);
 	return so;
 }

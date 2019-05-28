@@ -265,7 +265,7 @@ void* readSharedObject(DID dataID) {
 			return segmentList[dataID]->get_address();
 		}
 		else {
-			errorHandle("The key %ull does not exist", dataID);
+			errorHandle("The key %llu does not exist", dataID);
 		}
 	}
 	catch (const std::exception & ex) {

@@ -28,8 +28,8 @@ SEXP C_testFunc(SEXP a)
 }
 
 // [[Rcpp::export]]
-DID C_findAvailableKey(DID did) {
-	return findAvailableKey(did);
+DID C_findAvailableKey(DID dataID) {
+	return findAvailableKey(dataID);
 }
 
 // [[Rcpp::export]]
@@ -60,7 +60,7 @@ SEXP C_readSharedMemory(DID dataID) {
 
 // [[Rcpp::export]]
 SEXP C_createAltrep(SEXP SM_obj){
-  int type= Rf_asInteger(SM_DATA(SM_obj, typeID));
+  int type= SM_TYPEID(SM_obj);
   DEBUG(Rprintf("type %d\n", type));
   R_altrep_class_t alt_class = getAltClass(type);
   DEBUG(Rprintf("get alt class\n"));
@@ -73,9 +73,9 @@ SEXP C_createAltrep(SEXP SM_obj){
 
 
 // [[Rcpp::export]]
-void C_clearObj(double did) {
+void C_clearObj(double dataID) {
 	try {
-		destroyObject(did);
+		destroyObject(dataID);
 	}
 	catch (const std::exception& ex) {
 		errorHandle("Unexpected error in removing object: \n%s" , ex.what());
@@ -86,8 +86,9 @@ void C_clearObj(double did) {
 std::vector<double> C_getDataIDList() {
 	return getDataIDList();
 }
-NumericVector C_getDataInfo(DID did) {
-	dataInfo& info= getDataInfo(did);
+// [[Rcpp::export]]
+NumericVector C_getDataInfo(DID dataID) {
+	dataInfo& info= getDataInfo(dataID);
 	NumericVector v(DATAINFO_FIELDS_NUMBER);
 #define X(id,type, name) v[id]=info.name;
 	DATAINFO_FIELDS

@@ -4,11 +4,42 @@
 #' @param x An automic object
 #' @param opt options
 #' @export
-sharedVector<-function(x,opt=list()){
-  sm=sharedMemory(x,opt)
+sharedVector<-function(x,options=list()){
+  sm=sharedMemory(x,options)
   obj=C_createAltrep(sm)
   obj
 }
+
+#' @export
+setGeneric("share",function(x,...){
+  standardGeneric("share")
+})
+
+
+setMethod("share",signature(x="vector"),function(x,...){
+  options=list(...)
+  sm=sharedMemory(x,options)
+  obj=C_createAltrep(sm)
+  obj=copyAttribute(x,obj)
+  obj
+} )
+
+setMethod("share",signature(x="data.frame"),function(x,...){
+  options=list(...)
+  obj=vector("list",length=length(x))
+  for(i in seq_along(obj)){
+    sm=sharedObject_hidden(x[[i]],options=options)
+    obj[[i]]=sm
+  }
+  obj=copyAttribute(x,obj)
+  obj
+
+} )
+setMethod("share",signature(x="list"),function(x,...){
+  stop("Shared list cannot be automatically created. Please create it manually")
+} )
+
+
 
 #' A fundamental tool to share an R object.
 #'
@@ -119,7 +150,7 @@ sharedObject_hidden<-function(x,options){
     obj=sharedDataFrame(x,options)
     return(obj)
   }
-  error("Unsupported data structure")
+  stop("Unsupported data structure")
 }
 
 
@@ -144,119 +175,4 @@ sharedDataFrame<-function(x,opt){
 
 
 
-
-getSharedProperty<-function(x,prop){
-  if(is.sharedVector(x)){
-    sm=peekSharedMemory(x)
-    if(prop%in%sharedOption){
-      res=switch(prop,
-                 copyOnWrite=C_getCopyOnWrite(getVecDID(x)),
-                 sharedSub=C_getSharedSub(getVecDID(x)),
-                 sharedDuplicate=C_getSharedDuplicate(getVecDID(x))
-             )
-      return(res)
-    }
-    if(prop%in%dataInfoName){
-      return(sm$dataInfo[prop])
-    }else{
-      return(sm[[prop]])
-    }
-  }else{
-    error("The object is not of shared memory class")
-  }
-}
-
-setSharedProperty<-function(x,prop,value){
-  if(is.sharedVector(x)){
-    sm=peekSharedMemory(x)
-    if(prop%in%sharedOption){
-      res=switch(prop,
-                 copyOnWrite=C_setCopyOnWrite(getVecDID(x),value),
-                 sharedSub=C_setSharedSub(getVecDID(x),value),
-                 sharedDuplicate=C_setSharedDuplicate(getVecDID(x),value)
-      )
-      sm$dataInfo[prop]=value
-    }
-    if(prop%in%dataInfoName){
-      sm$dataInfo[prop]=value
-    }else{
-      sm[[prop]]=value
-    }
-  }else{
-    error("The object is not of shared memory class")
-  }
-}
-
-#' Get/Set the property of a shared vector
-#'
-#' These function works for atomic shared vector only, it does not work for data.frame and list type.
-#'
-#' @param x a shared vector object
-#' @rdname sharedVectorProps
-#' @export
-getVecDID<-function(x){
-  getSharedProperty(x,"DID")
-}
-#' @rdname sharedVectorProps
-#' @export
-getVecPID<-function(x){
-  getSharedProperty(x,"PID")
-}
-#' @rdname sharedVectorProps
-#' @export
-getVecType<-function(x){
-  getSharedProperty(x,"type")
-}
-#' @rdname sharedVectorProps
-#' @export
-getVecTypeID<-function(x){
-  getSharedProperty(x,"type_id")
-}
-#' @rdname sharedVectorProps
-#' @export
-getVecTotalSize<-function(x){
-  getSharedProperty(x,"total_size")
-}
-#' @rdname sharedVectorProps
-#' @export
-getVecCopyOnWrite<-function(x){
-  as.logical(getSharedProperty(x,"copyOnWrite"))
-}
-#' @rdname sharedVectorProps
-#' @export
-getVecSharedSub<-function(x){
-  as.logical(getSharedProperty(x,"sharedSub"))
-}
-#' @rdname sharedVectorProps
-#' @export
-getVecSharedDuplicate<-function(x){
-  as.logical(getSharedProperty(x,"sharedDuplicate"))
-}
-getVecOwnData<-function(x){
-  getSharedProperty(x,"ownData")
-}
-
-
-
-#' @param value the value you want to change
-#' @rdname sharedVectorProps
-#' @export
-setVecCopyOnwrite<-function(x,value){
-  setSharedProperty(x,"copyOnWrite",value)
-}
-#' @rdname sharedVectorProps
-#' @export
-setVecSharedSub<-function(x,value){
-  setSharedProperty(x,"sharedSub",value)
-}
-#' @rdname sharedVectorProps
-#' @export
-setVecSharedDuplicate<-function(x,value){
-  setSharedProperty(x,"sharedDuplicate",value)
-}
-#' @rdname sharedVectorProps
-#' @export
-setVecOwnData<-function(x,value){
-  setSharedProperty(x,"ownData",value)
-}
 

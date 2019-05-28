@@ -2,65 +2,73 @@
 
 
 sharedMemory$methods(
-  getDataId=function(){
+  getDataID = function() {
     .self$dataID
   },
-  getProcessId=function(){
-    .self$processID
-  },
-  getTypeName=function(){
+  getTypeName = function() {
     .self$typeName
   },
-  getOwnData=function(){
+  getOwnData = function() {
     .self$ownData
   },
-  getTypeID=function(){
-    C_getTypeID(.self$getDataId())
+  getProcessID = function() {
+    C_getProcessID(.self$getDataID())
   },
-  getLength=function(){
-    C_getLength(.self$getDataId())
+  getTypeID = function() {
+    C_getTypeID(.self$getDataID())
   },
-  getTotalSize=function(){
-    C_getTotalSize(.self$getDataId())
+  getLength = function() {
+    C_getLength(.self$getDataID())
   },
-  getCopyOnWrite=function(){
-    C_getCopyOnWrite(.self$getDataId())
+  getTotalSize = function() {
+    C_getTotalSize(.self$getDataID())
   },
-  getSharedSubset=function(){
-    C_getSharedSubset(.self$getDataId())
+  getCopyOnWrite = function() {
+    C_getCopyOnWrite(.self$getDataID())
   },
-  getSharedDuplicate=function(){
-    C_getSharedDuplicate(.self$getDataId())
+  getSharedSubset = function() {
+    C_getSharedSubset(.self$getDataID())
   },
-  updateAddress=function(){
-    .self$address=C_readSharedMemory(.self$getDataId())
+  getSharedDuplicate = function() {
+    C_getSharedDuplicate(.self$getDataID())
   },
-  possess=function(){
-    .self$ownData=TRUE
+  setCopyOnWrite = function(value) {
+    C_setCopyOnWrite(.self$getDataID(), value)
   },
-  surrender=function(){
-    .self$ownData=FALSE
+  setSharedSubset = function(value) {
+    C_setSharedSubset(.self$getDataID(), value)
   },
-  show = function(){
+  setSharedDuplicate = function(value) {
+    C_setSharedDuplicate(.self$getDataID(), value)
+  },
+  updateAddress = function() {
+    .self$address = C_readSharedMemory(.self$getDataID())
+  },
+  possess = function() {
+    .self$ownData = TRUE
+  },
+  surrender = function() {
+    .self$ownData = FALSE
+  },
+  show = function() {
     cat("Shared memory object\n")
-    cat("",'Data ID: ', .self$getDataID(), '\n')
-    cat("",'Process ID: ', .self$getProcessID(), '\n')
-    cat("",'Type ID: ', .self$getTypeID(), '\n')
-    cat("",'Type name: ', .self$getTypeName(), '\n')
-    cat("",'Length: ', .self$getLength(), '\n')
-    cat("",'Total size: ', .self$getTotalSize(), '\n')
-    cat("",'Copy on write: ', .self$getCopyOnWrite(), '\n')
-    cat("",'Shared subset: ', .self$getSharedSubset(), '\n')
-    cat("",'Shared duplicate: ', .self$getSharedDuplicate(), '\n')
-    cat("",'Own data: ', .self$getOwnData(), '\n')
-    cat("",'Address: ', capture.output(.self[["address"]]), '\n')
+    cat("", 'Data ID:\t', as.character(.self$getDataID()), '\n')
+    cat("", 'Process ID:\t', .self$getProcessID(), '\n')
+    cat("", 'Type ID:\t', .self$getTypeID(), '\n')
+    cat("", 'Type name:\t', .self$getTypeName(), '\n')
+    cat("", 'Length:\t', .self$getLength(), '\n')
+    cat("", 'Total size:\t', .self$getTotalSize(), '\n')
+    cat("", 'Copy on write:\t', .self$getCopyOnWrite(), '\n')
+    cat("", 'Shared subset:\t', .self$getSharedSubset(), '\n')
+    cat("", 'Shared duplicate: ', .self$getSharedDuplicate(), '\n')
+    cat("", 'Own data:\t', .self$getOwnData(), '\n')
+    cat("", 'Address:\t', capture.output(.self[["address"]]), '\n')
   }
 )
 
 
-createSharedMemoryByID<-function(did){
- sm=sharedMemory()
- sm$initializeWithID(did)
- sm
+createSharedMemoryByID <- function(dataID) {
+  sm = sharedMemory()
+  sm$initializeWithID(dataID)
+  sm
 }
-

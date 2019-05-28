@@ -9,8 +9,8 @@ C_testFunc <- function(a) {
     .Call(`_sharedObject_C_testFunc`, a)
 }
 
-C_findAvailableKey <- function(did) {
-    .Call(`_sharedObject_C_findAvailableKey`, did)
+C_findAvailableKey <- function(dataID) {
+    .Call(`_sharedObject_C_findAvailableKey`, dataID)
 }
 
 C_createSharedMemory <- function(R_x, R_dataInfo) {
@@ -25,12 +25,16 @@ C_createAltrep <- function(SM_obj) {
     .Call(`_sharedObject_C_createAltrep`, SM_obj)
 }
 
-C_clearObj <- function(did) {
-    invisible(.Call(`_sharedObject_C_clearObj`, did))
+C_clearObj <- function(dataID) {
+    invisible(.Call(`_sharedObject_C_clearObj`, dataID))
 }
 
 C_getDataIDList <- function() {
     .Call(`_sharedObject_C_getDataIDList`)
+}
+
+C_getDataInfo <- function(dataID) {
+    .Call(`_sharedObject_C_getDataInfo`, dataID)
 }
 
 C_attachAttr <- function(R_source, R_tag, R_attr) {

@@ -29,13 +29,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_findAvailableKey
-DID C_findAvailableKey(DID did);
-RcppExport SEXP _sharedObject_C_findAvailableKey(SEXP didSEXP) {
+DID C_findAvailableKey(DID dataID);
+RcppExport SEXP _sharedObject_C_findAvailableKey(SEXP dataIDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DID >::type did(didSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_findAvailableKey(did));
+    Rcpp::traits::input_parameter< DID >::type dataID(dataIDSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_findAvailableKey(dataID));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -73,12 +73,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_clearObj
-void C_clearObj(double did);
-RcppExport SEXP _sharedObject_C_clearObj(SEXP didSEXP) {
+void C_clearObj(double dataID);
+RcppExport SEXP _sharedObject_C_clearObj(SEXP dataIDSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type did(didSEXP);
-    C_clearObj(did);
+    Rcpp::traits::input_parameter< double >::type dataID(dataIDSEXP);
+    C_clearObj(dataID);
     return R_NilValue;
 END_RCPP
 }
@@ -89,6 +89,17 @@ BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(C_getDataIDList());
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getDataInfo
+NumericVector C_getDataInfo(DID dataID);
+RcppExport SEXP _sharedObject_C_getDataInfo(SEXP dataIDSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type dataID(dataIDSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getDataInfo(dataID));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -247,6 +258,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_sharedObject_C_createAltrep", (DL_FUNC) &_sharedObject_C_createAltrep, 1},
     {"_sharedObject_C_clearObj", (DL_FUNC) &_sharedObject_C_clearObj, 1},
     {"_sharedObject_C_getDataIDList", (DL_FUNC) &_sharedObject_C_getDataIDList, 0},
+    {"_sharedObject_C_getDataInfo", (DL_FUNC) &_sharedObject_C_getDataInfo, 1},
     {"_sharedObject_C_attachAttr", (DL_FUNC) &_sharedObject_C_attachAttr, 3},
     {"_sharedObject_C_ALTREP", (DL_FUNC) &_sharedObject_C_ALTREP, 1},
     {"_sharedObject_C_getDataID", (DL_FUNC) &_sharedObject_C_getDataID, 1},

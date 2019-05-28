@@ -74,11 +74,9 @@ void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_l
 
 template<int SXP_TYPE, class C_TYPE>
 SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
+	DEBUG(Rprintf("Accessing subset, sharedSubset: %d\n", SV_SHARED_SUBSET(x));)
 	using namespace Rcpp;
-	DEBUG(Rprintf("accessing subset\n"));
 	Environment package_env("package:sharedObject");
-
-
 		R_xlen_t len = Rf_xlength(indx);
 		C_TYPE* result = Calloc(len ,C_TYPE);
 		switch (TYPEOF(indx)) {
@@ -90,7 +88,6 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 			break;
 		}
 		SEXP res= wrap(Vector<SXP_TYPE>(result, result + len));
-		DEBUG(Rprintf("sharedSubset:%d\n", SV_SHARED_SUBSET(x));)
 		if (SV_SHARED_SUBSET(x)) {
 			Function getSharedParms = package_env["createInheritedParms"];
 			List opt = getSharedParms(x);
