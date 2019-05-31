@@ -182,6 +182,8 @@ OS_shared_memory_object* obj=new OS_shared_memory_object(openType, name, mode, p
 obj->truncate(size);
 #endif
 
+
+
 /*
 Create a shared memory
 add the shared_memory object into the sharedMemoryList
@@ -196,18 +198,11 @@ void* reserveSpace(DID dataID, ULLong size) {
 		boost::interprocess::permissions perm;
 		perm.set_unrestricted();
 		CREATE_SHARED_MEM(sharedData, create_only, dataKey.c_str(), read_write, perm, size);
-		sharedMemoryList.insert(pair<DID, OS_shared_memory_object*>(dataID, sharedData));
-		//mapped_region region(*sharedData, read_write);
-		mapped_region* region = new mapped_region(*sharedData, read_write);
-		//segmentList
-		segmentList.insert(pair<DID, mapped_region*>(dataID, region));
-		return(region->get_address());
+		return(readSharedObject(dataID, dataKey.c_str()));
 	}
 	catch (const std::exception & ex) {
 		removeSharedMemory(dataKey.c_str());
-		removeVectorKeyAndValueIfExist(sharedMemoryList, dataID);
-		removeVectorKeyAndValueIfExist(segmentList, dataID)
-			errorHandle(string("Can't open shared object,\n") + ex.what());
+		errorHandle(string("Can't open shared object,\n") + ex.what());
 	}
 	return nullptr;
 }
@@ -254,21 +249,42 @@ void createSharedObject(const void* data, const dataInfo DI) {
 	insertDataInfo(DI);
 }
 
-
-
 void* readSharedObject(DID dataID) {
-	initialSharedMemory();
 	string signature = getDataMemoryKey(dataID);
+	return(readSharedObject(dataID, signature.c_str()));
+}
+/*
+Read a shared object by ID
+If the shared oject is not recorded in sharedMemoryList or segmentList, it will be recorded
+If the shared object does not exist, an error will be thrown.
+*/
+void* readSharedObject(DID dataID,const char* signature) {
+	initialSharedMemory();
 	try
 	{
-		if (segmentList.find(dataID) != segmentList.end()) {
-			return segmentList[dataID]->get_address();
+		if (sharedMemoryList.find(dataID) != sharedMemoryList.end()) {
+			if (segmentList.find(dataID) != segmentList.end()) {
+				return segmentList[dataID]->get_address();
+			}
+			else {
+				mapped_region* region = new mapped_region(*sharedMemoryList.find(dataID)->second, read_write);
+				//segmentList
+				segmentList.insert(pair<DID, mapped_region*>(dataID, region));
+				return region->get_address();
+			}
 		}
 		else {
-			errorHandle("The key %llu does not exist", dataID);
+			OS_shared_memory_object* sharedData =new OS_shared_memory_object(open_only, signature, read_write);
+			sharedMemoryList.insert(pair<DID, OS_shared_memory_object*>(dataID, sharedData));
+			mapped_region* region = new mapped_region(*sharedData, read_write);
+			//segmentList
+			segmentList.insert(pair<DID, mapped_region*>(dataID, region));
+			return(region->get_address());
 		}
 	}
 	catch (const std::exception & ex) {
+		removeVectorKeyAndValueIfExist(sharedMemoryList, dataID);
+		removeVectorKeyAndValueIfExist(segmentList, dataID)
 		errorHandle("Can't read shared object:%s\n", ex.what());
 	}
 	return(NULL);
@@ -314,8 +330,6 @@ dataInfo& getDataInfo(DID dataID) {
 	catch (const std::exception & ex) {
 		errorHandle("Unexpected error while trying to open %llu\n", dataID);
 	}
-	dataInfo tmp;
-	return(tmp);
 }
 
 

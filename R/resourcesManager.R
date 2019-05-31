@@ -21,7 +21,7 @@ RM$getPID<-function(){
 #' @return no return value
 #' @export
 removeAllObject<-function(){
-  dids=getDataID()
+  dids=getDataIDList()
   removeObject(dids)
   invisible()
 }
@@ -44,8 +44,8 @@ removeObject_single<-function(id){
 }
 
 
-getDataID<-function(){
-  C_getDataID()
+getDataIDList<-function(){
+  C_getDataIDList()
 }
 
 #' Get a summary report of the data in the shared memory
@@ -59,7 +59,7 @@ getDataID<-function(){
 #' @export
 getDataInfo<-function(data_ids=NULL){
   if(is.null(data_ids)){
-    data_ids=getDataID()
+    data_ids=getDataIDList()
   }
   res=sapply(data_ids, getDataInfo_single)
   if(length(res)==0){

@@ -25,6 +25,8 @@ setGlobal<-function(name,x){
 }
 
 
+
+
 #' @export
 sharedParms.copyOnWrite<-function(x=NULL){
   setGlobal("copyOnWrite",x)
@@ -32,7 +34,7 @@ sharedParms.copyOnWrite<-function(x=NULL){
 
 
 sharedParms.sharedSub<-function(x=NULL){
-  setGlobal("sharedSub",x)
+  setGlobal("sharedSubset",x)
 }
 
 sharedParms.sharedDuplicate<-function(x=NULL){

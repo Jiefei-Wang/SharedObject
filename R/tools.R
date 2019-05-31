@@ -31,7 +31,7 @@ getTypeNameByID<-function(id){
 }
 
 #' @export
-peekSharedMemory<-function(x){
+getSharedProperty<-function(x){
   C_peekSharedMemory(x)
 }
 
@@ -75,7 +75,7 @@ is.sharedObject<-function(x){
 #' @export
 is.sharedVector<-function(x){
   if(is.atomic(x)){
-    sm=peekSharedMemory(x)
+    sm=getSharedProperty(x)
     if(!is.null(sm)&&is(sm,"sharedMemory")){
       return(TRUE)
     }
@@ -83,57 +83,37 @@ is.sharedVector<-function(x){
   return(FALSE)
 }
 
-#' Get or set the copy-on-write feature
+#' Set the copy-on-write feature
 #'
-#' Get or set the copy-on-write feature for a shared object
+#' Set the copy-on-write feature for a shared object
 #'
 #' @param x A shared object
-#' @return 'copyOnwriteProp': A copy-on-write property
-#' @rdname copyOnWrite
-#' @export
-copyOnwriteProp<-function(x){
-  if(is.sharedVector(x)){
-    return(getVecCopyOnWrite(x))
-  }
-
-  if(is.data.frame(x)){
-    res=logical(ncol(x))
-    for(i in seq_len(ncol(x))){
-      if(is.sharedVector(x)){
-        res[i]=getVecCopyOnWrite(x[,i])
-      }else{
-        res[i]=TRUE
-      }
-    }
-    return(all(res))
-  }
-
-  message("The object is not a shared object")
-}
 #' @return 'setCopyOnwrite': No return value
 #' @rdname copyOnWrite
 #' @export
 setCopyOnwrite<-function(x){
-  copyOnWrite_hidden(x,TRUE)
+  copyOnWriteHidden(x,TRUE)
   invisible()
 }
 #' @return 'unsetCopyOnwrite': No return value
 #' @rdname copyOnWrite
 #' @export
 unsetCopyOnwrite<-function(x){
-  copyOnWrite_hidden(x,FALSE)
+  copyOnWriteHidden(x,FALSE)
   invisible()
 }
 
-copyOnWrite_hidden<-function(x,opt){
+copyOnWriteHidden<-function(x,opt){
   if(is.sharedVector(x)){
-    setVecCopyOnwrite(x,opt)
+    sm=getSharedProperty(x)
+    sm$setCopyOnWrite(opt)
   #return(x)
   }
   if(is.data.frame(x)){
     for(i in seq_len(ncol(x))){
       if(is.altrep(x)){
-        setVecCopyOnwrite(x[,i],opt)
+        sm=getSharedProperty(x[,i])
+        sm$setCopyOnWrite(opt)
       }
     }
     #return(x)
@@ -143,7 +123,7 @@ copyOnWrite_hidden<-function(x,opt){
 #Get the parameters that will be inherit by the child of a shared object
 #' @export
 createInheritedParms<-function(x){
-  sm=peekSharedMemory(x)
+  sm=getSharedProperty(x)
   parms=list(
     copyOnWrite=sm$getCopyOnWrite(),
     sharedSubset=sm$getSharedSubset(),

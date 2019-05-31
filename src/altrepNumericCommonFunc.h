@@ -91,7 +91,7 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 		if (SV_SHARED_SUBSET(x)) {
 			Function getSharedParms = package_env["createInheritedParms"];
 			List opt = getSharedParms(x);
-			Function sv_constructor = package_env["sharedVector"];
+			Function sv_constructor = package_env["share"];
 			SEXP so = sv_constructor(res, opt);
 			return so;
 		}
