@@ -105,14 +105,16 @@ setGeneric("share",function(x,...){
   standardGeneric("share")
 })
 
-
-setMethod("share",signature(x="vector"),function(x,...){
+shareAtomic<-function(x,...){
   options=as.list(unlist(list(...)))
   sm=sharedMemory(x,options)
   obj=C_createAltrep(sm)
   obj=copyAttribute(x,obj)
   obj
-} )
+}
+
+setMethod("share",signature(x="vector"),shareAtomic)
+setMethod("share",signature(x="matrix"),shareAtomic)
 
 setMethod("share",signature(x="data.frame"),function(x,...){
   options=as.list(unlist(list(...)))

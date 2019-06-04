@@ -20,77 +20,92 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-library("sharedObject")
+library("SharedObject")
 ```
 # Introduction
-The `sharedObject` package is designed for sharing data across multiple R threads, where all threads can read the data located in the same memory location. This sharing mechanism is capable to save the memory usage and reduce the overhead of data preparation in the parallel computing. The use of the package arises from many data-science subjects such as gene data analysis, in which case A paralle computing is desirable and the data used in the parallel computing is very large. Blindly calling an export function such as `clusterExport` will duplicate the data for each process and it is obviously unnecessary if the data is read-only in the parallel computing. The `sharedObject` package can share the data without duplications and A new set of APIs called `ALTREP` is used to provide a seamless experience in the parallel computing.
+The `SharedObject` package is designed for sharing data across multiple R processes, where all processes can read the data located in the same memory location. This sharing mechanism has the potential to save the memory usage and reduce the overhead of data transmission in the parallel computing. The use of the package arises from many data-science subjects such as high-throughput gene data analysis, in which case A paralle computing is desirable and the data is very large. Blindly calling an export function such as `clusterExport` will duplicate the data for each process and it is obviously unnecessary if the data is read-only in the parallel computing. The `sharedObject` package can share the data without duplications and is able to reduce the time cost. A new set of R APIs called `ALTREP` is used to provide a seamless experience when sharing an object.
 
 #Quick example
-We first illustrate the package with an example. In the example, we create a cluster with 4 cores and share an n-by-n matrix `A` across all cores, we use the function `sharedObject` to aviod the duplication of the matrix `A` when calling the function `clusterExport`:
+We first illustrate the package with an example. In the example, we create a cluster with 4 cores and share an n-by-n matrix `A`, we use the function `share` to create the shared object `A_shr` and call the function `clusterExport` to export it:
 
 ```{r}
 library(parallel)
-#Initiate the cluster
+## Initiate the cluster
 cl=makeCluster(4)
-#create data
+## create data
 n=3
 A=matrix(runif(n^2),n,n)
-#create shared object
-A_shr=sharedObject(A)
-#export the shared object
+## create shared object
+A_shr=share(A)
+## export the shared object
 clusterExport(cl,"A_shr")
 ```
-As the code shows above, the procedure is very similar to what people usually do in the parallel computing, except that instead of sharing the matrix `A`, we first create a shared object `A_shr` and call `clusterExport` to share it. Notably, there is no different between the matrix `A` and the shared object `A_shr`. The shared object `A_shr` is neither an S3 nor S4 object and its behavior is exactly the same as the matrix `A`, so there is no need to change the existing code to work with the shared object. We can verify this through
+As the code shows above, the procedure of sharing a shared object is similar to the procedure of sharing an R object, except that we replace the matrix `A` with a shared object `A_shr`. Notably, there is no different between the matrix `A` and the shared object `A_shr`. The shared object `A_shr` is neither an S3 nor S4 object and its behaviors are exactly the same as the matrix `A`, so there is no need to change the existing code to work with the shared object. We can verify this through
 ```{r}
-#check the data
+## check the data
 A
 A_shr
-#check the properties
+## check the properties
 attributes(A)
 attributes(A_shr)
-#check the class
+## check the class
 class(A)
 class(A_shr)
 ```
-A user can treate the shared object as a matrix and do operations on it as usual.
+Users can treate the shared object as a matrix and do operations on it as usual.
 
 #Supported data types
 Currently, the package supports `atomic`(aka `vector`), `matrix` and `data.frame` data structures. `List` is not allowed for the `sharedObject` function but users can create a shared object for each child of the list.
 
-The type of `integer`, `numeric`, `logical` and `raw` are available for sharing. `string` type has not been fully implemented.
+Please note that `data.frame` is fundamentally a list of vectors. Sharing a `data.frame` will share its vector elements, not the `data.frame` itself. Therefore, adding or replace a column in a shared `data.frame` will not affect the shared memory. Users should avoid such behaviors.
+
+The type of `integer`, `numeric`, `logical` and `raw` are available for sharing. `string` is not supported.
+
 
 
 #Check object class
-In order to distinguish the shared object, the package provide several functions to examine the internal data structure
+In order to distinguish a shared object, the package provide several functions to examine the internal data structure
 
 ```{r}
-#Check if an object is of an ALTREP class
+## Check if an object is of an ALTREP class
 is.altrep(A)
 is.altrep(A_shr)
 
-#Check if an object is a shared vector.
-#This is only valid for vector type
+## Check if an object is a shared vector.
+## This is only valid for vector type
 is.sharedVector(A)
 is.sharedVector(A_shr)
 
-#Check if an object is a shared object
-#This works for both vector and data.frame
+## Check if an object is a shared object
+## This works for both vector and data.frame
 is.sharedObject(A)
 is.sharedObject(A_shr)
 ```
-The function `is.altrep` only checks if an object is using ALTREP. Since a shared object is created using ALTREP class, the function always returns `TRUE` for a shared object. However, R also creates ALTREP object when required(e.g. A=1:10, A is an ALTREP object), this function cannot be used to check whether an object is a shared object. `is.sharedVector` is the low level API to check the shared object, but it only works for an atomic vector. `is.sharedObject` is the most suitable way to check the shared object. For `data.fram` type, it return `TRUE` only when all of its columns are shared objects.
+The function `is.altrep` only checks if an object is an ALTREP object. Since the shared object class inherits ALTREP class, the function returns `TRUE` for a shared object. However, R also creates ALTREP object in some cases(e.g. A=1:10, A is an ALTREP object), this function may fail to check determine whether an object is a shared object. `is.sharedVector` is the low level API to check the shared object, but it only works for an atomic vector. `is.sharedObject` is the most suitable way to check the shared object. For `data.frame` type, it return `TRUE` only when all of its vector elements are shared objects.
 
 There are several properties with the shared object, one can check them via
 ```{r}
-peekSharedMemory(A_shr)
+## get a summary report
+getSharedProperty(A_shr)
+
+## get the individual properties
+getDataID(A_shr)
+getTypeName(A_shr)
+getOwnData(A_shr)
+getProcessID(A_shr)
+getTypeID(A_shr)
+getLength(A_shr)
+getTotalSize(A_shr)
+getCopyOnWrite(A_shr)
+getSharedSubset(A_shr)
+getSharedCopy(A_shr)
 ```
 Please see the advanced topic in the next section to see which properties are changable and how to change them in a proper way.
 
 
-
 #Advanced topic: Copy-On-Write
 
-Because all cores are using the shared object `A_shr` located in the same memory location, a reckless change made on the matrix `A_shr` in one process will immediately be broadcasted to the other process. To prevent users from changing the values of a shared object without awareness, a shared object will duplicate itself if a change of its value is required. Therefore, the code like
+Because all cores are using the shared object `A_shr` located in the same memory location, a reckless change made on the matrix `A_shr` in one process will immediately be broadcasted to the other process. To prevent users from changing the values of a shared object without awareness, a shared object will duplicate itself if a change of its value is made. Therefore, the code like
 
 ```{r}
 A_shr2=A_shr
@@ -99,53 +114,54 @@ A_shr[1,1]=10
 A_shr
 A_shr2
 ```
-will result in a memory dulplication. The matrix `A_shr2` is not affected. This default behavior can be overwritten by passing an argument `copyOnWrite` to the function `sharedObject`. For example
+will result in a memory dulplication. The matrix `A_shr2` is not affected. This default behavior can be overwritten by passing an argument `copyOnWrite` to the function `share`. For example
 
 ```{r}
-A_shr=sharedObject(A,copyOnWrite=FALSE)
+A_shr=share(A,copyOnWrite=FALSE)
 A_shr2=A_shr
 A_shr[1,1]=10
 
 A_shr
 A_shr2
 ```
-As the result shows, a change in the matrix `A_shr` cause a change in `A_shr2`. This feature could be potentially useful to return the result from each R process without additional memory allocation, so `A_shr` can be both the initial data and the final result. However, due to the limitation of R, only copy-on-write feature is fully supported, not the reverse. it is possible to change the value of a shared object unexpectly even when we are aware of the copy-on-write feature
+A change in the matrix `A_shr` cause a change in `A_shr2`. This feature could be potentially useful to return the result from each R process without additional memory allocation, so `A_shr` can be both the initial data and the final result. However, due to the limitation of R, only copy-on-write feature is fully supported, not the reverse. it is possible to change the value of a shared object unexpectly.
 
 ```{r}
-A_shr=sharedObject(A,copyOnWrite=FALSE)
+A_shr=share(A,copyOnWrite=FALSE)
 -A_shr
 A_shr
 ```
-The above bad example shows how dangerous it could be if the copy-on-write feature is off. Simply calling an unary function can change the values of a shared object. Therefore, for the safty of the naive user, the copy-on-write feature is active by default. For the experienced user, the package provides `setCopyOnwrite` and `unsetCopyOnwrite` functions to switch the copy-on-write feature. There is no return value for those functions.
+The above example shows an unexpected result when the copy-on-write feature is off. Simply calling an unary function can change the values of a shared object. Therefore, for the safty of the naive user, the copy-on-write feature is active by default. For the experienced user, the the copy-on-write feature can be altered via `setCopyOnwrite` funtion. There is no return value for the function.
 
 ```{r}
-A_shr=sharedObject(A,copyOnWrite=FALSE)
+A_shr=share(A,copyOnWrite=FALSE)
 #Assign A_shr to another object
 A_shr2=A_shr
 #change the value of A_shr
-A_shr[1]=10
+A_shr[1,1]=10
 #Both A_shr and A_shr2 are affected
 A_shr
 A_shr2
 #Enable copy-on-write
-setCopyOnwrite(A_shr)
+setCopyOnWrite(A_shr,TRUE)
 #The unary function does not affect the variable A_shr
 -A_shr
 A_shr
 
-copyOnwriteProp(A_shr)
+getCopyOnWrite(A_shr)
 ```
-These flexibilities provide us a way to do safe operations during the computation and return the results without memory cost.
+These flexibilities provide us a way to do safe operations during the computation and return the results without memory duplications.
 
 ##Warning
-If a high-precision value is assigned to a low-precision shared object, An implicit type conversion will be triggered for correctly storing the change. Therefore, the change will not be broadcasted even if the copy-on-write feature is off. The most common senario is to assign a numeric value to an integer shared object.
+If a high-precision value is assigned to a low-precision shared object, An implicit type conversion will be triggered for correctly storing the change. The resulting object would be a regular R object, not a shared object. Therefore, the change will not be broadcasted even if the copy-on-write feature is off. The most common senario is to assign a numeric value to an integer shared object. Users should be caution with the data type that a shared object is using.
 
-#Advanced topic: shared subset and shared duplicate
-The options `sharedSub` and `sharedDuplicate` controls whether to create a shared object for the subset function and duplicate function respectively. For performance consideration, the default settings are `sharedSub=TRUE` and `sharedDuplicate=FALSE`, but they can be overwritten via:
+#Advanced topic: shared subset and shared copy
+The options `sharedSubset` controls whether to create a shared object when subsetting a shared object. `sharedCopy` determines if the duplication of a shared object is still a shared object. For performance consideration, the default settings are `sharedSubset=TRUE` and `sharedDuplicate=FALSE`, but they can be overwritten via:
 ```{r}
-A_shr=sharedObject(A,sharedSub=FALSE,sharedDuplicate=TRUE)
-peekSharedMemory(A_shr)
+A_shr=share(A,sharedSubset=FALSE,sharedCopy=TRUE)
+getSharedProperty(A_shr)
 ```
+Please note that `sharedCopy` is only available when `copyOnWrite=TRUE`.
 
 #Session Information
 ```{r}
