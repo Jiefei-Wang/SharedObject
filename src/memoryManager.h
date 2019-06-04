@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "sharedObject_types.h"
+#include "SharedObject_types.h"
 #include <vector>
 
 

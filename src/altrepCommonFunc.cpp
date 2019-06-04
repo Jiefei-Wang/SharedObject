@@ -82,10 +82,10 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 	//Rf_PrintValue(SV_DATA(x, dataInfo));
 	if (SV_COPY_ON_WRITE(x)) {
 		if (SV_SHARED_DUPLICATE(x)) {
-			Environment package_env("package:sharedObject");
+			Environment package_env(PACKAGE_ENV_NAME);
 			Function getSharedParms = package_env["createInheritedParms"];
 			List opt = getSharedParms(x);
-			Function sv_constructor = package_env["sharedVector"];
+			Function sv_constructor = package_env["share"];
 			SEXP so = sv_constructor(x, opt);
 			return(so);
 		}
@@ -109,7 +109,7 @@ SEXP sharedVector_serialized_state(SEXP x) {
 
 void loadLibrary() {
 	SEXP e;
-	Rf_protect(e = Rf_lang2(Rf_install("library"), Rf_mkString("sharedObject")));
+	Rf_protect(e = Rf_lang2(Rf_install("library"), Rf_mkString(PACKAGE_NAME)));
 	R_tryEval(e, R_GlobalEnv, NULL);
 	Rf_unprotect(1);
 }
@@ -120,7 +120,7 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP state) {
 	
 	loadLibrary();
 	DEBUG(Rprintf("Library loaded\n");)
-	Environment package_env("package:sharedObject");
+	Environment package_env(PACKAGE_ENV_NAME);
 	Function so_constructor = package_env["sharedVectorById"];
 	SEXP so = so_constructor(state);
 	return so;

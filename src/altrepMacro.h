@@ -1,5 +1,4 @@
 #pragma once
-#define PGKNAME "sharedObject"
 #include "C_memoryManagerInterface.h"
 
 //Shared memory basic macros
@@ -20,7 +19,7 @@
 #define SM_TOTAL_SIZE(x) C_getTotalSize(SM_DATAID(x))
 #define SM_COPY_ON_WRITE(x) C_getCopyOnWrite(SM_DATAID(x))
 #define SM_SHARED_SUBSET(x)  C_getSharedSubset(SM_DATAID(x))
-#define SM_SHARED_DUPLICATE(x)  C_getSharedDuplicate(SM_DATAID(x))
+#define SM_SHARED_DUPLICATE(x)  C_getSharedCopy(SM_DATAID(x))
 
 //shared vector basic macros
 #define SV_ENV(x) SM_ENV(R_altrep_data1(x))

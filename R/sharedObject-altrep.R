@@ -1,32 +1,35 @@
 #' Create an R object in the shared memory
 #'
-#' This function will create an object in the shared memory for the function argument `x`,
-#' It can be exported to the other R processes. If exported, the object in all processes will use
-#' the same data in the same memory location. Therefore, there is no cost to share the return value of this function.
-#' @param x An R object that you want to shared. The data type can be `vector`,
-#' `matrix` and `data.frame`. List is not supported.
+#' This function will create an object in the shared memory for the function argument `x`
+#' and return a shared object. There is no duplication of the shared object when it is
+#' exported to the other processes. All the shared objects will use the data located in
+#' the same shared memory space.
+#'
+#' @param x An R object that you want to shared. The supported data types are
+#' `raw`, `logical`, `integer` and `real`. The data structure can be `vector`,
+#' `matrix` and `data.frame`. List is not supported but can be created manually.
 #' @param ... Additional parameters that will be passed to the shared object, see details.
 #'
 #'
 #' @return A shared object
 #' @details
-#' When the function argument `x` is an automic object(e.g vector, matrix),
+#' When the function argument `x` is an atomic object(e.g vector, matrix),
 #' the function will create an ALTREP object to replace it.
 #' When `x` is a data frame, each column of `x` will be replaced by an ALTREP object.
 #'
-#' On the R level, the behaviors of an ALTREP object is exactly the same as an automic object(AKA vector),
-#' but the data of an ALTREP object is allocated in the shared memory space. Therefore an ALTREP object
-#' can be easily exported to the other R processes without dulplicate the memory, which reduces the memory
-#' usage and the overhead of data transmission.
+#' In the R level, the behaviors of an ALTREP object is exactly the same as an atomic object
+#' but the data of an ALTREP object is allocated in the shared memory space. Therefore an
+#' ALTREP object can be easily exported to the other R processes without dulplicating the
+#' data, which reduces the memory usage and the overhead of data transmission.
 #'
 #' The behavior of a shared object can be controlled through three parameters:
-#' `copyOnWrite`, `sharedSubset` and `sharedDuplicate`.
+#' `copyOnWrite`, `sharedSubset` and `sharedCopy`.
 #'
 #' `copyOnWrite` determines Whether a new R object need to be allocated when the
 #' shared object is changed. The default value is `TRUE`, but can be altered by passing
 #' an argument `copyOnWrite=FALSE` to the function.
 #'
-#' The no-copy-on-write feature is not fully supported by R. In other words, when
+#' Please note that the no-copy-on-write feature is not fully supported by R. When
 #' `copyOnWrite` is `FALSE`, a shared object might not behaves as user expects.
 #' Please refer to the example code to see the exceptions.
 #'
@@ -34,49 +37,55 @@
 #'  The default value is `TRUE`, and can be changed by passing `sharedSubset=FALSE`
 #'  to the function
 #'
-#' `sharedDuplicate` determines whether the object is still a shared object after a
-#' duplication. In current version (R 3.6), an object will be duplicated four times
-#' for creating a shared object and lead to a serious performance problem. Therefore,
-#' the default value is `FALSE`, user can change it by passing `sharedDuplicate=FALSE`
-#' to the function
+#'  At the time this documentation is being written, The shared subset feature will
+#'  cause an unnecessary memory duplication in R studio. Therefore, for the performance
+#'  consideration, it is better to turn the feature off when using R studio.
 #'
+#' `sharedCopy` determines whether the object is still a shared object after a
+#' duplication. If `copyOnWrite` is `FALSE`, this feature is off since the duplication
+#' cannot be triggered. In current version (R 3.6), an object will be duplicated four times
+#' for creating a shared object and lead to a serious performance problem. Therefore,
+#' the default value is `FALSE`, user can alter it by passing `sharedCopy=FALSE`
+#' to the function.
+#'alter
 #'
 #' @examples
-#' #For vector
+#' ## For vector
 #' x=runif(10)
 #' so=share(x)
 #' x
 #' so
 #'
-#' #For matrix
+#' ## For matrix
 #' x=matrix(runif(10),2,5)
 #' so=share(x)
 #' x
 #' so
 #'
-#' #For data frame
+#' ## For data frame
 #' x=as.data.frame(matrix(runif(10),2,5))
 #' so=share(x)
 #' x
 #' so
 #'
-#' #export the object
+#' ## export the object
 #' library(parallel)
 #' cl=makeCluster(1)
 #' clusterExport(cl,"so")
-#' #check the exported object in the other cluster
+#' ## check the exported object in the other process
 #' clusterEvalQ(cl,so)
 #'
-#' #Copy-on-write
+#' ## Copy-on-write
+#' ## This is the default setting
 #' x=runif(10)
 #' so1=share(x,copyOnWrite=TRUE)
 #' so2=so1
 #' so2[1]=10
-#' #so1 is unchanged since copy-on-write feature is on.
+#' ## so1 is unchanged since copy-on-write feature is on.
 #' so1
 #' so2
 #'
-#' #No-copy-on-write
+#' ## No-copy-on-write
 #' so1=share(x,copyOnWrite=FALSE)
 #' so2=so1
 #' so2[1]=10
@@ -84,12 +93,12 @@
 #' so1
 #' so2
 #'
-#' #Flaw of no-copy-on-write
-#' #The following code changes the value of so1, highly unexpected! Please use with caution!
+#' ## Flaw of no-copy-on-write
+#' ## The following code changes the value of so1, highly unexpected! Please use with caution!
 #' -so1
 #' so1
-#' #The reason is that the minus function trys to dulplicate so1 object,
-#' #but the dulplicate function will return so1 itself, so the value in so1 also get changed.
+#' ## The reason is that the minus function trys to dulplicate so1 object,
+#' ## but the dulplicate function will return so1 itself, so the value in so1 also get changed.
 #'
 #' @export
 setGeneric("share",function(x,...){
@@ -132,56 +141,109 @@ sharedVectorById<-function(did){
   obj=C_createAltrep(sm)
   obj
 }
-
+#' Get or set the properties of a shared object
+#'
+#' @param x A shared object
+#' @param value logical, the value you want the property to be. For a `data.frame`, it can be either
+#' a single value or a vector. If the length of `value` does not match the column of the `data.frame`,
+#' `value` will be replicate to match the length.
+#' @return
+#' `get`: The property of a shared object
+#'
+#' `set`: No return value
+#' @rdname sharedProperty
 #' @export
 getDataID <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getDataID()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getDataID()),numeric(1))
 }
+#' @rdname sharedProperty
 #' @export
 getTypeName <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getTypeName()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeName()),character(1))
 }
+#' @rdname sharedProperty
 #' @export
 getOwnData <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getOwnData()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getOwnData()),logical(1))
 }
+#' @rdname sharedProperty
 #' @export
 getProcessID <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getProcessID()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getProcessID()),numeric(1))
 }
+#' @rdname sharedProperty
 #' @export
 getTypeID <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getTypeID()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeID()),integer(1))
 }
+#' @rdname sharedProperty
 #' @export
 getLength <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getLength()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getLength()),numeric(1))
 }
+#' @rdname sharedProperty
 #' @export
 getTotalSize <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getTotalSize()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTotalSize()),numeric(1))
 }
+#' @rdname sharedProperty
 #' @export
 getCopyOnWrite <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getCopyOnWrite()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getCopyOnWrite()),logical(1))
 }
+#' @rdname sharedProperty
 #' @export
 getSharedSubset <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getSharedSubset()
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getSharedSubset()),logical(1))
 }
+#' @rdname sharedProperty
 #' @export
-getSharedDuplicate <- function(x) {
-  sm=getSharedProperty(x)
-  sm$getSharedDuplicate()
+getSharedCopy <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getSharedCopy()),logical(1))
+}
+
+#' @rdname sharedProperty
+#' @export
+setCopyOnWrite <- function(x,value) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  value=rep_len(value,length(sm))
+  for(i in seq_along(sm)){
+    if(!is.null(sm)){
+      sm[[i]]$setCopyOnWrite(value[i])
+    }
+  }
+}
+#' @rdname sharedProperty
+#' @export
+setSharedSubset <- function(x,value) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  value=rep_len(value,length(sm))
+  for(i in seq_along(sm)){
+    if(!is.null(sm)){
+      sm[[i]]$setSharedSubset(value[i])
+    }
+  }
+}
+#' @rdname sharedProperty
+#' @export
+setSharedCopy <- function(x,value) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  value=rep_len(value,length(sm))
+  for(i in seq_along(sm)){
+    if(!is.null(sm)){
+      sm[[i]]$setSharedCopy(value[i])
+    }
+  }
 }
 
 

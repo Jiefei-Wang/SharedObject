@@ -247,6 +247,7 @@ void createSharedObject(const void* data, const dataInfo DI) {
 	copyRData(dataPtr, data, DI.typeID, DI.totalSize);
 	//Record the data info
 	insertDataInfo(DI);
+	DEBUG(printf("A shared object is created with id: %llu\n", DI.dataID));
 }
 
 void* readSharedObject(DID dataID) {

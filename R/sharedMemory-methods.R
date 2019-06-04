@@ -29,8 +29,8 @@ sharedMemory$methods(
   getSharedSubset = function() {
     C_getSharedSubset(.self$getDataID())
   },
-  getSharedDuplicate = function() {
-    C_getSharedDuplicate(.self$getDataID())
+  getSharedCopy = function() {
+    C_getSharedCopy(.self$getDataID())
   },
   setCopyOnWrite = function(value) {
     C_setCopyOnWrite(.self$getDataID(), value)
@@ -38,8 +38,8 @@ sharedMemory$methods(
   setSharedSubset = function(value) {
     C_setSharedSubset(.self$getDataID(), value)
   },
-  setSharedDuplicate = function(value) {
-    C_setSharedDuplicate(.self$getDataID(), value)
+  setSharedCopy = function(value) {
+    C_setSharedCopy(.self$getDataID(), value)
   },
   updateAddress = function() {
     .self$address = C_readSharedMemory(.self$getDataID())
@@ -60,7 +60,7 @@ sharedMemory$methods(
     cat("", 'Total size:\t', .self$getTotalSize(), '\n')
     cat("", 'Copy on write:\t', .self$getCopyOnWrite(), '\n')
     cat("", 'Shared subset:\t', .self$getSharedSubset(), '\n')
-    cat("", 'Shared duplicate: ', .self$getSharedDuplicate(), '\n')
+    cat("", 'Shared copy: ', .self$getSharedCopy(), '\n')
     cat("", 'Own data:\t', .self$getOwnData(), '\n')
     cat("", 'Address:\t', capture.output(.self[["address"]]), '\n')
   }

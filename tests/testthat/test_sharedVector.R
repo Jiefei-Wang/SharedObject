@@ -5,8 +5,7 @@ library(parallel)
 cl=makeCluster(1)
 
 n=100
-data=abs(rnorm(n,0,10))
-data[data>100]=0
+data=floor(abs(runif(n)*2))
 type=c(
   logical=as.logical,
   integer=as.integer,
@@ -50,7 +49,7 @@ test_that(paste0("Testing cluster export for type ",typeName[i]),{
 test_that("Copy on write switch",{
   so1=share(data,copyOnWrite = TRUE)
   expect_equal(getCopyOnWrite(so1),TRUE)
-  unsetCopyOnwrite(so1)
+  setCopyOnWrite(so1,FALSE)
   so2=so1
   expect_equal(getCopyOnWrite(so1),FALSE)
   expect_equal(getCopyOnWrite(so2),FALSE)
@@ -58,7 +57,7 @@ test_that("Copy on write switch",{
   data[1]=10
   expect_equal(so1,data)
   expect_equal(so2,data)
-  setCopyOnwrite(so1)
+  setCopyOnWrite(so1,TRUE)
   so3=so1
   expect_equal(getCopyOnWrite(so1),TRUE)
   expect_equal(getCopyOnWrite(so2),TRUE)

@@ -40,9 +40,9 @@ bool C_getSharedSubset(DID did) {
 	return info.sharedSubset;
 }
 // [[Rcpp::export]]
-bool C_getSharedDuplicate(DID did) {
+bool C_getSharedCopy(DID did) {
 	dataInfo& info = getDataInfo(did);
-	return info.sharedDuplicate;
+	return info.sharedCopy;
 }
 
 
@@ -57,8 +57,8 @@ void C_setSharedSub(DID did, bool value) {
 	info.sharedSubset = value;
 }
 // [[Rcpp::export]]
-void C_setSharedDuplicate(DID did, bool value) {
+void C_setSharedCopy(DID did, bool value) {
 	dataInfo& info = getDataInfo(did);
-	info.sharedDuplicate = value;
+	info.sharedCopy = value;
 }
 

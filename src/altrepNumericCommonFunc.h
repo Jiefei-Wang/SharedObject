@@ -54,9 +54,9 @@ R_xlen_t numeric_region(SEXP x, R_xlen_t start, R_xlen_t size, T* out) {
 template<class T1, class T2>
 void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_len, R_xlen_t ind_len) {
 	source = source - 1L;
-	DEBUG(messageHandle("Index:"));
+	DEBUG(printf("Index:"));
 	for (R_xlen_t i = 0; i < ind_len; i++) {
-		DEBUG(messageHandle("%d,", (int)indx[i]));
+		DEBUG(printf("%d,", (int)indx[i]));
 		if (indx[i] <= src_len&& indx[i]>0) {
 			if (std::is_same<T2, double>::value) {
 				target[i] = source[(R_xlen_t)indx[i]];
@@ -69,14 +69,14 @@ void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_l
 			errorHandle("Index out of bound:\n index: %llu length:%llu\n", (ULLong)indx[i], (ULLong)src_len);
 		}
 	}
-	messageHandle("\n");
+	DEBUG(printf("\n"));
 }
 
 template<int SXP_TYPE, class C_TYPE>
 SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
-	DEBUG(Rprintf("Accessing subset, sharedSubset: %d\n", SV_SHARED_SUBSET(x));)
+	DEBUG(printf("Accessing subset, sharedSubset: %d\n", SV_SHARED_SUBSET(x));)
 	using namespace Rcpp;
-	Environment package_env("package:sharedObject");
+	Environment package_env(PACKAGE_ENV_NAME);
 		R_xlen_t len = Rf_xlength(indx);
 		C_TYPE* result = Calloc(len ,C_TYPE);
 		switch (TYPEOF(indx)) {

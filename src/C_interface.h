@@ -1,13 +1,13 @@
 #pragma once
 #include <Rcpp.h>
-#include "sharedObject_types.h"
+#include "SharedObject_types.h"
 using namespace Rcpp;
 
 
 
 
 
-SEXP C_peekSharedMemory(SEXP x);
+SEXP C_getSharedProperty(SEXP x);
 
 
 

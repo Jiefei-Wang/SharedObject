@@ -1,4 +1,4 @@
-Package: sharedObject
+Package: SharedObject
 Title: Sharing R objects across multiple R processes
 Version: 0.99.0
 Authors@R: c(

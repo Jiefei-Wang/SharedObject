@@ -10,14 +10,22 @@ using namespace Rcpp;
 using std::string;
 
 // [[Rcpp::export]]
-SEXP C_peekSharedMemory(SEXP x) {
+SEXP C_getSharedProperty(SEXP x) {
 	if (!ALTREP(x)) {
 		return R_NilValue;
 	}
 	while (ALTREP(x)) {
 		x = R_altrep_data1(x);
 	}
-	return(x);
+	SEXP typeCheck = Rf_protect(Rf_lang3(Rf_install("=="),
+		Rf_lang2(Rf_install("class"), x),
+		Rf_mkString("sharedMemory")));
+
+	if (!Rf_asLogical(R_tryEval(typeCheck, R_GlobalEnv, NULL))){
+		x = R_NilValue;
+	}
+	Rf_unprotect(1);
+	return x;
 }
 
 // [[Rcpp::export]]

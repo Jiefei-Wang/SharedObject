@@ -1,7 +1,9 @@
 #include <string>
-#include "sharedObject_types.h"
+#include "SharedObject_types.h"
+#define PACKAGE_NAME "SharedObject"
+#define PACKAGE_ENV_NAME "package:" PACKAGE_NAME
 
-#define DEBUG(x) x;
+#define DEBUG(x);
 #define asString(x) std::string(CHAR(asChar(x)))
 #define LOGICAL_TYPE 1L
 #define INT_TYPE 2L
@@ -20,7 +22,7 @@
     X(4,ULLong, totalSize) \
     X(5,bool, copyOnWrite) \
     X(6,bool, sharedSubset)\
-	X(7,bool, sharedDuplicate)
+	X(7,bool, sharedCopy)
 
 #define X(id,type, name) extern const ULLong dataInfo_##name;
 DATAINFO_FIELDS

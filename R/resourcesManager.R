@@ -61,16 +61,17 @@ getDataInfo<-function(data_ids=NULL){
   if(is.null(data_ids)){
     data_ids=getDataIDList()
   }
-  res=sapply(data_ids, getDataInfo_single)
-  if(length(res)==0){
+  if(length(data_ids)==0){
     res=data.frame(matrix(vector(), 0, length(dataInfoName),
                           dimnames=list(c(), dataInfoName)),
                    stringsAsFactors=F)
     return(res)
   }
+
+  res=sapply(data_ids, getDataInfo_single)
   res=as.data.frame(t(res))
 
-  res$DID=as.character(res$DID)
+  res$dataID=as.character(res$dataID)
 
   res
 }

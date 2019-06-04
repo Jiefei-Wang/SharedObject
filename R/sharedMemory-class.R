@@ -1,5 +1,5 @@
 dataInfoPropName=c("dataID","processID","typeID","length","totalSize")
-sharedOptions=c("copyOnWrite","sharedSubset","sharedDuplicate")
+sharedOptions=c("copyOnWrite","sharedSubset","sharedCopy")
 dataInfoName=c(dataInfoPropName,sharedOptions)
 dataInfoTemplate=rep(0.0,length(dataInfoName))
 names(dataInfoTemplate)=dataInfoName
@@ -11,7 +11,7 @@ sharedMemory=
 
 sharedMemory$methods(
   initialize = function(x=NULL,options=list()) {
-    ownData<<-FALSE
+    .self$ownData=FALSE
     if(!is.null(x)){
       for(i in seq_along(sharedOptions)){
         name=sharedOptions[i]

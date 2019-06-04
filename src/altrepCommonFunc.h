@@ -2,7 +2,7 @@
 #include <Rinternals.h>
 #include <R_ext/Altrep.h>
 #include "tools.h"
-#include "sharedObject_types.h"
+#include "SharedObject_types.h"
 
 
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,

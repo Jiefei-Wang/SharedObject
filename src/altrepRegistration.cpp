@@ -4,7 +4,7 @@
 #include "tools.h"
 
 #define ALT_NUM_COMMOM_REG(ALT_CLASS,ALT_TYPE,C_TYPE,R_TYPE)\
-	ALT_CLASS =R_make_##ALT_TYPE##_class(class_name, PGKNAME, dll);\
+	ALT_CLASS =R_make_##ALT_TYPE##_class(class_name, PACKAGE_NAME, dll);\
 	/* override ALTREP methods */\
 	R_set_altrep_Inspect_method(ALT_CLASS, sharedVector_Inspect);\
 	R_set_altrep_Length_method(ALT_CLASS, sharedVector_length);\
@@ -84,7 +84,7 @@ const void* altstring_dataptr_or_null(SEXP x);
 R_altrep_class_t shared_str_class;
 //[[Rcpp::init]]
 void init_str_class(DllInfo* dll) {
-	shared_str_class = R_make_altstring_class("shared_str", PGKNAME, dll); 
+	shared_str_class = R_make_altstring_class("shared_str", PACKAGE_NAME, dll); 
 	/* override ALTREP methods */
 	R_set_altrep_Inspect_method(shared_str_class, sharedVector_Inspect);
 	R_set_altrep_Length_method(shared_str_class, sharedVector_length);
