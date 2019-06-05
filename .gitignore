@@ -1,4 +1,5 @@
 inst/doc
+src-i386/
 .Rproj.user
 .Rhistory
 .RData

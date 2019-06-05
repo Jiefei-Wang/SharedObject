@@ -47,6 +47,10 @@ Please refer to the example code to see the exceptions.
  The default value is `TRUE`, and can be changed by passing `sharedSubset=FALSE`
  to the function
 
+ At the time this documentation is being written, The shared subset feature will
+ cause an unnecessary memory duplication in R studio. Therefore, for the performance
+ consideration, it is better to turn the feature off when using R studio.
+
 `sharedCopy` determines whether the object is still a shared object after a
 duplication. If `copyOnWrite` is `FALSE`, this feature is off since the duplication
 cannot be triggered. In current version (R 3.6), an object will be duplicated four times

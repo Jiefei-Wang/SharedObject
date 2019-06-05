@@ -29,7 +29,9 @@ getTypeNameByID<-function(id){
     stop("The id does not correspond to any type: ", id)
   typeName[ind]
 }
-
+#' get a summary report for a shared object
+#'
+#' @param x A shared object
 #' @export
 getSharedProperty<-function(x,as.list=FALSE){
   if(is.data.frame(x)){
