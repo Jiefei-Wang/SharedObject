@@ -4,28 +4,28 @@
 #include <cstdarg>
 using namespace std;
 #define HANDLE_CHAR(FUNC) {\
-va_list args;\
-char buf[1000];\
-va_start(args, fmt);\
-vsnprintf(buf, sizeof(buf), fmt, args);\
-va_end(args);\
-FUNC(buf);\
-}
+	va_list args;\
+	char buf[1000];\
+	va_start(args, fmt);\
+	vsnprintf(buf, sizeof(buf), fmt, args);\
+	va_end(args);\
+	FUNC(buf);\
+	}
 
 #define X(id,type, name) const ULLong dataInfo_##name=id;
-DATAINFO_FIELDS
+	DATAINFO_FIELDS;
 #undef X
 
 
-void errorHandle(string msg){
-  errorHandle(msg.c_str());
+void errorHandle(string msg) {
+	errorHandle(msg.c_str());
 
 }
-void errorHandle(const char* fmt, ...){
-  HANDLE_CHAR(error);
+void errorHandle(const char* fmt, ...) {
+	HANDLE_CHAR(error);
 }
-void warningHandle(string msg){
-  warningHandle(msg.c_str());
+void warningHandle(string msg) {
+	warningHandle(msg.c_str());
 }
 void warningHandle(const char* fmt, ...) {
 	HANDLE_CHAR(warning)
@@ -34,24 +34,24 @@ void warningHandle(const char* fmt, ...) {
 void messageHandle(std::string msg) {
 	messageHandle(msg.c_str());
 }
-void messageHandle(const char* fmt,...){
+void messageHandle(const char* fmt, ...) {
 	HANDLE_CHAR(Rprintf);
 }
 
 
-int getTypeSize(unsigned int type){
-  switch(type){
-  case INT_TYPE:
-    return 4;
-  case LOGICAL_TYPE:
-    return 4;
-  case REAL_TYPE:
-    return 8;
-  case RAW_TYPE:
-	  return 1;
-  }
-  errorHandle("Unexpected data type");
-  return 0;
+int getTypeSize(unsigned int type) {
+	switch (type) {
+	case INT_TYPE:
+		return 4;
+	case LOGICAL_TYPE:
+		return 4;
+	case REAL_TYPE:
+		return 8;
+	case RAW_TYPE:
+		return 1;
+	}
+	errorHandle("Unexpected data type");
+	return 0;
 }
 
 /*
@@ -60,19 +60,17 @@ offset to the ith string,i=1,...,n.(64bit offset)
 actual data
 */
 
-void strCpy(const void* target,const void* R_str) {
+void strCpy(const void* target, const void* R_str) {
 	SEXP str = (SEXP)R_str;
 	//printf("get string length\n");
 	ULLong n = XLENGTH(str);
 	ULLong* ptr = (ULLong*)target;
-	char* data = (char*)(ptr + n) ;
+	char* data = (char*)(ptr + n);
 	ULLong curOff = n * sizeof(ULLong);
 	for (ULLong i = 0; i < n; i++) {
 		//get an element from the string vector
 		SEXP ele = STRING_ELT(str, i);
-		//printf("getting length\n");
 		R_xlen_t ele_size = XLENGTH(ele);
-		//printf("substr %llu len:%llu\n",i, ele_size);
 		const char* ele_char = CHAR(ele);
 		//set the offset to the data
 		*ptr = curOff;

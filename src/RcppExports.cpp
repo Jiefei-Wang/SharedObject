@@ -226,14 +226,14 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// C_setSharedSub
-void C_setSharedSub(DID did, bool value);
-RcppExport SEXP _SharedObject_C_setSharedSub(SEXP didSEXP, SEXP valueSEXP) {
+// C_setSharedSubset
+void C_setSharedSubset(DID did, bool value);
+RcppExport SEXP _SharedObject_C_setSharedSubset(SEXP didSEXP, SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DID >::type did(didSEXP);
     Rcpp::traits::input_parameter< bool >::type value(valueSEXP);
-    C_setSharedSub(did, value);
+    C_setSharedSubset(did, value);
     return R_NilValue;
 END_RCPP
 }
@@ -270,7 +270,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getSharedSubset", (DL_FUNC) &_SharedObject_C_getSharedSubset, 1},
     {"_SharedObject_C_getSharedCopy", (DL_FUNC) &_SharedObject_C_getSharedCopy, 1},
     {"_SharedObject_C_setCopyOnWrite", (DL_FUNC) &_SharedObject_C_setCopyOnWrite, 2},
-    {"_SharedObject_C_setSharedSub", (DL_FUNC) &_SharedObject_C_setSharedSub, 2},
+    {"_SharedObject_C_setSharedSubset", (DL_FUNC) &_SharedObject_C_setSharedSubset, 2},
     {"_SharedObject_C_setSharedCopy", (DL_FUNC) &_SharedObject_C_setSharedCopy, 2},
     {NULL, NULL, 0}
 };

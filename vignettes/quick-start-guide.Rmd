@@ -71,31 +71,27 @@ In order to distinguish a shared object, the package provide several functions t
 is.altrep(A)
 is.altrep(A_shr)
 
-## Check if an object is a shared vector.
-## This is only valid for vector type
-is.sharedVector(A)
-is.sharedVector(A_shr)
-
 ## Check if an object is a shared object
 ## This works for both vector and data.frame
-is.sharedObject(A)
-is.sharedObject(A_shr)
+is.shared(A)
+is.shared(A_shr)
 ```
-The function `is.altrep` only checks if an object is an ALTREP object. Since the shared object class inherits ALTREP class, the function returns `TRUE` for a shared object. However, R also creates ALTREP object in some cases(e.g. A=1:10, A is an ALTREP object), this function may fail to check determine whether an object is a shared object. `is.sharedVector` is the low level API to check the shared object, but it only works for an atomic vector. `is.sharedObject` is the most suitable way to check the shared object. For `data.frame` type, it return `TRUE` only when all of its vector elements are shared objects.
+The function `is.altrep` only checks if an object is an ALTREP object. Since the shared object class inherits ALTREP class, the function returns `TRUE` for a shared object. However, R also creates ALTREP object in some cases(e.g. A=1:10, A is an ALTREP object), this function may fail to check determine whether an object is a shared object. `is.shared` is the most suitable way to check the shared object. For `data.frame` type, it return `TRUE` only when all of its vector elements are shared objects.
 
 There are several properties with the shared object, one can check them via
 ```{r}
 ## get a summary report
 getSharedProperty(A_shr)
 
+## Internal function to check the properties
 ## get the individual properties
-getDataID(A_shr)
-getTypeName(A_shr)
-getOwnData(A_shr)
-getProcessID(A_shr)
-getTypeID(A_shr)
-getLength(A_shr)
-getTotalSize(A_shr)
+.dataID(A_shr)
+.typeName(A_shr)
+.ownData(A_shr)
+.processID(A_shr)
+.typeID(A_shr)
+.length(A_shr)
+.totalSize(A_shr)
 getCopyOnWrite(A_shr)
 getSharedSubset(A_shr)
 getSharedCopy(A_shr)

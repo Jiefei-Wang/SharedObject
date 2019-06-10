@@ -81,8 +81,8 @@ C_setCopyOnWrite <- function(did, value) {
     invisible(.Call(`_SharedObject_C_setCopyOnWrite`, did, value))
 }
 
-C_setSharedSub <- function(did, value) {
-    invisible(.Call(`_SharedObject_C_setSharedSub`, did, value))
+C_setSharedSubset <- function(did, value) {
+    invisible(.Call(`_SharedObject_C_setSharedSubset`, did, value))
 }
 
 C_setSharedCopy <- function(did, value) {

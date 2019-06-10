@@ -72,3 +72,5 @@ createSharedMemoryByID <- function(dataID) {
   sm$initializeWithID(dataID)
   sm
 }
+
+

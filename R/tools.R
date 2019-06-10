@@ -68,8 +68,6 @@ generateKey<-function(){
 is.altrep<-function(x){
   C_ALTREP(x)
 }
-#' @rdname typeCheck
-#' @export
 is.sharedObject<-function(x){
   if(is.atomic(x)){
     return(is.sharedVector(x))
@@ -81,8 +79,6 @@ is.sharedObject<-function(x){
   return(FALSE)
 }
 
-#' @rdname typeCheck
-#' @export
 is.sharedVector<-function(x){
   if(is.atomic(x)){
     sm=getSharedProperty(x)
@@ -92,11 +88,20 @@ is.sharedVector<-function(x){
   }
   return(FALSE)
 }
-
-
-#Get the parameters that will be inherit by the child of a shared object
+#' @rdname typeCheck
+#' @param recursive Logical, whether a `data.frame` can be treated as a shared object. If `TRUE`, a `data.frame`
+#' is called a shared object if and only if all of its columns are shared objects.
 #' @export
-createInheritedParms<-function(x){
+is.shared<-function(x, recursive = TRUE){
+  ifelse(recursive,is.sharedObject(x),is.sharedVector(x))
+}
+
+
+#' @details
+#' .createInheritedParms: Get the parameters that can be inherited by the child of a shared object
+#' @rdname internal
+#' @export
+.createInheritedParms<-function(x){
   sm=getSharedProperty(x)
   parms=list(
     copyOnWrite=sm$getCopyOnWrite(),

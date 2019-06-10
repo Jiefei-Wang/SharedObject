@@ -259,7 +259,7 @@ Read a shared object by ID
 If the shared oject is not recorded in sharedMemoryList or segmentList, it will be recorded
 If the shared object does not exist, an error will be thrown.
 */
-void* readSharedObject(DID dataID,const char* signature) {
+void* readSharedObject(DID dataID, const char* signature) {
 	initialSharedMemory();
 	try
 	{
@@ -275,7 +275,7 @@ void* readSharedObject(DID dataID,const char* signature) {
 			}
 		}
 		else {
-			OS_shared_memory_object* sharedData =new OS_shared_memory_object(open_only, signature, read_write);
+			OS_shared_memory_object* sharedData = new OS_shared_memory_object(open_only, signature, read_write);
 			sharedMemoryList.insert(pair<DID, OS_shared_memory_object*>(dataID, sharedData));
 			mapped_region* region = new mapped_region(*sharedData, read_write);
 			//segmentList
@@ -286,7 +286,7 @@ void* readSharedObject(DID dataID,const char* signature) {
 	catch (const std::exception & ex) {
 		removeVectorKeyAndValueIfExist(sharedMemoryList, dataID);
 		removeVectorKeyAndValueIfExist(segmentList, dataID)
-		errorHandle("Can't read shared object:%s\n", ex.what());
+			errorHandle("Can't read shared object:%s\n", ex.what());
 	}
 	return(NULL);
 }

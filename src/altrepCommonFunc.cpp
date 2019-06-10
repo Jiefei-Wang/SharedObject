@@ -8,14 +8,14 @@ const void* getPointer(SEXP x) {
 	const void* ptr;
 	switch (TYPEOF(x))
 	{
-	/*case INTSXP:
-		return INTEGER(x);
-	case REALSXP:
-		return REAL(x);
-	case LGLSXP:
-		return LOGICAL(x);
-	case RAWSXP:
-		return RAW(x);*/
+		/*case INTSXP:
+			return INTEGER(x);
+		case REALSXP:
+			return REAL(x);
+		case LGLSXP:
+			return LOGICAL(x);
+		case RAWSXP:
+			return RAW(x);*/
 	case INTSXP:
 	case REALSXP:
 	case LGLSXP:
@@ -54,23 +54,23 @@ R_altrep_class_t getAltClass(int type) {
 
 
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
-                      void (*inspect_subtree)(SEXP, int, int, int))
+	void (*inspect_subtree)(SEXP, int, int, int))
 {
-  Rprintf(" Share object of type %s\n", SV_TYPE_NAME(x));
-  return TRUE;
+	Rprintf(" Share object of type %s\n", SV_TYPE_NAME(x));
+	return TRUE;
 }
 
 R_xlen_t sharedVector_length(SEXP x)
 {
 	DEBUG(Rprintf("accessing length:%.0f\n", SV_LENGTH(x)));
-  return SV_LENGTH(x);
+	return SV_LENGTH(x);
 }
 
-void *sharedVector_dataptr(SEXP x, Rboolean writeable){
+void* sharedVector_dataptr(SEXP x, Rboolean writeable) {
 	DEBUG(Rprintf("accessing data pointer\n"));
-  return SV_PTR(x);
+	return SV_PTR(x);
 }
-const void *sharedVector_dataptr_or_null(SEXP x)
+const void* sharedVector_dataptr_or_null(SEXP x)
 {
 	DEBUG(Rprintf("accessing data pointer or null\n"));
 	return sharedVector_dataptr(x, Rboolean::TRUE);
@@ -78,12 +78,12 @@ const void *sharedVector_dataptr_or_null(SEXP x)
 
 SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 	using namespace Rcpp;
-	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n",deep, SV_COPY_ON_WRITE(x),SV_SHARED_DUPLICATE(x)));
+	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n", deep, SV_COPY_ON_WRITE(x), SV_SHARED_DUPLICATE(x)));
 	//Rf_PrintValue(SV_DATA(x, dataInfo));
 	if (SV_COPY_ON_WRITE(x)) {
 		if (SV_SHARED_DUPLICATE(x)) {
 			Environment package_env(PACKAGE_ENV_NAME);
-			Function getSharedParms = package_env["createInheritedParms"];
+			Function getSharedParms = package_env[".createInheritedParms"];
 			List opt = getSharedParms(x);
 			Function sv_constructor = package_env["share"];
 			SEXP so = sv_constructor(x, opt);
@@ -99,11 +99,7 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 }
 
 SEXP sharedVector_serialized_state(SEXP x) {
-	DEBUG(Rprintf("serialize state\n");)
-	//SEXP e = Rf_protect( Rf_lang2(Rf_install("serializeSO"),x));
-	//SEXP did= R_tryEval(e, R_GlobalEnv, NULL);
-	//Rf_unprotect(1);
-
+	DEBUG(Rprintf("serialize state\n"));
 	return(Rf_ScalarReal(SV_DATAID(x)));
 }
 
@@ -116,12 +112,11 @@ void loadLibrary() {
 
 SEXP sharedVector_unserialize(SEXP R_class, SEXP state) {
 	using namespace Rcpp;
-	DEBUG(Rprintf("unserializing data\n");)
-	
+	DEBUG(Rprintf("unserializing data\n"));
 	loadLibrary();
-	DEBUG(Rprintf("Library loaded\n");)
+	DEBUG(Rprintf("Library loaded\n"));
 	Environment package_env(PACKAGE_ENV_NAME);
-	Function so_constructor = package_env["sharedVectorById"];
+	Function so_constructor = package_env[".sharedVectorById"];
 	SEXP so = so_constructor(state);
 	return so;
 }

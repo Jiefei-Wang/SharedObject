@@ -25,7 +25,7 @@
 	X(7,bool, sharedCopy)
 
 #define X(id,type, name) extern const ULLong dataInfo_##name;
-DATAINFO_FIELDS
+DATAINFO_FIELDS;
 #undef X
 
 

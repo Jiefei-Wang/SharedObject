@@ -23,10 +23,10 @@ sharedMemory$methods(
     }
   },
   finalize=function(){
-    if(ownData&&!RM_data$unloaded){
-      removeObject(.self$getDataID())
+    if(ownData&&!.globals$isPackageUnloaded()){
+      .removeObject(.self$getDataID())
     }
-    if(RM_data$unloaded){
+    if(.globals$isPackageUnloaded()){
       message("Fail to release data: The package has been unloaded.")
     }
   },
@@ -39,7 +39,7 @@ sharedMemory$methods(
       dataInfo["dataID"]=generateKey()
     }
 
-    dataInfo["processID"]=RM$getPID()
+    dataInfo["processID"]=.globals$getProcessID()
     dataInfo["typeID"]=getTypeIDByName(typeof(x))
     dataInfo["length"]=length(x)
     dataInfo["totalSize"]=calculateSharedMemerySize(x)

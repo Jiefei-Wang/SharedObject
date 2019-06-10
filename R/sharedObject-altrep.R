@@ -133,16 +133,70 @@ setMethod("share",signature(x="list"),function(x,...){
 
 
 
-#' A fundamental tool to share an R object.
+#' Internal functions
 #'
-#' retrieve an R object by the data ID, this function is for internal usage only
+#' @details
+#' .sharedVectorById: retrieve an R object by the data ID
 #' @param did The data id
+#' @rdname internal
 #' @export
-sharedVectorById<-function(did){
+.sharedVectorById<-function(did){
   sm=createSharedMemoryByID(did)
   obj=C_createAltrep(sm)
   obj
 }
+
+
+#' @rdname internal
+#' @export
+.dataID <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getDataID()),numeric(1))
+}
+
+#' @rdname internal
+#' @export
+.typeName <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeName()),character(1))
+}
+
+#' @rdname internal
+#' @export
+.ownData <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getOwnData()),logical(1))
+}
+
+#' @rdname internal
+#' @export
+.processID <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getProcessID()),numeric(1))
+}
+
+#' @rdname internal
+#' @export
+.typeID <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeID()),integer(1))
+}
+
+#' @rdname internal
+#' @export
+.length <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getLength()),numeric(1))
+}
+
+#' @rdname internal
+#' @export
+.totalSize <- function(x) {
+  sm=getSharedProperty(x,as.list=TRUE)
+  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTotalSize()),numeric(1))
+}
+
+
 #' Get or set the properties of a shared object
 #'
 #' @param x A shared object
@@ -153,48 +207,6 @@ sharedVectorById<-function(did){
 #' `get`: The property of a shared object
 #'
 #' `set`: No return value
-#' @rdname sharedProperty
-#' @export
-getDataID <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getDataID()),numeric(1))
-}
-#' @rdname sharedProperty
-#' @export
-getTypeName <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeName()),character(1))
-}
-#' @rdname sharedProperty
-#' @export
-getOwnData <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getOwnData()),logical(1))
-}
-#' @rdname sharedProperty
-#' @export
-getProcessID <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getProcessID()),numeric(1))
-}
-#' @rdname sharedProperty
-#' @export
-getTypeID <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeID()),integer(1))
-}
-#' @rdname sharedProperty
-#' @export
-getLength <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getLength()),numeric(1))
-}
-#' @rdname sharedProperty
-#' @export
-getTotalSize <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTotalSize()),numeric(1))
-}
 #' @rdname sharedProperty
 #' @export
 getCopyOnWrite <- function(x) {

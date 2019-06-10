@@ -52,7 +52,7 @@ void C_setCopyOnWrite(DID did, bool value) {
 	info.copyOnWrite = value;
 }
 // [[Rcpp::export]]
-void C_setSharedSub(DID did, bool value) {
+void C_setSharedSubset(DID did, bool value) {
 	dataInfo& info = getDataInfo(did);
 	info.sharedSubset = value;
 }

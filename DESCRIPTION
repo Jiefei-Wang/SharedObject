@@ -26,6 +26,7 @@ Collate:
     'sharedMemory-methods.R'
     'sharedObject-altrep.R'
     'tools.R'
+    'zzz.R'
 Suggests: 
     testthat,
     parallel,

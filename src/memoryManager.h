@@ -7,7 +7,7 @@
 
 struct dataInfo {
 #define X(id,type, name) type name;
-	DATAINFO_FIELDS
+	DATAINFO_FIELDS;
 #undef X
 };
 
