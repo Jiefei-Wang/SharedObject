@@ -120,3 +120,6 @@ const void* altstring_dataptr_or_null(SEXP x) {
 	DEBUG(messageHandle("accessing string pointer or null\n"));
 	return(NULL);
 }
+
+
+

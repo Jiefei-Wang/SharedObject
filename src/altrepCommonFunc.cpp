@@ -49,6 +49,8 @@ R_altrep_class_t getAltClass(int type) {
 		//return shared_str_class;
 	default: errorHandle("Type of %d is not supported yet", type);
 	}
+	//This return is only for keeping the annoying warning silent
+	return shared_real_class;
 }
 
 

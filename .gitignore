@@ -1,6 +1,7 @@
 Meta
 doc
 inst/doc
+man/
 src-i386/
 .Rproj.user
 .Rhistory
@@ -8,4 +9,3 @@ src-i386/
 .Ruserdata
 .Rproj
 SharedObject.Rproj
-man/

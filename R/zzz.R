@@ -1,6 +1,7 @@
 #' @useDynLib SharedObject, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
-
+#' @importFrom stats runif
+#' @importFrom methods is new
 
 .globals <- local({
   unloaded <- FALSE

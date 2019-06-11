@@ -1,4 +1,4 @@
 library(testthat)
-library(sharedObject)
+library(SharedObject)
 
 test_check("sharedObject")

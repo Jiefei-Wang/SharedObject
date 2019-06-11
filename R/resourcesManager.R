@@ -43,12 +43,11 @@ getDataIDList<-function(){
 #' @param data_ids The data ID. If NULL(default), all data will be returned.
 #'
 #' @examples
-#' getDataInfo()
+#' .getDataInfo()
 #' @export
 .getDataInfo<-function(data_ids=NULL){
   if(is.null(data_ids)){
-    data_ids=getData
-    IDList()
+    data_ids=getDataIDList()
   }
   if(length(data_ids)==0){
     res=data.frame(

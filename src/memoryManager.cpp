@@ -331,6 +331,10 @@ dataInfo& getDataInfo(DID dataID) {
 	catch (const std::exception & ex) {
 		errorHandle("Unexpected error while trying to open %llu\n", dataID);
 	}
+
+	//This return is only for keeping the annoying warning silent
+	dataInfo* di = new dataInfo();
+	return *di;
 }
 
 

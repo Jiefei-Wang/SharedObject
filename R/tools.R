@@ -32,6 +32,8 @@ getTypeNameByID<-function(id){
 #' get a summary report for a shared object
 #'
 #' @param x A shared object
+#' @param as.list Logical, Whether the result should be in a list format even
+#' if only one shared property is reported
 #' @export
 getSharedProperty<-function(x,as.list=FALSE){
   if(is.data.frame(x)){

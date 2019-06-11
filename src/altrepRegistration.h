@@ -16,3 +16,6 @@ void init_raw_class(DllInfo* dll);
 
 extern R_altrep_class_t shared_str_class;
 void init_str_class(DllInfo* dll);
+
+
+

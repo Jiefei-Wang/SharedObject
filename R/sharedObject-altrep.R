@@ -10,6 +10,7 @@
 #' `matrix` and `data.frame`. List is not supported but can be created manually.
 #' @param ... Additional parameters that will be passed to the shared object, see details.
 #'
+#' @aliases share,vector-method share,matrix-method share,data.frame-method share,list-method
 #'
 #' @return A shared object
 #' @details
@@ -146,7 +147,7 @@ setMethod("share",signature(x="list"),function(x,...){
   obj
 }
 
-
+#' @param x A shared object
 #' @rdname internal
 #' @export
 .dataID <- function(x) {
