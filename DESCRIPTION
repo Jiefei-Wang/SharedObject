@@ -14,7 +14,8 @@ LinkingTo:
     Rcpp
 Depends: R (>= 3.6.0)
 Imports: 
-    Rcpp
+    Rcpp,
+    BiocGenerics
 biocViews: Infrastructure
 BugReports: https://github.com/Jiefei-Wang/sharedObject/issues
 RoxygenNote: 6.1.1
@@ -23,7 +24,8 @@ Suggests:
     testthat,
     parallel,
     knitr,
-    rmarkdown
+    rmarkdown,
+    BiocStyle
 Collate: 
     'RcppExports.R'
     'pkgSetting.R'
