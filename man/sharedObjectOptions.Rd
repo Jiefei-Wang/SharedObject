@@ -10,10 +10,10 @@ setSharedObjectOptions(...)
 getSharedObjectOptions(...)
 }
 \arguments{
-\item{...}{`setSharedObjectOptions`: the options you want to set, it can be copyOnWrite,
+\item{...}{\code{setSharedObjectOptions}: the options you want to set, it can be copyOnWrite,
 sharedSubset and sharedCopy.
 
-`getSharedObjectOptions`: it is a character vector. If empty, all options will be returned.}
+\code{getSharedObjectOptions}: it is a character vector. If empty, all options will be returned.}
 }
 \description{
 Get or set the global options for the SharedObject package

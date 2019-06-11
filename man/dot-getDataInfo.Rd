@@ -13,5 +13,5 @@
 This function will return a list of the summary of the data in the shared memory.
 }
 \examples{
-getDataInfo()
+.getDataInfo()
 }

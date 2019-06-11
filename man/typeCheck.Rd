@@ -12,7 +12,7 @@ is.shared(x, recursive = TRUE)
 \arguments{
 \item{x}{an R object}
 
-\item{recursive}{Logical, whether a `data.frame` can be treated as a shared object. If `TRUE`, a `data.frame`
+\item{recursive}{Logical, whether a \code{data.frame} can be treated as a shared object. If \code{TRUE}, a \code{data.frame}
 is called a shared object if and only if all of its columns are shared objects.}
 }
 \description{

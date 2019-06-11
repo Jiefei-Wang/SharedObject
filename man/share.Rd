@@ -2,14 +2,18 @@
 % Please edit documentation in R/sharedObject-altrep.R
 \name{share}
 \alias{share}
+\alias{share,vector-method}
+\alias{share,matrix-method}
+\alias{share,data.frame-method}
+\alias{share,list-method}
 \title{Create an R object in the shared memory}
 \usage{
 share(x, ...)
 }
 \arguments{
 \item{x}{An R object that you want to shared. The supported data types are
-`raw`, `logical`, `integer` and `real`. The data structure can be `vector`,
-`matrix` and `data.frame`. List is not supported but can be created manually.}
+\code{raw}, \code{logical}, \code{integer} and \code{real}. The data structure can be \code{vector},
+\code{matrix} and \code{data.frame}. List is not supported but can be created manually.}
 
 \item{...}{Additional parameters that will be passed to the shared object, see details.}
 }
@@ -17,15 +21,15 @@ share(x, ...)
 A shared object
 }
 \description{
-This function will create an object in the shared memory for the function argument `x`
+This function will create an object in the shared memory for the function argument \code{x}
 and return a shared object. There is no duplication of the shared object when it is
 exported to the other processes. All the shared objects will use the data located in
 the same shared memory space.
 }
 \details{
-When the function argument `x` is an atomic object(e.g vector, matrix),
+When the function argument \code{x} is an atomic object(e.g vector, matrix),
 the function will create an ALTREP object to replace it.
-When `x` is a data frame, each column of `x` will be replaced by an ALTREP object.
+When \code{x} is a data frame, each column of \code{x} will be replaced by an ALTREP object.
 
 In the R level, the behaviors of an ALTREP object is exactly the same as an atomic object
 but the data of an ALTREP object is allocated in the shared memory space. Therefore an
@@ -33,29 +37,28 @@ ALTREP object can be easily exported to the other R processes without dulplicati
 data, which reduces the memory usage and the overhead of data transmission.
 
 The behavior of a shared object can be controlled through three parameters:
-`copyOnWrite`, `sharedSubset` and `sharedCopy`.
+\code{copyOnWrite}, \code{sharedSubset} and \code{sharedCopy}.
 
-`copyOnWrite` determines Whether a new R object need to be allocated when the
-shared object is changed. The default value is `TRUE`, but can be altered by passing
-an argument `copyOnWrite=FALSE` to the function.
+\code{copyOnWrite} determines Whether a new R object need to be allocated when the
+shared object is changed. The default value is \code{TRUE}, but can be altered by passing
+an argument \code{copyOnWrite=FALSE} to the function.
 
 Please note that the no-copy-on-write feature is not fully supported by R. When
-`copyOnWrite` is `FALSE`, a shared object might not behaves as user expects.
+\code{copyOnWrite} is \code{FALSE}, a shared object might not behaves as user expects.
 Please refer to the example code to see the exceptions.
 
-`sharedSubset`` determines whether the subset of a shared object is still a shared object.
- The default value is `TRUE`, and can be changed by passing `sharedSubset=FALSE`
- to the function
+\code{sharedSubset`` determines whether the subset of a shared object is still a shared object. The default value is }TRUE\code{, and can be changed by passing }sharedSubset=FALSE`
+to the function
 
- At the time this documentation is being written, The shared subset feature will
- cause an unnecessary memory duplication in R studio. Therefore, for the performance
- consideration, it is better to turn the feature off when using R studio.
+At the time this documentation is being written, The shared subset feature will
+cause an unnecessary memory duplication in R studio. Therefore, for the performance
+consideration, it is better to turn the feature off when using R studio.
 
-`sharedCopy` determines whether the object is still a shared object after a
-duplication. If `copyOnWrite` is `FALSE`, this feature is off since the duplication
+\code{sharedCopy} determines whether the object is still a shared object after a
+duplication. If \code{copyOnWrite} is \code{FALSE}, this feature is off since the duplication
 cannot be triggered. In current version (R 3.6), an object will be duplicated four times
 for creating a shared object and lead to a serious performance problem. Therefore,
-the default value is `FALSE`, user can alter it by passing `sharedCopy=FALSE`
+the default value is \code{FALSE}, user can alter it by passing \code{sharedCopy=FALSE}
 to the function.
 alter
 }

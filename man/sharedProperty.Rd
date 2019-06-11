@@ -24,14 +24,14 @@ setSharedCopy(x, value)
 \arguments{
 \item{x}{A shared object}
 
-\item{value}{logical, the value you want the property to be. For a `data.frame`, it can be either
-a single value or a vector. If the length of `value` does not match the column of the `data.frame`,
-`value` will be replicate to match the length.}
+\item{value}{logical, the value you want the property to be. For a \code{data.frame}, it can be either
+a single value or a vector. If the length of \code{value} does not match the column of the \code{data.frame},
+\code{value} will be replicate to match the length.}
 }
 \value{
-`get`: The property of a shared object
+\code{get}: The property of a shared object
 
-`set`: No return value
+\code{set}: No return value
 }
 \description{
 Get or set the properties of a shared object
