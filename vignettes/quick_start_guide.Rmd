@@ -12,7 +12,7 @@ vignette: >
   %\VignetteIndexEntry{quickStart}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-package: sharedObject
+package: SharedObject
 ---
 
 ```{r setup, include = FALSE}
