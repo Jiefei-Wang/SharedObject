@@ -41,6 +41,8 @@
 \item{dataID}{The data ID you want to delete}
 
 \item{did}{The data id}
+
+\item{x}{A shared object}
 }
 \value{
 .removeAllObject: no return value

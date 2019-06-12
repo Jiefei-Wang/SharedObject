@@ -88,6 +88,9 @@ clusterExport(cl,"so")
 ## check the exported object in the other process
 clusterEvalQ(cl,so)
 
+## close the connection
+stopCluster(cl)
+
 ## Copy-on-write
 ## This is the default setting
 x=runif(10)

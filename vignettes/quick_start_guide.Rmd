@@ -31,7 +31,7 @@ We first illustrate the package with an example. In the example, we create a clu
 ```{r}
 library(parallel)
 ## Initiate the cluster
-cl=makeCluster(4)
+cl=makeCluster(1)
 ## create data
 n=3
 A=matrix(runif(n^2),n,n)
@@ -39,6 +39,8 @@ A=matrix(runif(n^2),n,n)
 A_shr=share(A)
 ## export the shared object
 clusterExport(cl,"A_shr")
+
+stopCluster(cl)
 ```
 As the code shows above, the procedure of sharing a shared object is similar to the procedure of sharing an R object, except that we replace the matrix `A` with a shared object `A_shr`. Notably, there is no different between the matrix `A` and the shared object `A_shr`. The shared object `A_shr` is neither an S3 nor S4 object and its behaviors are exactly the same as the matrix `A`, so there is no need to change the existing code to work with the shared object. We can verify this through
 ```{r}

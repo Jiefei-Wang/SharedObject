@@ -8,6 +8,9 @@ getSharedProperty(x, as.list = FALSE)
 }
 \arguments{
 \item{x}{A shared object}
+
+\item{as.list}{Logical, Whether the result should be in a list format even
+if only one shared property is reported}
 }
 \description{
 get a summary report for a shared object
