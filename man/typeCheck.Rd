@@ -21,3 +21,8 @@ A logical value
 \description{
 Is an Object a desired type?
 }
+\examples{
+x=share(1:10)
+is.altrep(x)
+is.shared(x)
+}

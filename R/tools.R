@@ -77,6 +77,10 @@ findUniqueKey<-function(x){
 #' @param x an R object
 #' @return A logical value
 #' @rdname typeCheck
+#' @examples
+#' x=share(1:10)
+#' is.altrep(x)
+#' is.shared(x)
 #' @export
 is.altrep<-function(x){
   C_ALTREP(x)
