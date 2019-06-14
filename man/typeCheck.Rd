@@ -15,6 +15,9 @@ is.shared(x, recursive = TRUE)
 \item{recursive}{Logical, whether a \code{data.frame} can be treated as a shared object. If \code{TRUE}, a \code{data.frame}
 is called a shared object if and only if all of its columns are shared objects.}
 }
+\value{
+A logical value
+}
 \description{
 Is an Object a desired type?
 }

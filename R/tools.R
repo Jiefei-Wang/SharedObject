@@ -34,6 +34,13 @@ getTypeNameByID<-function(id){
 #' @param x A shared object
 #' @param as.list Logical, Whether the result should be in a list format even
 #' if only one shared property is reported
+#' @return
+#' If x is a shared vector and as.list is FALSE, the function returns a sharedMemory object.
+#' Otherwise, the function returns a list of sharedMemory object(s).
+#' @examples
+#' x=share(1:10)
+#' getSharedProperty(x)
+#' @seealso getCopyOnWrite, getSharedSubset, getSharedCopy
 #' @export
 getSharedProperty<-function(x,as.list=FALSE){
   if(is.data.frame(x)){
@@ -58,13 +65,17 @@ copyAttribute<-function(source,target){
 
 generateKey<-function(){
   key=round(runif(1,0,2^53))
-  key=C_findAvailableKey(key)
   key
+}
+
+findUniqueKey<-function(x){
+  C_findAvailableKey(x)
 }
 
 #' Is an Object a desired type?
 #'
 #' @param x an R object
+#' @return A logical value
 #' @rdname typeCheck
 #' @export
 is.altrep<-function(x){
@@ -99,10 +110,7 @@ is.shared<-function(x, recursive = TRUE){
 }
 
 
-#' @details
-#' .createInheritedParms: Get the parameters that can be inherited by the child of a shared object
-#' @rdname internal
-#' @export
+
 .createInheritedParms<-function(x){
   sm=getSharedProperty(x)
   parms=list(
@@ -118,7 +126,7 @@ is.shared<-function(x, recursive = TRUE){
 calculateSharedMemerySize<-function(x){
   n=length(x)
   if(typeof(x)=="character"){
-    char_size=sum(sapply(x,length))+n
+    char_size=sum(vapply(x,length,numeric(1)))+n
     return(n*8+char_size)
   }else{
     return(n*typeSize(typeof(x)))

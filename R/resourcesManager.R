@@ -5,6 +5,8 @@
 #' @rdname internal
 #' @return
 #' .removeAllObject: no return value
+#' @examples
+#' .removeAllObject()
 #' @export
 .removeAllObject<-function(){
   dids=getDataIDList()
@@ -22,7 +24,8 @@
 #' .removeObject: no return value
 #' @export
 .removeObject<-function(dataID){
-  sapply(as.double(dataID),removeObject_single)
+  #return NULL, cannot use vapply
+  lapply(as.double(dataID),removeObject_single)
   invisible()
 }
 
@@ -42,6 +45,7 @@ getDataIDList<-function(){
 #'
 #' @param data_ids The data ID. If NULL(default), all data will be returned.
 #'
+#' @return A data.frame
 #' @examples
 #' .getDataInfo()
 #' @export
@@ -53,11 +57,11 @@ getDataIDList<-function(){
     res=data.frame(
       matrix(vector(), 0, length(dataInfoName),
              dimnames=list(c(), dataInfoName)),
-      stringsAsFactors=F)
+      stringsAsFactors=FALSE)
     return(res)
   }
 
-  res=sapply(data_ids, getDataInfo_single)
+  res=vapply(data_ids, getDataInfo_single,numeric(length(dataInfoTemplate)))
   res=as.data.frame(t(res))
 
   res$dataID=as.character(res$dataID)

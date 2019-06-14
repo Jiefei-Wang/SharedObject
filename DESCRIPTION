@@ -15,11 +15,11 @@ LinkingTo:
 Depends: R (>= 3.6.0)
 Imports: 
     Rcpp,
-    BiocGenerics,
     methods,
-    stats
+    stats,
+    BiocGenerics
 biocViews: Infrastructure
-BugReports: https://github.com/Jiefei-Wang/sharedObject/issues
+BugReports: https://github.com/Jiefei-Wang/SharedObject/issues
 RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
 Suggests: 

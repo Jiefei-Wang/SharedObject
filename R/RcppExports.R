@@ -9,6 +9,18 @@ C_testFunc <- function(a) {
     .Call(`_SharedObject_C_testFunc`, a)
 }
 
+C_testFunc2 <- function(a) {
+    .Call(`_SharedObject_C_testFunc2`, a)
+}
+
+C_testFunc3 <- function(a) {
+    .Call(`_SharedObject_C_testFunc3`, a)
+}
+
+C_testFunc4 <- function(a) {
+    .Call(`_SharedObject_C_testFunc4`, a)
+}
+
 C_findAvailableKey <- function(dataID) {
     .Call(`_SharedObject_C_findAvailableKey`, dataID)
 }
@@ -43,6 +55,10 @@ C_attachAttr <- function(R_source, R_tag, R_attr) {
 
 C_ALTREP <- function(x) {
     .Call(`_SharedObject_C_ALTREP`, x)
+}
+
+C_getUsedKey <- function() {
+    .Call(`_SharedObject_C_getUsedKey`)
 }
 
 C_getDataID <- function(did) {

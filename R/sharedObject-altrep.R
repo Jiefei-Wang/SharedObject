@@ -211,6 +211,22 @@ setMethod("share",signature(x="list"),function(x,...){
 #' `get`: The property of a shared object
 #'
 #' `set`: No return value
+#' @examples
+#' x=share(1:20)
+#' ##Check the default values
+#' getCopyOnWrite(x)
+#' getSharedSubset(x)
+#' getSharedCopy(x)
+#'
+#' ##Set the values
+#' setCopyOnWrite(x,FALSE)
+#' setSharedSubset(x,FALSE)
+#' setSharedCopy(x,TRUE)
+#'
+#' ##Check the values again
+#' getCopyOnWrite(x)
+#' getSharedSubset(x)
+#' getSharedCopy(x)
 #' @rdname sharedProperty
 #' @export
 getCopyOnWrite <- function(x) {

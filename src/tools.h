@@ -1,10 +1,13 @@
 #include <string>
 #include "SharedObject_types.h"
 #define PACKAGE_NAME "SharedObject"
-#define PACKAGE_ENV_NAME "package:" PACKAGE_NAME
+#define PACKAGE_ENV R_FindNamespace(Rf_mkString(PACKAGE_NAME))
+#define PACKAGE_FUNC(x) Rf_findFun(Rf_install(x),R_FindNamespace(Rf_mkString(PACKAGE_NAME)))
 
-#define DEBUG(x);
+#define DEBUG(x) ;
 #define asString(x) std::string(CHAR(asChar(x)))
+
+
 #define LOGICAL_TYPE 1L
 #define INT_TYPE 2L
 #define REAL_TYPE 3L
@@ -28,6 +31,7 @@
 DATAINFO_FIELDS;
 #undef X
 
+extern std::string OS_ADDRESS_SIZE;
 
 void errorHandle(std::string msg);
 void errorHandle(const char* fmt, ...);

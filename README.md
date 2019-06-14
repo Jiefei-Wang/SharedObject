@@ -27,4 +27,5 @@ library(parallel)
 cl=makeCluster(1)
 clusterExport(cl,"so")
 clusterEvalQ(cl,so)
+stopCluster(cl)
 ```

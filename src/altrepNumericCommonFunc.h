@@ -3,7 +3,6 @@
 #include "altrepCommonFunc.h"
 #include "altrepMacro.h"
 
-
 #define TMP_PTR(x) ((T*)SV_PTR(x))
 template<class T>
 SEXP template_coerce(T* x, R_xlen_t len, int type)
@@ -54,9 +53,9 @@ R_xlen_t numeric_region(SEXP x, R_xlen_t start, R_xlen_t size, T* out) {
 template<class T1, class T2>
 void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_len, R_xlen_t ind_len) {
 	source = source - 1L;
-	DEBUG(printf("Index:"));
+	DEBUG(Rprintf("Index:"));
 	for (R_xlen_t i = 0; i < ind_len; i++) {
-		DEBUG(printf("%d,", (int)indx[i]));
+		DEBUG(Rprintf("%d,", (int)indx[i]));
 		if (indx[i] <= src_len&& indx[i]>0) {
 			if (std::is_same<T2, double>::value) {
 				target[i] = source[(R_xlen_t)indx[i]];
@@ -69,14 +68,14 @@ void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_l
 			errorHandle("Index out of bound:\n index: %llu length:%llu\n", (ULLong)indx[i], (ULLong)src_len);
 		}
 	}
-	DEBUG(printf("\n"));
+	DEBUG(Rprintf("\n"));
 }
 
 template<int SXP_TYPE, class C_TYPE>
 SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 	DEBUG(printf("Accessing subset, sharedSubset: %d\n", SV_SHARED_SUBSET(x));)
 	using namespace Rcpp;
-	Environment package_env(PACKAGE_ENV_NAME);
+	Environment package_env(PACKAGE_ENV);
 		R_xlen_t len = Rf_xlength(indx);
 		C_TYPE* result = Calloc(len ,C_TYPE);
 		switch (TYPEOF(indx)) {
@@ -89,9 +88,9 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 		}
 		SEXP res= wrap(Vector<SXP_TYPE>(result, result + len));
 		if (SV_SHARED_SUBSET(x)) {
-			Function getSharedParms = package_env[".createInheritedParms"];
+			Function getSharedParms= package_env[".createInheritedParms"];
 			List opt = getSharedParms(x);
-			Function sv_constructor = package_env["share"];
+			Function sv_constructor= package_env["share"];
 			SEXP so = sv_constructor(res, opt);
 			return so;
 		}

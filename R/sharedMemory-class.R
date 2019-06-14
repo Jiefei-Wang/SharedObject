@@ -32,12 +32,12 @@ sharedMemory$methods(
   },
   initializeWithData=function(x,options){
     dataInfo=dataInfoTemplate
-
     if(!is.null(options$dataID)){
-      dataInfo["dataID"]=options$dataID
+      key=options$dataID
     }else{
-      dataInfo["dataID"]=generateKey()
+      key=generateKey()
     }
+    dataInfo["dataID"]=findUniqueKey(key)
 
     dataInfo["processID"]=.globals$getProcessID()
     dataInfo["typeID"]=getTypeIDByName(typeof(x))

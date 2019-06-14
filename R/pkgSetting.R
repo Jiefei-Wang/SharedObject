@@ -12,7 +12,17 @@ globalSettings$sharedCopy=FALSE
 #' `setSharedObjectOptions`: the options you want to set, it can be copyOnWrite,
 #' sharedSubset and sharedCopy.
 #'
-#' `getSharedObjectOptions`: it is a character vector. If empty, all options will be returned.
+#' `getSharedObjectOptions`: A character vector. If empty, all options will be returned.
+#' @return
+#' `setSharedObjectOptions`: No return value
+#' `getSharedObjectOptions`: A list of the package options
+#' @examples
+#' getSharedObjectOptions()
+#' setSharedObjectOptions(copyOnWrite=FALSE)
+#' getSharedObjectOptions()
+#' getSharedObjectOptions("copyOnWrite")
+#'
+#'
 #' @rdname sharedObjectOptions
 #' @export
 setSharedObjectOptions<-function(...){
@@ -26,7 +36,7 @@ setSharedObjectOptions<-function(...){
 #' @rdname sharedObjectOptions
 #' @export
 getSharedObjectOptions<-function(...){
- options=list(...)
+ options=c(...)
  if(length(options)==0){
    return(as.list(globalSettings))
  }
@@ -38,8 +48,8 @@ getSharedObjectOptions<-function(...){
 checkOptionExistance<-function(options){
   noneExistOptions=!names(options)%in%names(globalSettings)
   if (any(noneExistOptions)) {
-    sapply(paste0(names(options)[noneExistOptions]), function(x)
-      warning(paste0("The option `", x, "` does not exist")))
+    vapply(paste0(names(options)[noneExistOptions]), function(x)
+      warning(paste0("The option `", x, "` does not exist")),character(1))
   }
   options=options[!noneExistOptions]
   return(options)

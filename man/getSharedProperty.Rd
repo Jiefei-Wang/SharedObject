@@ -12,6 +12,17 @@ getSharedProperty(x, as.list = FALSE)
 \item{as.list}{Logical, Whether the result should be in a list format even
 if only one shared property is reported}
 }
+\value{
+If x is a shared vector and as.list is FALSE, the function returns a sharedMemory object.
+Otherwise, the function returns a list of sharedMemory object(s).
+}
 \description{
 get a summary report for a shared object
+}
+\examples{
+x=share(1:10)
+getSharedProperty(x)
+}
+\seealso{
+getCopyOnWrite, getSharedSubset, getSharedCopy
 }

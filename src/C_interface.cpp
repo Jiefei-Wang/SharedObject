@@ -1,6 +1,5 @@
 #include <Rcpp.h>
 using namespace Rcpp;
-#include <Rinternals.h>
 #include "R_ext/Altrep.h"
 #include "tools.h"
 #include "memoryManager.h"
@@ -14,26 +13,46 @@ SEXP C_getSharedProperty(SEXP x) {
 	if (!ALTREP(x)) {
 		return R_NilValue;
 	}
-	while (ALTREP(x)) {
+	while (ALTREP(R_altrep_data1(x))) {
 		x = R_altrep_data1(x);
 	}
-	SEXP typeCheck = Rf_protect(Rf_lang3(Rf_install("=="),
-		Rf_lang2(Rf_install("class"), x),
-		Rf_mkString("sharedMemory")));
-
-	if (!Rf_asLogical(R_tryEval(typeCheck, R_GlobalEnv, NULL))) {
+	SEXP altClassName = R_altrep_data2(x);
+	if (TYPEOF(altClassName)!=STRSXP||as<string>(altClassName)!="shared memory") {
 		x = R_NilValue;
 	}
-	Rf_unprotect(1);
-	return x;
+	return R_altrep_data1(x);
 }
 
 // [[Rcpp::export]]
 SEXP C_testFunc(SEXP a)
 {
-	STDVEC_DATAPTR(a);
-	return(a);
+	Environment package_env("SharedObject");
+	return(package_env);
 }
+// [[Rcpp::export]]
+SEXP C_testFunc2(SEXP a)
+{
+	Environment package_env(R_FindNamespace(Rf_mkString("SharedObject")));
+	return(package_env);
+}
+
+// [[Rcpp::export]]
+SEXP C_testFunc3(SEXP a)
+{
+	Function getSharedParms(PACKAGE_FUNC(".createInheritedParms"));
+	return(getSharedParms);
+}
+
+// [[Rcpp::export]]
+SEXP C_testFunc4(SEXP a)
+{
+	Environment package_env(R_FindNamespace(Rf_mkString("SharedObject")));
+	Function getSharedParms = package_env[".createInheritedParms"];
+	return(getSharedParms);
+}
+
+
+
 
 // [[Rcpp::export]]
 DID C_findAvailableKey(DID dataID) {
@@ -43,7 +62,7 @@ DID C_findAvailableKey(DID dataID) {
 // [[Rcpp::export]]
 void C_createSharedMemory(SEXP R_x, SEXP R_dataInfo) {
 	//R_xlen_t len = Rf_xlength(R_x);
-	//Rprintf("length:%d,type: %d, total:%f, pid: %llu\n", len, type,total_size, pid);
+	DEBUG(Rprintf("Creating a shared memory object\n"));
 	//Rf_PrintValue(R_x);
 	dataInfo di;
 #define X(id,type, name) di.name=REAL(R_dataInfo)[id];
@@ -58,6 +77,7 @@ void C_createSharedMemory(SEXP R_x, SEXP R_dataInfo) {
 
 // [[Rcpp::export]]
 SEXP C_readSharedMemory(DID dataID) {
+	DEBUG(Rprintf("reading the shared memory object, data ID: %llu\n", dataID));
 	void* p = readSharedObject(dataID);
 	SEXP exter_p = R_MakeExternalPtr(p, R_NilValue, R_NilValue);
 	return(exter_p);
@@ -68,14 +88,16 @@ SEXP C_readSharedMemory(DID dataID) {
 
 // [[Rcpp::export]]
 SEXP C_createAltrep(SEXP SM_obj) {
+	DEBUG(Rprintf("creating the altrep objec\n"));
 	int type = SM_TYPEID(SM_obj);
 	DEBUG(Rprintf("type %d\n", type));
 	R_altrep_class_t alt_class = getAltClass(type);
 	DEBUG(Rprintf("get alt class\n"));
-	SEXP res = Rf_protect(R_new_altrep(alt_class, SM_obj, R_NilValue));
+	SEXP altClassName = PROTECT(Rf_mkString("shared memory"));
+	SEXP res = PROTECT(R_new_altrep(alt_class, SM_obj, altClassName));
 	DEBUG(Rprintf("altrep generated with type %d\n", type));
 
-	Rf_unprotect(1);
+	UNPROTECT(2);
 	return res;
 }
 
@@ -118,3 +140,7 @@ bool C_ALTREP(SEXP x) {
 	return ALTREP(x);
 }
 
+// [[Rcpp::export]]
+std::vector<double> C_getUsedKey() {
+	return getUsedKey();
+}

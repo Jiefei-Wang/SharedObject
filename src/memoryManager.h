@@ -23,5 +23,5 @@ void destroyObject(DID dataID);
 std::string getDataMemoryKey(DID dataID);
 dataInfo& getDataInfo(DID dataID);
 std::vector<double> getDataIDList();
-
+std::vector<double> getUsedKey();
 

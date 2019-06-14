@@ -28,6 +28,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_testFunc2
+SEXP C_testFunc2(SEXP a);
+RcppExport SEXP _SharedObject_C_testFunc2(SEXP aSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type a(aSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_testFunc2(a));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_testFunc3
+SEXP C_testFunc3(SEXP a);
+RcppExport SEXP _SharedObject_C_testFunc3(SEXP aSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type a(aSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_testFunc3(a));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_testFunc4
+SEXP C_testFunc4(SEXP a);
+RcppExport SEXP _SharedObject_C_testFunc4(SEXP aSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type a(aSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_testFunc4(a));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_findAvailableKey
 DID C_findAvailableKey(DID dataID);
 RcppExport SEXP _SharedObject_C_findAvailableKey(SEXP dataIDSEXP) {
@@ -124,6 +157,16 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(C_ALTREP(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getUsedKey
+std::vector<double> C_getUsedKey();
+RcppExport SEXP _SharedObject_C_getUsedKey() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(C_getUsedKey());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -252,6 +295,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getSharedProperty", (DL_FUNC) &_SharedObject_C_getSharedProperty, 1},
     {"_SharedObject_C_testFunc", (DL_FUNC) &_SharedObject_C_testFunc, 1},
+    {"_SharedObject_C_testFunc2", (DL_FUNC) &_SharedObject_C_testFunc2, 1},
+    {"_SharedObject_C_testFunc3", (DL_FUNC) &_SharedObject_C_testFunc3, 1},
+    {"_SharedObject_C_testFunc4", (DL_FUNC) &_SharedObject_C_testFunc4, 1},
     {"_SharedObject_C_findAvailableKey", (DL_FUNC) &_SharedObject_C_findAvailableKey, 1},
     {"_SharedObject_C_createSharedMemory", (DL_FUNC) &_SharedObject_C_createSharedMemory, 2},
     {"_SharedObject_C_readSharedMemory", (DL_FUNC) &_SharedObject_C_readSharedMemory, 1},
@@ -261,6 +307,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getDataInfo", (DL_FUNC) &_SharedObject_C_getDataInfo, 1},
     {"_SharedObject_C_attachAttr", (DL_FUNC) &_SharedObject_C_attachAttr, 3},
     {"_SharedObject_C_ALTREP", (DL_FUNC) &_SharedObject_C_ALTREP, 1},
+    {"_SharedObject_C_getUsedKey", (DL_FUNC) &_SharedObject_C_getUsedKey, 0},
     {"_SharedObject_C_getDataID", (DL_FUNC) &_SharedObject_C_getDataID, 1},
     {"_SharedObject_C_getProcessID", (DL_FUNC) &_SharedObject_C_getProcessID, 1},
     {"_SharedObject_C_getTypeID", (DL_FUNC) &_SharedObject_C_getTypeID, 1},

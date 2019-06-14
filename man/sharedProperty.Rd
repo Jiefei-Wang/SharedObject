@@ -36,3 +36,20 @@ a single value or a vector. If the length of \code{value} does not match the col
 \description{
 Get or set the properties of a shared object
 }
+\examples{
+x=share(1:20)
+##Check the default values
+getCopyOnWrite(x)
+getSharedSubset(x)
+getSharedCopy(x)
+
+##Set the values
+setCopyOnWrite(x,FALSE)
+setSharedSubset(x,FALSE)
+setSharedCopy(x,TRUE)
+
+##Check the values again
+getCopyOnWrite(x)
+getSharedSubset(x)
+getSharedCopy(x)
+}

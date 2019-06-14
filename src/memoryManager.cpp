@@ -1,23 +1,25 @@
 #ifdef _WIN32
 #define WINDOWS_OS
 #endif
+
+
 #ifdef  WINDOWS_OS 
 #include <boost/interprocess/managed_windows_shared_memory.hpp>
 #define OS_managed_shared_memory managed_windows_shared_memory
 #define OS_shared_memory_object windows_shared_memory 
-#define OS_SHARED_OBJECT_PKG_SPACE "Local\\shared_object_package_space"
-#define OS_DATA_INFO_MAP_NAME "Local\\data_info_map"
+#define OS_SHARED_OBJECT_PKG_SPACE ("Local\\shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
+#define OS_DATA_INFO_MAP_NAME ("Local\\data_info_map"+OS_ADDRESS_SIZE).c_str()
+#define OS_USED_KEY_SET_NAME ("Local\\used_key_set"+OS_ADDRESS_SIZE).c_str()
 #else
 #include <boost/interprocess/managed_shared_memory.hpp>
 #define OS_managed_shared_memory managed_shared_memory
 #define OS_shared_memory_object shared_memory_object 
-#define OS_SHARED_OBJECT_PKG_SPACE "shared_object_package_space"
-#define OS_DATA_INFO_MAP_NAME "data_info_map"
+#define OS_SHARED_OBJECT_PKG_SPACE ("shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
+#define OS_DATA_INFO_MAP_NAME ("data_info_map"+OS_ADDRESS_SIZE).c_str()
+#define OS_USED_KEY_SET_NAME ("used_key_set"+OS_ADDRESS_SIZE).c_str()
 #endif //  WINDOWS_OS 
 
 #include <boost/interprocess/allocators/allocator.hpp>
-//#include <boost/exception/diagnostic_information.hpp>
-//#include <boost/exception_ptr.hpp>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/foreach.hpp>
@@ -33,7 +35,7 @@ using std::to_string;
 #define SHARED_OBJECT_PKG_SPACE OS_SHARED_OBJECT_PKG_SPACE
 //The name of data info map
 #define DATA_INFO_MAP_NAME OS_DATA_INFO_MAP_NAME
-
+#define USED_KEY_SET_NAME OS_USED_KEY_SET_NAME
 
 
 
@@ -47,6 +49,9 @@ typedef std::pair<const DID, dataInfo> dataInfoPair;
 typedef allocator<dataInfoPair, OS_managed_shared_memory::segment_manager> dataInfoAllocator;
 typedef map<DID, dataInfo, std::less<DID>, dataInfoAllocator> sharedDataInfoMap;
 
+typedef allocator<DID, OS_managed_shared_memory::segment_manager> usedKeySetAllocator;
+typedef set<DID, std::less<DID>, usedKeySetAllocator> sharedUsedKeySet;
+
 
 
 std::map<DID, OS_shared_memory_object*> sharedMemoryList;
@@ -55,6 +60,7 @@ std::map<DID, mapped_region*> segmentList;
 //The shared memory contains dataInfoMap
 OS_managed_shared_memory* processInfoSegment = nullptr;
 sharedDataInfoMap* dataInfoMap = nullptr;
+sharedUsedKeySet* usedKeyset = nullptr;
 
 
 #define removeVectorKeyAndValueIfExist(vec,key)\
@@ -85,10 +91,11 @@ bool valid(const char* name, sharedSystem ss)
 }
 
 bool removeSharedMemory(const char* name) {
-#ifndef WINDOWS_OS 
+#ifdef WINDOWS_OS 
+	return true;
+#else
 	return OS_shared_memory_object::remove(name);
 #endif
-	return true;
 }
 
 bool hasDataID(DID did) {
@@ -140,6 +147,7 @@ mapType* openOrCreateSharedMap(OS_managed_shared_memory * segment, const char* n
 
 
 
+
 void initialSharedMemory() {
 	try
 	{
@@ -150,6 +158,7 @@ void initialSharedMemory() {
 			//Create shared memory space if not exist
 			processInfoSegment = openOrCreateSharedSegment(SHARED_OBJECT_PKG_SPACE, DATA_LIST_SIZE);
 			dataInfoMap = openOrCreateSharedMap< dataInfoAllocator, sharedDataInfoMap, DID>(processInfoSegment, DATA_INFO_MAP_NAME);
+			usedKeyset = openOrCreateSharedMap< usedKeySetAllocator, sharedUsedKeySet, DID>(processInfoSegment, USED_KEY_SET_NAME);
 
 			//processInfoMap = segment.find<sharedProcessInfoMap>(PROCESS_SHARED_NAME).first;
 		}
@@ -166,7 +175,7 @@ void initialSharedMemory() {
 
 DID findAvailableKey(DID dataID) {
 	initialSharedMemory();
-	while (dataInfoMap->find(dataID) != dataInfoMap->end()) {
+	while (usedKeyset->find(dataID) != usedKeyset->end()) {
 		dataID += 1;
 	}
 	return dataID;
@@ -195,6 +204,7 @@ void* reserveSpace(DID dataID, ULLong size) {
 	string dataKey = getDataMemoryKey(dataID);
 	try
 	{
+		//printf("key:%llu\n", dataID);
 		boost::interprocess::permissions perm;
 		perm.set_unrestricted();
 		CREATE_SHARED_MEM(sharedData, create_only, dataKey.c_str(), read_write, perm, size);
@@ -202,7 +212,7 @@ void* reserveSpace(DID dataID, ULLong size) {
 	}
 	catch (const std::exception & ex) {
 		removeSharedMemory(dataKey.c_str());
-		errorHandle(string("Can't open shared object,\n") + ex.what());
+		errorHandle("Can't open shared object, data ID %llu, has key:%d \n%s", dataID, dataInfoMap->find(dataID) != dataInfoMap->end(), ex.what());
 	}
 	return nullptr;
 }
@@ -212,6 +222,7 @@ void insertDataInfo(const dataInfo DI) {
 	{
 		//Insert the data info into the record
 		dataInfoMap->insert(dataInfoPair(DI.dataID, DI));
+		usedKeyset->insert(DI.dataID);
 	}
 	catch (const std::exception & ex) {
 		errorHandle("error in recording a shared memory info\n");
@@ -349,4 +360,11 @@ std::vector<double> getDataIDList() {
 }
 
 
-
+std::vector<double> getUsedKey() {
+	initialSharedMemory();
+	std::vector<double> v;
+	BOOST_FOREACH(DID & dip, *usedKeyset) {
+		v.push_back(dip);
+	}
+	return v;
+}

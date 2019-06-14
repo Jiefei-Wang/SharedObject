@@ -9,6 +9,9 @@
 \arguments{
 \item{data_ids}{The data ID. If NULL(default), all data will be returned.}
 }
+\value{
+A data.frame
+}
 \description{
 This function will return a list of the summary of the data in the shared memory.
 }
