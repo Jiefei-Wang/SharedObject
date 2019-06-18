@@ -1,6 +1,6 @@
 Package: SharedObject
 Type: Package
-Title: Sharing R objects across multiple R processes
+Title: Sharing R objects across multiple R processes without memory duplication
 Version: 0.99.0
 Date: 2019-6-10
 Author: Jiefei Wang
@@ -12,11 +12,13 @@ License: GPL-3
 LinkingTo: 
     BH,
     Rcpp
-Depends: R (>= 3.6.0)
+Depends: 
+    R (>= 3.6.0)
 Imports: 
     Rcpp,
     methods,
     stats,
+    xptr,
     BiocGenerics
 biocViews: Infrastructure
 BugReports: https://github.com/Jiefei-Wang/SharedObject/issues
@@ -28,14 +30,5 @@ Suggests:
     knitr,
     rmarkdown,
     BiocStyle
-Collate: 
-    'RcppExports.R'
-    'pkgSetting.R'
-    'resourcesManager.R'
-    'sharedMemory-class.R'
-    'sharedMemory-methods.R'
-    'sharedObject-altrep.R'
-    'tools.R'
-    'zzz.R'
 VignetteBuilder: knitr
 Encoding: UTF-8

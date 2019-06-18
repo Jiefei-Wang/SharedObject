@@ -31,8 +31,9 @@ const void* getPointer(SEXP x) {
 		return x;
 	default:
 		errorHandle("Unexpected SEXP of type %d\n", TYPEOF(x));
+		// Just for suppressing the annoying warning, it should never be excuted
+		return nullptr;
 	}
-	return nullptr;
 }
 
 R_altrep_class_t getAltClass(int type) {
@@ -49,7 +50,7 @@ R_altrep_class_t getAltClass(int type) {
 		//return shared_str_class;
 	default: errorHandle("Type of %d is not supported yet", type);
 	}
-	//This return is only for keeping the annoying warning silent
+	// Just for suppressing the annoying warning, it should never be excuted
 	return shared_real_class;
 }
 
@@ -79,25 +80,33 @@ const void* sharedVector_dataptr_or_null(SEXP x)
 }
 
 SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
-	using namespace Rcpp;
-	DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n", deep, SV_COPY_ON_WRITE(x), SV_SHARED_DUPLICATE(x)));
-	//Rf_PrintValue(SV_DATA(x, dataInfo));
-	if (SV_COPY_ON_WRITE(x)) {
-		if (SV_SHARED_DUPLICATE(x)) {
-			Environment package_env(PACKAGE_ENV);
-			Function getSharedParms = package_env[".createInheritedParms"];
-			List opt = getSharedParms(x);
-			Function sv_constructor = package_env["share"];
-			SEXP so = sv_constructor(x, opt);
-			return(so);
+	try {
+		using namespace Rcpp;
+		DEBUG(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared duplicate %d\n", deep, SV_COPY_ON_WRITE(x), SV_SHARED_DUPLICATE(x)));
+		//Rf_PrintValue(SV_DATA(x, dataInfo));
+		if (SV_COPY_ON_WRITE(x)) {
+			if (SV_SHARED_DUPLICATE(x)) {
+				Environment package_env(PACKAGE_ENV);
+				Function getSharedParms = package_env[".createInheritedParms"];
+				List opt = getSharedParms(x);
+				Function sv_constructor = package_env["share"];
+				SEXP so = sv_constructor(x, opt);
+				return(so);
+			}
+			else {
+				return(NULL);
+			}
 		}
 		else {
-			return(NULL);
+			return(x);
 		}
 	}
-	else {
-		return(x);
+	catch (const std::exception & ex) {
+		errorHandle("Error in duplicating an altrep\n%s", ex.what());
 	}
+
+	// Just for suppressing the annoying warning, it should never be excuted
+	return(NULL);
 }
 
 SEXP sharedVector_serialized_state(SEXP x) {
@@ -113,14 +122,20 @@ void loadLibrary() {
 }
 
 SEXP sharedVector_unserialize(SEXP R_class, SEXP state) {
-	using namespace Rcpp;
-	DEBUG(Rprintf("unserializing data\n"));
-	loadLibrary();
-	DEBUG(Rprintf("Library loaded\n"));
-	Environment package_env(PACKAGE_ENV);
-	Function so_constructor = package_env[".sharedVectorById"];
-	SEXP so = so_constructor(state);
-	return so;
+	try {
+		using namespace Rcpp;
+		DEBUG(Rprintf("unserializing data\n"));
+		loadLibrary();
+		DEBUG(Rprintf("Library loaded\n"));
+		Environment package_env(PACKAGE_ENV);
+		Function so_constructor = package_env["sharedVectorById"];
+		SEXP so = so_constructor(state);
+		return so;
+	}
+	catch (const std::exception & ex) {
+		errorHandle("Error in unserializing an altrep\n%s", ex.what());
+	}
+	return state;
 }
 
 

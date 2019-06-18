@@ -47,6 +47,21 @@ for (i in seq_along(typeName)) {
     })
     expect_equal(curData, res[[1]])
   })
+
+
+  test_that(paste0("Testing copy-on-write for cluster export for type ", typeName[i]), {
+    if (i <= 3) {
+    curData = type[[i]](data)
+    sv = share(curData)
+    clusterExport(cl, "sv", envir = environment())
+    setCopyOnWrite(sv,FALSE)
+    res = clusterEvalQ(cl, {
+      sv[1]=as(1-sv[1],typeof(sv))
+      sv
+    })
+    expect_equal(0+sv[1], 1-data[1])
+    }
+  })
 }
 test_that("Copy on write switch", {
   so1 = share(data, copyOnWrite = TRUE)
@@ -138,16 +153,20 @@ test_that("Shared Object API", {
 test_that("Key management", {
   #Shared object API
   x = share(data)
-  sm=getSharedProperty(x)
-  key=sm$getDataID()
-  rm("x","sm")
+  sp=getSharedProperty(x)
+  key=sp[["dataId"]]
+  rm("x","sp")
   gc()
   gc()
 
-  expect_error(share(data,dataID=key),NA)
+  expect_warning(share(data,dataId=key))
 })
 
-
+test_that("data frame", {
+  newData=as.data.frame(matrix(data,n/10,10))
+  x=share(newData)
+  expect_equal(x,newData)
+})
 
 
 

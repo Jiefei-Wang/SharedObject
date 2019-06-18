@@ -7,17 +7,17 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 DID C_getDataID(DID did) {
 	dataInfo& info = getDataInfo(did);
-	return info.dataID;
+	return info.dataId;
 }
 // [[Rcpp::export]]
 PID C_getProcessID(DID did) {
 	dataInfo& info = getDataInfo(did);
-	return info.processID;
+	return info.processId;
 }
 // [[Rcpp::export]]
 int C_getTypeID(DID did) {
 	dataInfo& info = getDataInfo(did);
-	return info.typeID;
+	return info.typeId;
 }
 // [[Rcpp::export]]
 ULLong C_getLength(DID did) {

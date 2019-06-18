@@ -111,8 +111,8 @@ setGeneric("share",function(x,...){
 
 shareAtomic<-function(x,...){
   options=as.list(unlist(list(...)))
-  sm=sharedMemory(x,options)
-  obj=C_createAltrep(sm)
+  dataReferenceInfo=initialSharedMemoryByData(x,options)
+  obj=C_createAltrep(dataReferenceInfo)
   obj=copyAttribute(x,obj)
   obj
 }
@@ -135,150 +135,13 @@ setMethod("share",signature(x="list"),function(x,...){
   stop("Shared list cannot be automatically created. Please create it manually")
 } )
 
-
-
-#' Internal functions
-#'
-#' @details
-#' .sharedVectorById: retrieve an R object by the data ID
-#' @param did The data id
-#' @rdname internal
-#' @export
-.sharedVectorById<-function(did){
-  sm=createSharedMemoryByID(did)
-  obj=C_createAltrep(sm)
+## Used by unserialize function
+sharedVectorById<-function(dataId){
+  dataReferenceInfo=initialSharedMemoryByID(dataId)
+  obj=C_createAltrep(dataReferenceInfo)
   obj
 }
 
-#' @param x A shared object
-#' @rdname internal
-#' @export
-.dataID <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getDataID()),numeric(1))
-}
-
-#' @rdname internal
-#' @export
-.typeName <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeName()),character(1))
-}
-
-#' @rdname internal
-#' @export
-.ownData <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getOwnData()),logical(1))
-}
-
-#' @rdname internal
-#' @export
-.processID <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getProcessID()),numeric(1))
-}
-
-#' @rdname internal
-#' @export
-.typeID <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTypeID()),integer(1))
-}
-
-#' @rdname internal
-#' @export
-.length <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getLength()),numeric(1))
-}
-
-#' @rdname internal
-#' @export
-.totalSize <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getTotalSize()),numeric(1))
-}
-
-
-#' Get or set the properties of a shared object
-#'
-#' @param x A shared object
-#' @param value logical, the value you want the property to be. For a `data.frame`, it can be either
-#' a single value or a vector. If the length of `value` does not match the column of the `data.frame`,
-#' `value` will be replicate to match the length.
-#' @return
-#' `get`: The property of a shared object
-#'
-#' `set`: No return value
-#' @examples
-#' x=share(1:20)
-#' ##Check the default values
-#' getCopyOnWrite(x)
-#' getSharedSubset(x)
-#' getSharedCopy(x)
-#'
-#' ##Set the values
-#' setCopyOnWrite(x,FALSE)
-#' setSharedSubset(x,FALSE)
-#' setSharedCopy(x,TRUE)
-#'
-#' ##Check the values again
-#' getCopyOnWrite(x)
-#' getSharedSubset(x)
-#' getSharedCopy(x)
-#' @rdname sharedProperty
-#' @export
-getCopyOnWrite <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getCopyOnWrite()),logical(1))
-}
-#' @rdname sharedProperty
-#' @export
-getSharedSubset <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getSharedSubset()),logical(1))
-}
-#' @rdname sharedProperty
-#' @export
-getSharedCopy <- function(x) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  vapply(sm,function(x)ifelse(is.null(x),NA,x$getSharedCopy()),logical(1))
-}
-
-#' @rdname sharedProperty
-#' @export
-setCopyOnWrite <- function(x,value) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  value=rep_len(value,length(sm))
-  for(i in seq_along(sm)){
-    if(!is.null(sm)){
-      sm[[i]]$setCopyOnWrite(value[i])
-    }
-  }
-}
-#' @rdname sharedProperty
-#' @export
-setSharedSubset <- function(x,value) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  value=rep_len(value,length(sm))
-  for(i in seq_along(sm)){
-    if(!is.null(sm)){
-      sm[[i]]$setSharedSubset(value[i])
-    }
-  }
-}
-#' @rdname sharedProperty
-#' @export
-setSharedCopy <- function(x,value) {
-  sm=getSharedProperty(x,as.list=TRUE)
-  value=rep_len(value,length(sm))
-  for(i in seq_along(sm)){
-    if(!is.null(sm)){
-      sm[[i]]$setSharedCopy(value[i])
-    }
-  }
-}
 
 
 

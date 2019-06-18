@@ -212,7 +212,7 @@ void* reserveSpace(DID dataID, ULLong size) {
 	}
 	catch (const std::exception & ex) {
 		removeSharedMemory(dataKey.c_str());
-		errorHandle("Can't open shared object, data ID %llu, has key:%d \n%s", dataID, dataInfoMap->find(dataID) != dataInfoMap->end(), ex.what());
+		errorHandle("Can't create a shared object, data ID %llu, has key:%d \n%s", dataID, dataInfoMap->find(dataID) != dataInfoMap->end(), ex.what());
 	}
 	return nullptr;
 }
@@ -221,8 +221,8 @@ void insertDataInfo(const dataInfo DI) {
 	try
 	{
 		//Insert the data info into the record
-		dataInfoMap->insert(dataInfoPair(DI.dataID, DI));
-		usedKeyset->insert(DI.dataID);
+		dataInfoMap->insert(dataInfoPair(DI.dataId, DI));
+		usedKeyset->insert(DI.dataId);
 	}
 	catch (const std::exception & ex) {
 		errorHandle("error in recording a shared memory info\n");
@@ -250,15 +250,16 @@ void copyRData(void* target, const void* RData, int typeID, ULLong size) {
 	}
 }
 
-void createSharedObject(const void* data, const dataInfo DI) {
+void* createSharedObject(const void* data, const dataInfo DI) {
 	initialSharedMemory();
 	//Allocate memory in the shared space
-	void* dataPtr = reserveSpace(DI.dataID, DI.totalSize);
+	void* dataPtr = reserveSpace(DI.dataId, DI.totalSize);
 	//Write to shared memory
-	copyRData(dataPtr, data, DI.typeID, DI.totalSize);
+	copyRData(dataPtr, data, DI.typeId, DI.totalSize);
 	//Record the data info
 	insertDataInfo(DI);
-	DEBUG(printf("A shared object is created with id: %llu\n", DI.dataID));
+	DEBUG(printf("A shared object is created with id: %llu\n", DI.dataId));
+	return dataPtr;
 }
 
 void* readSharedObject(DID dataID) {
@@ -350,7 +351,7 @@ dataInfo& getDataInfo(DID dataID) {
 
 
 
-std::vector<double> getDataIDList() {
+std::vector<double> getDataIdList() {
 	initialSharedMemory();
 	std::vector<double> v;
 	BOOST_FOREACH(dataInfoPair & dip, *dataInfoMap) {

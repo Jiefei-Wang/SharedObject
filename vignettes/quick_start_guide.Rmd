@@ -86,14 +86,12 @@ There are several properties with the shared object, one can check them via
 getSharedProperty(A_shr)
 
 ## Internal function to check the properties
-## get the individual properties
-.dataID(A_shr)
-.typeName(A_shr)
-.ownData(A_shr)
-.processID(A_shr)
-.typeID(A_shr)
-.length(A_shr)
-.totalSize(A_shr)
+## All properties can be accessed via the similar way
+.getProperty(A_shr,"dataId")
+.getProperty(A_shr,"processId")
+.getProperty(A_shr,"typeId")
+
+## Public function to check the properties
 getCopyOnWrite(A_shr)
 getSharedSubset(A_shr)
 getSharedCopy(A_shr)

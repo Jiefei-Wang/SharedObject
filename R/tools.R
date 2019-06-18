@@ -29,30 +29,7 @@ getTypeNameByID<-function(id){
     stop("The id does not correspond to any type: ", id)
   typeName[ind]
 }
-#' get a summary report for a shared object
-#'
-#' @param x A shared object
-#' @param as.list Logical, Whether the result should be in a list format even
-#' if only one shared property is reported
-#' @return
-#' If x is a shared vector and as.list is FALSE, the function returns a sharedMemory object.
-#' Otherwise, the function returns a list of sharedMemory object(s).
-#' @examples
-#' x=share(1:10)
-#' getSharedProperty(x)
-#' @seealso getCopyOnWrite, getSharedSubset, getSharedCopy
-#' @export
-getSharedProperty<-function(x,as.list=FALSE){
-  if(is.data.frame(x)){
-      res=lapply(seq_len(ncol(x)),function(i)C_getSharedProperty(x[,i]))
-  }else{
-    res=C_getSharedProperty(x)
-    if(as.list){
-      res=list(res)
-    }
-  }
-  res
-}
+
 
 
 copyAttribute<-function(source,target){
@@ -68,8 +45,13 @@ generateKey<-function(){
   key
 }
 
-findUniqueKey<-function(x){
-  C_findAvailableKey(x)
+findUniqueKey<-function(x,warning=TRUE){
+  x_new=C_findAvailableKey(x)
+  if(warning&&x_new!=x){
+    warning("The key ",as.character(x)," has existed in the shared memory. ",
+            "A new key ",as.character(x_new)," is generated.")
+  }
+  x_new
 }
 
 #' Is an Object a desired type?
@@ -98,8 +80,8 @@ is.sharedObject<-function(x){
 
 is.sharedVector<-function(x){
   if(is.atomic(x)){
-    sm=getSharedProperty(x)
-    if(!is.null(sm)&&is(sm,"sharedMemory")){
+    altData2=getAltData2(x)
+    if(!is.na(altData2)&&!is.null(altData2)&&length(altData2)==1&&altData2=="shared memory"){
       return(TRUE)
     }
   }
@@ -109,19 +91,19 @@ is.sharedVector<-function(x){
 #' @param recursive Logical, whether a `data.frame` can be treated as a shared object. If `TRUE`, a `data.frame`
 #' is called a shared object if and only if all of its columns are shared objects.
 #' @export
-is.shared<-function(x, recursive = TRUE){
-  ifelse(recursive,is.sharedObject(x),is.sharedVector(x))
+is.shared <- function(x, recursive = TRUE) {
+  if (recursive) {
+    return(is.sharedObject(x))
+  } else{
+    return(is.sharedVector(x))
+  }
 }
 
 
 
 .createInheritedParms<-function(x){
-  sm=getSharedProperty(x)
-  parms=list(
-    copyOnWrite=sm$getCopyOnWrite(),
-    sharedSubset=sm$getSharedSubset(),
-    sharedCopy=sm$getSharedCopy()
-  )
+  sharedProperty=getSharedProperty(x)
+  parms=as.list(sharedProperty[sharedOptions])
   parms
 }
 
@@ -135,5 +117,16 @@ calculateSharedMemerySize<-function(x){
   }else{
     return(n*typeSize(typeof(x)))
   }
+}
+
+
+##The function return the value in data 1
+##if and only if x is a shared object
+getAltData1<-function(x){
+  return(C_getAltData1(x))
+}
+
+getAltData2<-function(x){
+  return(C_getAltData2(x))
 }
 

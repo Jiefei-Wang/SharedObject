@@ -2,6 +2,7 @@
 #' @importFrom Rcpp sourceCpp
 #' @importFrom stats runif
 #' @importFrom methods is new
+#' @importFrom xptr xptr_tag
 #' @import BiocGenerics
 
 .globals <- local({

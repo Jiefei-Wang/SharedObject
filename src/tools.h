@@ -4,7 +4,7 @@
 #define PACKAGE_ENV R_FindNamespace(Rf_mkString(PACKAGE_NAME))
 #define PACKAGE_FUNC(x) Rf_findFun(Rf_install(x),R_FindNamespace(Rf_mkString(PACKAGE_NAME)))
 
-#define DEBUG(x) ;
+#define DEBUG(x);
 #define asString(x) std::string(CHAR(asChar(x)))
 
 
@@ -18,9 +18,9 @@
 
 #define DATAINFO_FIELDS_NUMBER 8
 #define DATAINFO_FIELDS \
-    X(0,DID, dataID) \
-    X(1,PID, processID) \
-    X(2,int, typeID) \
+    X(0,DID, dataId) \
+    X(1,PID, processId) \
+    X(2,int, typeId) \
     X(3,ULLong, length) \
     X(4,ULLong, totalSize) \
     X(5,bool, copyOnWrite) \
@@ -28,7 +28,7 @@
 	X(7,bool, sharedCopy)
 
 #define X(id,type, name) extern const ULLong dataInfo_##name;
-DATAINFO_FIELDS;
+DATAINFO_FIELDS
 #undef X
 
 extern std::string OS_ADDRESS_SIZE;

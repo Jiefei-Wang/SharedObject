@@ -1,3 +1,5 @@
+#' Internal functions
+#'
 #' @details
 #' .removeAllObject: This function will force the package to delete all data in the shared memory.
 #' Any try to read the data after the function call will crash R.
@@ -9,7 +11,7 @@
 #' .removeAllObject()
 #' @export
 .removeAllObject<-function(){
-  dids=getDataIDList()
+  dids=getDataIdList()
   .removeObject(dids)
   invisible()
 }
@@ -18,25 +20,28 @@
 #' removeObject: This function will delete the data associated with the key provided by the function argument.
 #' Any try to read the data after the function call will crash R.
 #'
-#' @param dataID The data ID you want to delete
+#' @param dataId The data ID you want to delete
 #' @rdname internal
 #' @return
 #' .removeObject: no return value
 #' @export
-.removeObject<-function(dataID){
+.removeObject<-function(dataId){
   #return NULL, cannot use vapply
-  lapply(as.double(dataID),removeObject_single)
+  lapply(as.double(dataId),removeObject_single)
   invisible()
 }
 
-removeObject_single<-function(dataID){
-  C_clearObj(dataID)
+removeObject_single<-function(dataId){
+  C_clearObj(dataId)
   invisible()
 }
 
+getUsedDataId<-function(){
+  C_getUsedKey()
+}
 
-getDataIDList<-function(){
-  C_getDataIDList()
+getDataIdList<-function(){
+  C_getDataIdList()
 }
 
 #' Get a summary report of the data in the shared memory
@@ -51,7 +56,7 @@ getDataIDList<-function(){
 #' @export
 .getDataInfo<-function(data_ids=NULL){
   if(is.null(data_ids)){
-    data_ids=getDataIDList()
+    data_ids=getDataIdList()
   }
   if(length(data_ids)==0){
     res=data.frame(
@@ -64,7 +69,7 @@ getDataIDList<-function(){
   res=vapply(data_ids, getDataInfo_single,numeric(length(dataInfoTemplate)))
   res=as.data.frame(t(res))
 
-  res$dataID=as.character(res$dataID)
+  res$dataId=as.character(res$dataId)
 
   res
 }

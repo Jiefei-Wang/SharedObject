@@ -5,7 +5,7 @@ This package is designed for sharing objects across multiple R processes. Users 
 ```
 #Create data and the shared object
 x=runif(10)
-so=sharedObject(x)
+so=share(x)
 
 #Compare differences
 x
@@ -16,8 +16,8 @@ is.vector(x)
 is.vector(so)
 
 #methods to check if an object is a shared object
-is.altrep(x)
-is.vector(so)
+is.shared(x)
+is.shared(so)
 
 .Internal(inspect(x))
 .Internal(inspect(so))

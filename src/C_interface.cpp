@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+#include "C_interface.h"
 #include "R_ext/Altrep.h"
 #include "tools.h"
 #include "memoryManager.h"
@@ -9,49 +8,25 @@ using namespace Rcpp;
 using std::string;
 
 // [[Rcpp::export]]
-SEXP C_getSharedProperty(SEXP x) {
+SEXP C_getAltData1(SEXP x) {
 	if (!ALTREP(x)) {
 		return R_NilValue;
 	}
 	while (ALTREP(R_altrep_data1(x))) {
 		x = R_altrep_data1(x);
 	}
-	SEXP altClassName = R_altrep_data2(x);
-	if (TYPEOF(altClassName)!=STRSXP||as<string>(altClassName)!="shared memory") {
-		x = R_NilValue;
-	}
 	return R_altrep_data1(x);
 }
-
 // [[Rcpp::export]]
-SEXP C_testFunc(SEXP a)
-{
-	Environment package_env("SharedObject");
-	return(package_env);
+SEXP C_getAltData2(SEXP x) {
+	if (!ALTREP(x)) {
+		return R_NilValue;
+	}
+	while (ALTREP(R_altrep_data1(x))) {
+		x = R_altrep_data1(x);
+	}
+	return R_altrep_data2(x);
 }
-// [[Rcpp::export]]
-SEXP C_testFunc2(SEXP a)
-{
-	Environment package_env(R_FindNamespace(Rf_mkString("SharedObject")));
-	return(package_env);
-}
-
-// [[Rcpp::export]]
-SEXP C_testFunc3(SEXP a)
-{
-	Function getSharedParms(PACKAGE_FUNC(".createInheritedParms"));
-	return(getSharedParms);
-}
-
-// [[Rcpp::export]]
-SEXP C_testFunc4(SEXP a)
-{
-	Environment package_env(R_FindNamespace(Rf_mkString("SharedObject")));
-	Function getSharedParms = package_env[".createInheritedParms"];
-	return(getSharedParms);
-}
-
-
 
 
 // [[Rcpp::export]]
@@ -59,27 +34,53 @@ DID C_findAvailableKey(DID dataID) {
 	return findAvailableKey(dataID);
 }
 
+// Finalizer of a pointer to the shared memory
+static void ptr_finalizer(SEXP extPtr) {
+	void* ptr = R_ExternalPtrAddr(extPtr);
+	NumericVector info = as<NumericVector>(R_ExternalPtrTag(extPtr));
+	DID dataId = info[0];
+	bool ownData = info[1];
+	if (ownData) {
+		DEBUG(Rprintf("finalizing data\n"));
+		destroyObject(dataId);
+	}
+	else {
+		DEBUG(Rprintf("nothing to finalize\n"));
+	}
+	return;
+}
+
+// Make a external pointer with a finalizer
+SEXP makeExternalSharedPtr(void* ptr,DID dataId,bool ownData) {
+	NumericVector info=NumericVector::create(dataId,ownData);
+	SEXP extPtr = PROTECT(R_MakeExternalPtr(ptr, wrap(info), R_NilValue));
+	R_RegisterCFinalizer(extPtr, ptr_finalizer);
+	UNPROTECT(1);
+	return extPtr;
+}
+
 // [[Rcpp::export]]
-void C_createSharedMemory(SEXP R_x, SEXP R_dataInfo) {
+SEXP C_createSharedMemory(SEXP x, SEXP R_dataInfo) {
 	//R_xlen_t len = Rf_xlength(R_x);
 	DEBUG(Rprintf("Creating a shared memory object\n"));
 	//Rf_PrintValue(R_x);
 	dataInfo di;
 #define X(id,type, name) di.name=REAL(R_dataInfo)[id];
-	DATAINFO_FIELDS;
+	DATAINFO_FIELDS
 #undef X
-	const void* data = getPointer(R_x);
+	const void* data = getPointer(x);
 	//printf("get pointer%p\n", data);
 	createSharedObject(data, di);
+	return C_readSharedMemory(di.dataId,true);
 }
 
 
 
 // [[Rcpp::export]]
-SEXP C_readSharedMemory(DID dataID) {
+SEXP C_readSharedMemory(DID dataID,bool ownData) {
 	DEBUG(Rprintf("reading the shared memory object, data ID: %llu\n", dataID));
-	void* p = readSharedObject(dataID);
-	SEXP exter_p = R_MakeExternalPtr(p, R_NilValue, R_NilValue);
+	void* ptr = readSharedObject(dataID);
+	SEXP exter_p = makeExternalSharedPtr(ptr, dataID, ownData);
 	return(exter_p);
 }
 
@@ -87,14 +88,14 @@ SEXP C_readSharedMemory(DID dataID) {
 
 
 // [[Rcpp::export]]
-SEXP C_createAltrep(SEXP SM_obj) {
+SEXP C_createAltrep(SEXP dataReferenceInfo) {
 	DEBUG(Rprintf("creating the altrep objec\n"));
-	int type = SM_TYPEID(SM_obj);
+	int type = DRI_TYPEID(dataReferenceInfo);
 	DEBUG(Rprintf("type %d\n", type));
 	R_altrep_class_t alt_class = getAltClass(type);
 	DEBUG(Rprintf("get alt class\n"));
 	SEXP altClassName = PROTECT(Rf_mkString("shared memory"));
-	SEXP res = PROTECT(R_new_altrep(alt_class, SM_obj, altClassName));
+	SEXP res = PROTECT(R_new_altrep(alt_class, dataReferenceInfo, altClassName));
 	DEBUG(Rprintf("altrep generated with type %d\n", type));
 
 	UNPROTECT(2);
@@ -113,15 +114,15 @@ void C_clearObj(double dataID) {
 }
 
 // [[Rcpp::export]]
-std::vector<double> C_getDataIDList() {
-	return getDataIDList();
+std::vector<double> C_getDataIdList() {
+	return getDataIdList();
 }
 // [[Rcpp::export]]
 NumericVector C_getDataInfo(DID dataID) {
 	dataInfo& info = getDataInfo(dataID);
 	NumericVector v(DATAINFO_FIELDS_NUMBER);
 #define X(id,type, name) v[id]=info.name;
-	DATAINFO_FIELDS;
+	DATAINFO_FIELDS
 #undef X
 	return v;
 }
@@ -143,4 +144,20 @@ bool C_ALTREP(SEXP x) {
 // [[Rcpp::export]]
 std::vector<double> C_getUsedKey() {
 	return getUsedKey();
+}
+
+
+
+
+// [[Rcpp::export]]
+SEXP C_testFunc(SEXP a)
+{
+	/* creating a pointer to a vector<int> */
+	std::vector<int>* v = new std::vector<int>;
+	v->push_back(1);
+	v->push_back(2);
+
+	Rcpp::XPtr< std::vector<int> > p(v, true);
+	Environment package_env("SharedObject");
+	return(package_env);
 }
