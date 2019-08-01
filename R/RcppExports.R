@@ -53,6 +53,18 @@ C_testFunc <- function(a) {
     .Call(`_SharedObject_C_testFunc`, a)
 }
 
+C_test1 <- function(f, x) {
+    .Call(`_SharedObject_C_test1`, f, x)
+}
+
+C_test2 <- function(expr, env) {
+    .Call(`_SharedObject_C_test2`, expr, env)
+}
+
+C_test3 <- function(f, x) {
+    .Call(`_SharedObject_C_test3`, f, x)
+}
+
 C_getDataID <- function(did) {
     .Call(`_SharedObject_C_getDataID`, did)
 }

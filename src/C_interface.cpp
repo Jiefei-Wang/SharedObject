@@ -5,6 +5,7 @@
 #include "altrepMacro.h"
 #include "altrepCommonFunc.h"
 
+// [[Rcpp::plugins(unwindProtect)]]
 using std::string;
 
 // [[Rcpp::export]]
@@ -16,7 +17,7 @@ SEXP C_getAltData1(SEXP x) {
 		x = R_altrep_data1(x);
 	}
 	return R_altrep_data1(x);
-}
+} 
 // [[Rcpp::export]]
 SEXP C_getAltData2(SEXP x) {
 	if (!ALTREP(x)) {
@@ -161,3 +162,27 @@ SEXP C_testFunc(SEXP a)
 	Environment package_env("SharedObject");
 	return(package_env);
 }
+
+
+
+
+// [[Rcpp::export]]
+SEXP C_test1(SEXP f, SEXP x) {
+	SEXP call = PROTECT(Rf_lang2(f, x));
+	SEXP val = R_forceAndCall(call, 1, R_GlobalEnv);
+	UNPROTECT(1);
+	return val;
+}
+
+// [[Rcpp::export]]
+SEXP C_test2(SEXP expr, SEXP env) {
+	SEXP val = Rf_eval(expr, env);
+	return val;
+}
+
+// [[Rcpp::export]]
+SEXP C_test3(SEXP f, SEXP x) {
+	Function fun(f);
+	return fun(x);
+}
+

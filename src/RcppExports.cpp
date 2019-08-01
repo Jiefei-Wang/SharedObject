@@ -150,6 +150,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_test1
+SEXP C_test1(SEXP f, SEXP x);
+RcppExport SEXP _SharedObject_C_test1(SEXP fSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type f(fSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_test1(f, x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_test2
+SEXP C_test2(SEXP expr, SEXP env);
+RcppExport SEXP _SharedObject_C_test2(SEXP exprSEXP, SEXP envSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type expr(exprSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type env(envSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_test2(expr, env));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_test3
+SEXP C_test3(SEXP f, SEXP x);
+RcppExport SEXP _SharedObject_C_test3(SEXP fSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type f(fSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_test3(f, x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_getDataID
 DID C_getDataID(DID did);
 RcppExport SEXP _SharedObject_C_getDataID(SEXP didSEXP) {
@@ -286,6 +322,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_ALTREP", (DL_FUNC) &_SharedObject_C_ALTREP, 1},
     {"_SharedObject_C_getUsedKey", (DL_FUNC) &_SharedObject_C_getUsedKey, 0},
     {"_SharedObject_C_testFunc", (DL_FUNC) &_SharedObject_C_testFunc, 1},
+    {"_SharedObject_C_test1", (DL_FUNC) &_SharedObject_C_test1, 2},
+    {"_SharedObject_C_test2", (DL_FUNC) &_SharedObject_C_test2, 2},
+    {"_SharedObject_C_test3", (DL_FUNC) &_SharedObject_C_test3, 2},
     {"_SharedObject_C_getDataID", (DL_FUNC) &_SharedObject_C_getDataID, 1},
     {"_SharedObject_C_getProcessID", (DL_FUNC) &_SharedObject_C_getProcessID, 1},
     {"_SharedObject_C_getTypeID", (DL_FUNC) &_SharedObject_C_getTypeID, 1},
