@@ -101,6 +101,7 @@
 #' @param x A shared object
 #' @param property Character, the name of the property
 #' @rdname internal
+#' @export
 .getProperty <- function(x, property) {
     func = .funcList[[property]]
 
@@ -115,6 +116,7 @@
 
 #' @param value The new value of the property
 #' @rdname internal
+#' @export
 .setProperty <- function(x, property, value) {
     func = .funcList[[property]]
     if (is.data.frame(x)) {
