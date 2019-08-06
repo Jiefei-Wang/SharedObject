@@ -26,7 +26,7 @@ removeAllObject <- function() {
 #' removeObject: no return value
 #' @export
 removeObject <- function(dataId) {
-  #return NULL, cannot use vapply
+  # return NULL, cannot use vapply
   lapply(as.double(dataId), removeSingleObject)
   invisible()
 }

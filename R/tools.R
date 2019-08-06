@@ -8,7 +8,7 @@ availableType = data.frame(
 
 
 
-#the size of the type
+## the size of the type
 typeSize <- function(x) {
     if (!x %in% typeName)
         stop("The type has not been defined: ", x)
@@ -129,8 +129,8 @@ calculateSharedMemerySize <- function(x) {
 }
 
 
-##The function return the value in data 1
-##if and only if x is a shared object
+## The function return the value in data 1
+## if and only if x is a shared object
 getAltData1 <- function(x) {
     return(C_getAltData1(x))
 }
