@@ -34,7 +34,7 @@
   if(!is.numeric(dataId)){
     stop("Unknown dataID argument: ",dataId)
   }
-  # return NULL, cannot use vapply
+  ## return NULL, cannot use vapply
   lapply(as.double(dataId), removeSingleObject)
   invisible()
 }

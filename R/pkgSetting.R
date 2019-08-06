@@ -36,8 +36,9 @@ getSharedObjectOptions <- function(...) {
     options = c(...)
     if (length(options) == 0) {
         return(as.list(globalSettings))
+    }else{
+        return(as.list(globalSettings)[options])
     }
-    return(as.list(globalSettings)[options])
 }
 
 ## Check if options exist or not
@@ -49,5 +50,5 @@ checkOptionExistance <- function(options) {
             warning(paste0("The option `", x, "` does not exist")), character(1))
     }
     options = options[!noneExistOptions]
-    return(options)
+    options
 }
