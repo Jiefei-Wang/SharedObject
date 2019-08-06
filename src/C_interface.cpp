@@ -1,64 +1,15 @@
-#include "C_interface.h"
+#include <Rcpp.h>
 #include "R_ext/Altrep.h"
 #include "tools.h"
 #include "memoryManager.h"
 #include "altrepMacro.h"
 #include "altrepCommonFunc.h"
+#include "C_interface.h"
 
 // [[Rcpp::plugins(unwindProtect)]]
+using namespace Rcpp;
 using std::string;
 
-// [[Rcpp::export]]
-SEXP C_getAltData1(SEXP x) {
-	if (!ALTREP(x)) {
-		return R_NilValue;
-	}
-	while (ALTREP(R_altrep_data1(x))) {
-		x = R_altrep_data1(x);
-	}
-	return R_altrep_data1(x);
-} 
-// [[Rcpp::export]]
-SEXP C_getAltData2(SEXP x) {
-	if (!ALTREP(x)) {
-		return R_NilValue;
-	}
-	while (ALTREP(R_altrep_data1(x))) {
-		x = R_altrep_data1(x);
-	}
-	return R_altrep_data2(x);
-}
-
-
-// [[Rcpp::export]]
-DID C_findAvailableKey(DID dataID) {
-	return findAvailableKey(dataID);
-}
-
-// Finalizer of a pointer to the shared memory
-static void ptr_finalizer(SEXP extPtr) {
-	void* ptr = R_ExternalPtrAddr(extPtr);
-	NumericVector info = as<NumericVector>(R_ExternalPtrTag(extPtr));
-	DID dataId = info[0];
-	bool ownData = info[1];
-	if (ownData) {
-		DEBUG(Rprintf("finalizing data\n"));
-		destroyObject(dataId);
-	}
-	else {
-		DEBUG(Rprintf("nothing to finalize\n"));
-	}
-	return;
-}
-
-// Make a external pointer with a finalizer
-SEXP makeExternalSharedPtr(void* ptr,DID dataId,bool ownData) {
-	NumericVector info=NumericVector::create(dataId,ownData);
-	SEXP extPtr = PROTECT(R_MakeExternalPtr(ptr, wrap(info), R_NilValue));
-	R_RegisterCFinalizer(extPtr, ptr_finalizer);
-	UNPROTECT(1);
-	return extPtr;
-}
 
 // [[Rcpp::export]]
 SEXP C_createSharedMemory(SEXP x, SEXP R_dataInfo) {
@@ -72,20 +23,17 @@ SEXP C_createSharedMemory(SEXP x, SEXP R_dataInfo) {
 	const void* data = getPointer(x);
 	//printf("get pointer%p\n", data);
 	createSharedObject(data, di);
-	return C_readSharedMemory(di.dataId,true);
+	return C_readSharedMemory(di.dataId, true);
 }
 
 
-
 // [[Rcpp::export]]
-SEXP C_readSharedMemory(DID dataID,bool ownData) {
+SEXP C_readSharedMemory(DID dataID, bool ownData) {
 	DEBUG(Rprintf("reading the shared memory object, data ID: %llu\n", dataID));
 	void* ptr = readSharedObject(dataID);
 	SEXP exter_p = makeExternalSharedPtr(ptr, dataID, ownData);
 	return(exter_p);
 }
-
-
 
 
 // [[Rcpp::export]]
@@ -104,6 +52,57 @@ SEXP C_createAltrep(SEXP dataReferenceInfo) {
 }
 
 
+SEXP makeExternalSharedPtr(void* ptr, DID dataId, bool ownData) {
+	NumericVector info = NumericVector::create(dataId, ownData);
+	SEXP extPtr = PROTECT(R_MakeExternalPtr(ptr, wrap(info), R_NilValue));
+	R_RegisterCFinalizer(extPtr, ptr_finalizer);
+	UNPROTECT(1);
+	return extPtr;
+}
+
+static void ptr_finalizer(SEXP extPtr) {
+	NumericVector info = as<NumericVector>(R_ExternalPtrTag(extPtr));
+	DID dataId = info[0];
+	bool ownData = info[1];
+	if (ownData) {
+		DEBUG(Rprintf("finalizing data\n"));
+		destroyObject(dataId);
+	}
+	else {
+		DEBUG(Rprintf("nothing to finalize\n"));
+	}
+	return;
+}
+
+
+// [[Rcpp::export]]
+SEXP C_getAltData1(SEXP x) {
+	if (!ALTREP(x)) {
+		return R_NilValue;
+	}
+	while (ALTREP(R_altrep_data1(x))) {
+		x = R_altrep_data1(x);
+	}
+	return R_altrep_data1(x);
+}
+// [[Rcpp::export]]
+SEXP C_getAltData2(SEXP x) {
+	if (!ALTREP(x)) {
+		return R_NilValue;
+	}
+	while (ALTREP(R_altrep_data1(x))) {
+		x = R_altrep_data1(x);
+	}
+	return R_altrep_data2(x);
+}
+
+
+// [[Rcpp::export]]
+DID C_findAvailableKey(DID dataID) {
+	return findAvailableKey(dataID);
+}
+
+
 // [[Rcpp::export]]
 void C_clearObj(double dataID) {
 	try {
@@ -118,14 +117,15 @@ void C_clearObj(double dataID) {
 std::vector<double> C_getDataIdList() {
 	return getDataIdList();
 }
+
 // [[Rcpp::export]]
-NumericVector C_getDataInfo(DID dataID) {
+SEXP C_getDataInfo(DID dataID) {
 	dataInfo& info = getDataInfo(dataID);
 	NumericVector v(DATAINFO_FIELDS_NUMBER);
 #define X(id,type, name) v[id]=info.name;
 	DATAINFO_FIELDS
 #undef X
-	return v;
+	return wrap(v);
 }
 
 
@@ -135,7 +135,6 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr) {
 	Rf_setAttrib(R_source, Rf_install(tag), R_attr);
 	return R_NilValue;
 }
-
 
 // [[Rcpp::export]]
 bool C_ALTREP(SEXP x) {

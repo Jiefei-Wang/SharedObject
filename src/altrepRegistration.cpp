@@ -72,6 +72,10 @@ void init_raw_class(DllInfo* dll) {
 #undef R_TYPE
 
 
+// The string ALTREP is not matured so that I decide
+// to wait and not to implement it
+
+/*
 SEXP altstring_elt(SEXP x, R_xlen_t i);
 void* altstring_dataptr(SEXP x, Rboolean writable);
 const void* altstring_dataptr_or_null(SEXP x);
@@ -79,15 +83,15 @@ R_altrep_class_t shared_str_class;
 //[[Rcpp::init]]
 void init_str_class(DllInfo* dll) {
 	shared_str_class = R_make_altstring_class("shared_str", PACKAGE_NAME, dll);
-	/* override ALTREP methods */
+	// override ALTREP methods
 	R_set_altrep_Inspect_method(shared_str_class, sharedVector_Inspect);
 	R_set_altrep_Length_method(shared_str_class, sharedVector_length);
 	R_set_altrep_Duplicate_method(shared_str_class, sharedVector_duplicate);
-	/*R_set_altrep_Coerce_method(ALT_CLASS, real_coerce);*/
+	//R_set_altrep_Coerce_method(ALT_CLASS, real_coerce);
 	R_set_altrep_Unserialize_method(shared_str_class, sharedVector_unserialize);
 	R_set_altrep_Serialized_state_method(shared_str_class, sharedVector_serialized_state);
 
-	/* override ALTVEC methods */
+	// override ALTVEC methods
 	R_set_altvec_Dataptr_method(shared_str_class, altstring_dataptr);
 	R_set_altvec_Dataptr_or_null_method(shared_str_class, altstring_dataptr_or_null);
 	//R_set_altvec_Extract_subset_method(shared_str_class, numeric_subset<R_TYPE, C_TYPE>);
@@ -121,5 +125,5 @@ const void* altstring_dataptr_or_null(SEXP x) {
 	return(NULL);
 }
 
-
+*/
 

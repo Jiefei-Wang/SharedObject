@@ -172,7 +172,8 @@ void initialSharedMemory() {
 /*
 #####################above is internal API###########################
 */
-
+// Check the availablility of the key
+// If the key is in used, return a new key, otherwise return the same key
 DID findAvailableKey(DID dataID) {
 	initialSharedMemory();
 	while (usedKeyset->find(dataID) != usedKeyset->end()) {
@@ -196,7 +197,7 @@ obj->truncate(size);
 /*
 Create a shared memory
 add the shared_memory object into the sharedMemoryList
-add the maooed_region object into the segmentList
+add the mapped_region object into the segmentList
 If fail, automatically remove the key(dataID) from the sharedMemoryList and segmentList
 */
 void* reserveSpace(DID dataID, ULLong size) {

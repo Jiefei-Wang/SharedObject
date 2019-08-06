@@ -1,21 +1,16 @@
+
+
 #include "Rcpp.h"
-#include "Rinternals.h"
 #include "tools.h"
 #include "altrepRegistration.h"
 #include "altrepMacro.h"
+
+
 
 const void* getPointer(SEXP x) {
 	const void* ptr;
 	switch (TYPEOF(x))
 	{
-		/*case INTSXP:
-			return INTEGER(x);
-		case REALSXP:
-			return REAL(x);
-		case LGLSXP:
-			return LOGICAL(x);
-		case RAWSXP:
-			return RAW(x);*/
 	case INTSXP:
 	case REALSXP:
 	case LGLSXP:
@@ -35,6 +30,7 @@ const void* getPointer(SEXP x) {
 		return nullptr;
 	}
 }
+
 
 R_altrep_class_t getAltClass(int type) {
 	switch (type) {

@@ -6,39 +6,6 @@
 
 using namespace Rcpp;
 
-// C_getAltData1
-SEXP C_getAltData1(SEXP x);
-RcppExport SEXP _SharedObject_C_getAltData1(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getAltData1(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getAltData2
-SEXP C_getAltData2(SEXP x);
-RcppExport SEXP _SharedObject_C_getAltData2(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getAltData2(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_findAvailableKey
-DID C_findAvailableKey(DID dataID);
-RcppExport SEXP _SharedObject_C_findAvailableKey(SEXP dataIDSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DID >::type dataID(dataIDSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_findAvailableKey(dataID));
-    return rcpp_result_gen;
-END_RCPP
-}
 // C_createSharedMemory
 SEXP C_createSharedMemory(SEXP x, SEXP R_dataInfo);
 RcppExport SEXP _SharedObject_C_createSharedMemory(SEXP xSEXP, SEXP R_dataInfoSEXP) {
@@ -74,6 +41,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_getAltData1
+SEXP C_getAltData1(SEXP x);
+RcppExport SEXP _SharedObject_C_getAltData1(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getAltData1(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getAltData2
+SEXP C_getAltData2(SEXP x);
+RcppExport SEXP _SharedObject_C_getAltData2(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getAltData2(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_findAvailableKey
+DID C_findAvailableKey(DID dataID);
+RcppExport SEXP _SharedObject_C_findAvailableKey(SEXP dataIDSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type dataID(dataIDSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_findAvailableKey(dataID));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_clearObj
 void C_clearObj(double dataID);
 RcppExport SEXP _SharedObject_C_clearObj(SEXP dataIDSEXP) {
@@ -95,7 +95,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_getDataInfo
-NumericVector C_getDataInfo(DID dataID);
+SEXP C_getDataInfo(DID dataID);
 RcppExport SEXP _SharedObject_C_getDataInfo(SEXP dataIDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -309,12 +309,12 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_SharedObject_C_getAltData1", (DL_FUNC) &_SharedObject_C_getAltData1, 1},
-    {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},
-    {"_SharedObject_C_findAvailableKey", (DL_FUNC) &_SharedObject_C_findAvailableKey, 1},
     {"_SharedObject_C_createSharedMemory", (DL_FUNC) &_SharedObject_C_createSharedMemory, 2},
     {"_SharedObject_C_readSharedMemory", (DL_FUNC) &_SharedObject_C_readSharedMemory, 2},
     {"_SharedObject_C_createAltrep", (DL_FUNC) &_SharedObject_C_createAltrep, 1},
+    {"_SharedObject_C_getAltData1", (DL_FUNC) &_SharedObject_C_getAltData1, 1},
+    {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},
+    {"_SharedObject_C_findAvailableKey", (DL_FUNC) &_SharedObject_C_findAvailableKey, 1},
     {"_SharedObject_C_clearObj", (DL_FUNC) &_SharedObject_C_clearObj, 1},
     {"_SharedObject_C_getDataIdList", (DL_FUNC) &_SharedObject_C_getDataIdList, 0},
     {"_SharedObject_C_getDataInfo", (DL_FUNC) &_SharedObject_C_getDataInfo, 1},
@@ -343,7 +343,6 @@ void init_real_class(DllInfo* dll);
 void init_integer_class(DllInfo* dll);
 void init_logical_class(DllInfo* dll);
 void init_raw_class(DllInfo* dll);
-void init_str_class(DllInfo* dll);
 RcppExport void R_init_SharedObject(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
@@ -351,5 +350,4 @@ RcppExport void R_init_SharedObject(DllInfo *dll) {
     init_integer_class(dll);
     init_logical_class(dll);
     init_raw_class(dll);
-    init_str_class(dll);
 }

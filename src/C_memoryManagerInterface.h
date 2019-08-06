@@ -1,6 +1,5 @@
+// R's C interface to get and set the properties of a shared object
 #include "tools.h"
-
-
 
 DID C_getDataID(DID did);
 PID C_getProcessID(DID did);

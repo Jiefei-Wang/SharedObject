@@ -1,12 +1,14 @@
 #pragma once
 #include "C_memoryManagerInterface.h"
 
-//get data from dataReferenceInfo 
+//get properties from dataReferenceInfo(DRI)
+//The dataReferenceInfo is from the data1 slot of an ALTREP object
 #define DRI_DATAID(x) Rf_asReal(VECTOR_ELT(x,0))
 #define DRI_EPTR(x) VECTOR_ELT(x,1)
 #define DRI_PTR(x) R_ExternalPtrAddr(DRI_EPTR(x))
 #define DRI_TYPE_NAME(x) VECTOR_ELT(x,2)
 
+//get the properties from shared memory
 #define DRI_PROCESSID(x) C_getProcessID(DRI_DATAID(x))
 #define DRI_TYPEID(x) C_getTypeID(DRI_DATAID(x))
 #define DRI_LENGTH(x) C_getLength(DRI_DATAID(x))
@@ -16,7 +18,7 @@
 #define DRI_SHARED_DUPLICATE(x)  C_getSharedCopy(DRI_DATAID(x))
 
 
-//Access to shared vector's Info
+//Access shared vector's properties
 #define SV_DATAID(x) DRI_DATAID(R_altrep_data1(x))
 #define SV_EPTR(x) DRI_EPTR(R_altrep_data1(x)
 #define SV_PTR(x) DRI_PTR(R_altrep_data1(x))
