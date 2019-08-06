@@ -6,17 +6,20 @@
 #' @import BiocGenerics
 
 .globals <- local({
-  unloaded <- FALSE
-  list(
-    getProcessID = function() as.double(Sys.getpid()),
-    isPackageUnloaded=function() unloaded,
-    setPackageUnloaded=function() assign("unloaded",TRUE,envir = environment(),inherits=TRUE)
-  )
+    unloaded <- FALSE
+    list(
+        getProcessID = function()
+            as.double(Sys.getpid()),
+        isPackageUnloaded = function()
+            unloaded,
+        setPackageUnloaded = function()
+            assign("unloaded", TRUE, envir = environment(), inherits = TRUE)
+    )
 })
 
 
 
 .onUnload <- function(libpath) {
-  library.dynam.unload("SharedObject", libpath)
-  .globals$setPackageUnloaded()
+    library.dynam.unload("SharedObject", libpath)
+    .globals$setPackageUnloaded()
 }

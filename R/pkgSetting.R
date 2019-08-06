@@ -1,10 +1,7 @@
-
-
-
-globalSettings=new.env()
-globalSettings$copyOnWrite=TRUE
-globalSettings$sharedSubset=TRUE
-globalSettings$sharedCopy=FALSE
+globalSettings = new.env()
+globalSettings$copyOnWrite = TRUE
+globalSettings$sharedSubset = TRUE
+globalSettings$sharedCopy = FALSE
 
 #' Get or set the global options for the SharedObject package
 #'
@@ -25,32 +22,32 @@ globalSettings$sharedCopy=FALSE
 #'
 #' @rdname sharedObjectOptions
 #' @export
-setSharedObjectOptions<-function(...){
-  options=list(...)
-  options=checkOptionExistance(options)
-  for(i in seq_along(options)){
-    globalSettings[[names(options)[i]]]=options[[i]]
-  }
+setSharedObjectOptions <- function(...) {
+    options = list(...)
+    options = checkOptionExistance(options)
+    for (i in seq_along(options)) {
+        globalSettings[[names(options)[i]]] = options[[i]]
+    }
 }
 
 #' @rdname sharedObjectOptions
 #' @export
-getSharedObjectOptions<-function(...){
- options=c(...)
- if(length(options)==0){
-   return(as.list(globalSettings))
- }
- return(as.list(globalSettings)[options])
+getSharedObjectOptions <- function(...) {
+    options = c(...)
+    if (length(options) == 0) {
+        return(as.list(globalSettings))
+    }
+    return(as.list(globalSettings)[options])
 }
 
 ## Check if options exist or not
 ## return the options that exist
-checkOptionExistance<-function(options){
-  noneExistOptions=!names(options)%in%names(globalSettings)
-  if (any(noneExistOptions)) {
-    vapply(paste0(names(options)[noneExistOptions]), function(x)
-      warning(paste0("The option `", x, "` does not exist")),character(1))
-  }
-  options=options[!noneExistOptions]
-  return(options)
+checkOptionExistance <- function(options) {
+    noneExistOptions = !names(options) %in% names(globalSettings)
+    if (any(noneExistOptions)) {
+        vapply(paste0(names(options)[noneExistOptions]), function(x)
+            warning(paste0("The option `", x, "` does not exist")), character(1))
+    }
+    options = options[!noneExistOptions]
+    return(options)
 }

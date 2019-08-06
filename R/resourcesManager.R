@@ -1,17 +1,17 @@
 #' Internal functions
 #'
 #' @details
-#' .removeAllObject: This function will force the package to delete all data in the shared memory.
+#' removeAllObject: This function will force the package to delete all data in the shared memory.
 #' Any try to read the data after the function call will crash R.
 #'
 #' @rdname internal
 #' @return
-#' .removeAllObject: no return value
+#' removeAllObject: no return value
 #' @examples
-#' .removeAllObject()
+#' removeAllObject()
 #' @export
-.removeAllObject<-function(){
-  dids=getDataIdList()
+removeAllObject <- function() {
+  dids = getDataIdList()
   .removeObject(dids)
   invisible()
 }
@@ -23,24 +23,23 @@
 #' @param dataId The data ID you want to delete
 #' @rdname internal
 #' @return
-#' .removeObject: no return value
+#' removeObject: no return value
 #' @export
-.removeObject<-function(dataId){
+removeObject <- function(dataId) {
   #return NULL, cannot use vapply
-  lapply(as.double(dataId),removeObject_single)
+  lapply(as.double(dataId), removeSingleObject)
   invisible()
 }
 
-removeObject_single<-function(dataId){
+removeSingleObject <- function(dataId) {
   C_clearObj(dataId)
-  invisible()
 }
 
-getUsedDataId<-function(){
+getUsedDataId <- function() {
   C_getUsedKey()
 }
 
-getDataIdList<-function(){
+getDataIdList <- function() {
   C_getDataIdList()
 }
 
@@ -52,32 +51,33 @@ getDataIdList<-function(){
 #'
 #' @return A data.frame
 #' @examples
-#' .getDataInfo()
+#' getDataInfo()
 #' @export
-.getDataInfo<-function(data_ids=NULL){
-  if(is.null(data_ids)){
-    data_ids=getDataIdList()
+getDataInfo <- function(data_ids = NULL) {
+  if (is.null(data_ids)) {
+    data_ids = getDataIdList()
   }
-  if(length(data_ids)==0){
-    res=data.frame(
-      matrix(vector(), 0, length(dataInfoName),
-             dimnames=list(c(), dataInfoName)),
-      stringsAsFactors=FALSE)
+  if (length(data_ids) == 0) {
+    res = data.frame(matrix(
+      vector(),
+      0,
+      length(dataInfoName),
+      dimnames = list(c(), dataInfoName)
+    ),
+    stringsAsFactors = FALSE)
     return(res)
   }
 
-  res=vapply(data_ids, getDataInfo_single,numeric(length(dataInfoTemplate)))
-  res=as.data.frame(t(res))
+  res = vapply(data_ids, getSingleDataInfo, numeric(length(dataInfoTemplate)))
+  res = as.data.frame(t(res))
 
-  res$dataId=as.character(res$dataId)
+  res$dataId = as.character(res$dataId)
 
   res
 }
 
-getDataInfo_single<-function(data_ids){
-  res=C_getDataInfo(data_ids)
-  names(res)=dataInfoName
+getSingleDataInfo <- function(data_ids) {
+  res = C_getDataInfo(data_ids)
+  names(res) = dataInfoName
   res
 }
-
-

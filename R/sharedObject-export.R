@@ -105,44 +105,32 @@
 #' ## but the dulplicate function will return so1 itself, so the value in so1 also get changed.
 #'
 #' @export
-setGeneric("share",function(x,...){
-  standardGeneric("share")
+setGeneric("share", function(x, ...) {
+    standardGeneric("share")
 })
 
-shareAtomic<-function(x,...){
-  options=as.list(unlist(list(...)))
-  dataReferenceInfo=initialSharedMemoryByData(x,options)
-  obj=C_createAltrep(dataReferenceInfo)
-  obj=copyAttribute(x,obj)
-  obj
+shareAtomic <- function(x, ...) {
+    options = as.list(unlist(list(...)))
+    dataReferenceInfo = initialSharedMemoryByData(x, options)
+    obj = C_createAltrep(dataReferenceInfo)
+    obj = copyAttribute(x, obj)
+    obj
 }
 
-setMethod("share",signature(x="vector"),shareAtomic)
-setMethod("share",signature(x="matrix"),shareAtomic)
+setMethod("share", signature(x = "vector"), shareAtomic)
+setMethod("share", signature(x = "matrix"), shareAtomic)
 
-setMethod("share",signature(x="data.frame"),function(x,...){
-  options=as.list(unlist(list(...)))
-  obj=vector("list",length=length(x))
-  for(i in seq_along(obj)){
-    sm=share(x[[i]],options=options)
-    obj[[i]]=sm
-  }
-  obj=copyAttribute(x,obj)
-  obj
+setMethod("share", signature(x = "data.frame"), function(x, ...) {
+    options = as.list(unlist(list(...)))
+    obj = vector("list", length = length(x))
+    for (i in seq_along(obj)) {
+        sm = share(x[[i]], options = options)
+        obj[[i]] = sm
+    }
+    obj = copyAttribute(x, obj)
+    obj
 
-} )
-setMethod("share",signature(x="list"),function(x,...){
-  stop("Shared list cannot be automatically created. Please create it manually")
-} )
-
-## Used by unserialize function
-sharedVectorById<-function(dataId){
-  dataReferenceInfo=initialSharedMemoryByID(dataId)
-  obj=C_createAltrep(dataReferenceInfo)
-  obj
-}
-
-
-
-
-
+})
+setMethod("share", signature(x = "list"), function(x, ...) {
+    stop("Shared list cannot be automatically created. Please create it manually")
+})
