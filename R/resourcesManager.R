@@ -1,31 +1,39 @@
 #' Internal functions
 #'
+#' @param dataId A vector of numeric numbers. The keys of shared objects
 #' @details
-#' removeAllObject: This function will force the package to delete all data in the shared memory.
-#' Any try to read the data after the function call will crash R.
-#'
-#' @rdname internal
-#' @return
-#' removeAllObject: no return value
+#' .removeObject: This function will delete the data associated with the key
+#' provided by the argument `dataId`. Any try to read the data after the
+#' function call might crash R. If `dataId` is set to "all",
+#' the function will delete all data. This function is for the case where
+#' R is terminated abnormally without deleting the shared memory. In normal
+#' case, R's garbage collector will free the shared memory and there is no
+#' need to call this function.
 #' @examples
-#' removeAllObject()
-#' @export
-removeAllObject <- function() {
-  dids = getDataIdList()
-  .removeObject(dids)
-  invisible()
-}
-
-#' @details
-#' removeObject: This function will delete the data associated with the key provided by the function argument.
-#' Any try to read the data after the function call will crash R.
-#'
-#' @param dataId The data ID you want to delete
-#' @rdname internal
+#' ## Create a shared object
+#' A = share(1:10)
+#' ## Get the ID of the shared object
+#' id = .getProperty(A, "dataId")
+#' ## Delete the data associated with the ID
+#' .removeObject(id)
+#' ## Accessing the variable will cause an error since its
+#' ## data has been deleted.
+#' \dontrun{
+#' A
+#' }
 #' @return
-#' removeObject: no return value
+#' .removeObject: no return value
+#' @rdname internal
 #' @export
-removeObject <- function(dataId) {
+.removeObject <- function(dataId) {
+  if(is.character(dataId)){
+    if(identical(pmatch(dataId,"all"),1L)){
+      dataId = getDataIdList()
+    }
+  }
+  if(!is.numeric(dataId)){
+    stop("Unknown dataID argument: ",dataId)
+  }
   # return NULL, cannot use vapply
   lapply(as.double(dataId), removeSingleObject)
   invisible()

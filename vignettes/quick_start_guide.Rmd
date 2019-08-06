@@ -67,9 +67,19 @@ no different between the matrix `A` and the shared object `A_shr`. The
 shared object `A_shr` is neither an S3 nor S4 object and its behaviors
 are exactly the same as the matrix `A`, so there is no need to change
 the existing code to work with the shared object. We can verify this
-through ```{r} ## check the data A A_shr ## check the properties
-attributes(A) attributes(A_shr) ## check the class class(A)
-class(A_shr) ``` Users can treate the shared object as a matrix and do
+through 
+```{r} 
+## check the data 
+A 
+A_shr 
+## check the properties
+attributes(A) 
+attributes(A_shr) 
+## check the class 
+class(A)
+class(A_shr) 
+``` 
+Users can treate the shared object as a matrix and do
 operations on it as usual.
 
 # Supported data types

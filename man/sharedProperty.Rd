@@ -38,17 +38,17 @@ Get or set the properties of a shared object
 }
 \examples{
 x=share(1:20)
-##Check the default values
+## Check the default values
 getCopyOnWrite(x)
 getSharedSubset(x)
 getSharedCopy(x)
 
-##Set the values
+## Set the values
 setCopyOnWrite(x,FALSE)
 setSharedSubset(x,FALSE)
 setSharedCopy(x,TRUE)
 
-##Check the values again
+## Check the values again
 getCopyOnWrite(x)
 getSharedSubset(x)
 getSharedCopy(x)

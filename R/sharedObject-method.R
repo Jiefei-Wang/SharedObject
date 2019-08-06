@@ -100,6 +100,14 @@
 
 #' @param x A shared object
 #' @param property Character, the name of the property
+#' @details
+#' .getProperty: This function returns a proporty of a shared object.
+#' The available properties are `dataId`,`typeName`,`ownData`,`processId`,
+#' `typeId`,`length`,`totalSize`,`copyOnWrite`,`sharedSubset`,`sharedCopy`,
+#' `setCopyOnWrite`,`setSharedSubset` and `setSharedCopy`.
+#' @return
+#' .getProperty: a property of a shared vector or
+#' a list of properties of a data.frame
 #' @rdname internal
 #' @export
 .getProperty <- function(x, property) {
@@ -115,7 +123,11 @@
 }
 
 #' @param value The new value of the property
+#' @details
+#' `.setProperty`: Set a property of a shared object.
 #' @rdname internal
+#' @return
+#' .setProperty: No return value
 #' @export
 .setProperty <- function(x, property, value) {
     func = .funcList[[property]]
