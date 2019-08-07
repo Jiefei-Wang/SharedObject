@@ -26,29 +26,29 @@
 #' @rdname internal
 #' @export
 .removeObject <- function(dataId) {
-  if(is.character(dataId)){
-    if(identical(pmatch(dataId,"all"),1L)){
-      dataId = getDataIdList()
+    if (is.character(dataId)) {
+        if (identical(pmatch(dataId, "all"), 1L)) {
+            dataId = getDataIdList()
+        }
     }
-  }
-  if(!is.numeric(dataId)){
-    stop("Unknown dataID argument: ",dataId)
-  }
-  ## return NULL, cannot use vapply
-  lapply(as.double(dataId), removeSingleObject)
-  invisible()
+    if (!is.numeric(dataId)) {
+        stop("Unknown dataID argument: ", dataId)
+    }
+    ## return NULL, cannot use vapply
+    lapply(as.double(dataId), removeSingleObject)
+    invisible()
 }
 
 removeSingleObject <- function(dataId) {
-  C_clearObj(dataId)
+    C_clearObj(dataId)
 }
 
 getUsedDataId <- function() {
-  C_getUsedKey()
+    C_getUsedKey()
 }
 
 getDataIdList <- function() {
-  C_getDataIdList()
+    C_getDataIdList()
 }
 
 #' Get a summary report of the data in the shared memory
@@ -62,30 +62,30 @@ getDataIdList <- function() {
 #' getDataInfo()
 #' @export
 getDataInfo <- function(data_ids = NULL) {
-  if (is.null(data_ids)) {
-    data_ids = getDataIdList()
-  }
-  if (length(data_ids) == 0) {
-    res = data.frame(matrix(
-      vector(),
-      0,
-      length(dataInfoName),
-      dimnames = list(c(), dataInfoName)
-    ),
-    stringsAsFactors = FALSE)
-    return(res)
-  }
+    if (is.null(data_ids)) {
+        data_ids = getDataIdList()
+    }
+    if (length(data_ids) == 0) {
+        res = data.frame(matrix(
+            vector(),
+            0,
+            length(dataInfoName),
+            dimnames = list(c(), dataInfoName)
+        ),
+        stringsAsFactors = FALSE)
+        return(res)
+    }
 
-  res = vapply(data_ids, getSingleDataInfo, numeric(length(dataInfoTemplate)))
-  res = as.data.frame(t(res))
+    res = vapply(data_ids, getSingleDataInfo, numeric(length(dataInfoTemplate)))
+    res = as.data.frame(t(res))
 
-  res$dataId = as.character(res$dataId)
+    res$dataId = as.character(res$dataId)
 
-  res
+    res
 }
 
 getSingleDataInfo <- function(data_ids) {
-  res = C_getDataInfo(data_ids)
-  names(res) = dataInfoName
-  res
+    res = C_getDataInfo(data_ids)
+    names(res) = dataInfoName
+    res
 }

@@ -2,7 +2,7 @@ Package: SharedObject
 Type: Package
 Title: Sharing R objects across multiple R processes without memory duplication
 Version: 0.99.8
-Date: 2019-6-10
+Date: 2019-6-11
 Author: Jiefei Wang
 Maintainer: Jiefei Wang <szwjf08@gmail.com>
 Description: This package is developed for facilitating parallel computing in R. 
