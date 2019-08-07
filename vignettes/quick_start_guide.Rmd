@@ -234,7 +234,7 @@ The options `sharedSubset` controls whether to create a shared object
 when subsetting a shared object. `sharedCopy` determines if the
 duplication of a shared object is still a shared object. For
 performance consideration, the default settings are
-`sharedSubset=TRUE` and `sharedDuplicate=FALSE`, but they can be
+`sharedSubset=TRUE` and `sharedCopy=FALSE`, but they can be
 overwritten via:
 
 ```{r}
