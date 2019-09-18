@@ -3,7 +3,7 @@
 \name{is.altrep}
 \alias{is.altrep}
 \alias{is.shared}
-\title{Is an Object a desired type?}
+\title{Is an object of a desired type?}
 \usage{
 is.altrep(x)
 
@@ -19,10 +19,10 @@ is called a shared object if and only if all of its columns are shared objects.}
 A logical value
 }
 \description{
-Is an Object a desired type?
+Is an object of a desired type?
 }
 \examples{
-x=share(1:10)
+x = share(1:10)
 is.altrep(x)
 is.shared(x)
 }

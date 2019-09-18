@@ -74,6 +74,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_hasDataID
+bool C_hasDataID(DID key);
+RcppExport SEXP _SharedObject_C_hasDataID(SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DID >::type key(keySEXP);
+    rcpp_result_gen = Rcpp::wrap(C_hasDataID(key));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_clearObj
 void C_clearObj(double dataID);
 RcppExport SEXP _SharedObject_C_clearObj(SEXP dataIDSEXP) {
@@ -126,63 +137,6 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(C_ALTREP(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_getUsedKey
-std::vector<double> C_getUsedKey();
-RcppExport SEXP _SharedObject_C_getUsedKey() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(C_getUsedKey());
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_testFunc
-SEXP C_testFunc(SEXP a);
-RcppExport SEXP _SharedObject_C_testFunc(SEXP aSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type a(aSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_testFunc(a));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_test1
-SEXP C_test1(SEXP f, SEXP x);
-RcppExport SEXP _SharedObject_C_test1(SEXP fSEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type f(fSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_test1(f, x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_test2
-SEXP C_test2(SEXP expr, SEXP env);
-RcppExport SEXP _SharedObject_C_test2(SEXP exprSEXP, SEXP envSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type expr(exprSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type env(envSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_test2(expr, env));
-    return rcpp_result_gen;
-END_RCPP
-}
-// C_test3
-SEXP C_test3(SEXP f, SEXP x);
-RcppExport SEXP _SharedObject_C_test3(SEXP fSEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type f(fSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_test3(f, x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -315,16 +269,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getAltData1", (DL_FUNC) &_SharedObject_C_getAltData1, 1},
     {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},
     {"_SharedObject_C_findAvailableKey", (DL_FUNC) &_SharedObject_C_findAvailableKey, 1},
+    {"_SharedObject_C_hasDataID", (DL_FUNC) &_SharedObject_C_hasDataID, 1},
     {"_SharedObject_C_clearObj", (DL_FUNC) &_SharedObject_C_clearObj, 1},
     {"_SharedObject_C_getDataIdList", (DL_FUNC) &_SharedObject_C_getDataIdList, 0},
     {"_SharedObject_C_getDataInfo", (DL_FUNC) &_SharedObject_C_getDataInfo, 1},
     {"_SharedObject_C_attachAttr", (DL_FUNC) &_SharedObject_C_attachAttr, 3},
     {"_SharedObject_C_ALTREP", (DL_FUNC) &_SharedObject_C_ALTREP, 1},
-    {"_SharedObject_C_getUsedKey", (DL_FUNC) &_SharedObject_C_getUsedKey, 0},
-    {"_SharedObject_C_testFunc", (DL_FUNC) &_SharedObject_C_testFunc, 1},
-    {"_SharedObject_C_test1", (DL_FUNC) &_SharedObject_C_test1, 2},
-    {"_SharedObject_C_test2", (DL_FUNC) &_SharedObject_C_test2, 2},
-    {"_SharedObject_C_test3", (DL_FUNC) &_SharedObject_C_test3, 2},
     {"_SharedObject_C_getDataID", (DL_FUNC) &_SharedObject_C_getDataID, 1},
     {"_SharedObject_C_getProcessID", (DL_FUNC) &_SharedObject_C_getProcessID, 1},
     {"_SharedObject_C_getTypeID", (DL_FUNC) &_SharedObject_C_getTypeID, 1},

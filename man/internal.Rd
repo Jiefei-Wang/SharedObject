@@ -24,7 +24,7 @@
 \value{
 .removeObject: no return value
 
-.getProperty: a property of a shared vector or
+.getProperty: The property of a shared vector or
 a list of properties of a data.frame
 
 .setProperty: No return value
@@ -37,7 +37,7 @@ Internal functions
 provided by the argument \code{dataId}. Any try to read the data after the
 function call might crash R. If \code{dataId} is set to "all",
 the function will delete all data. This function is for the case where
-R is terminated abnormally without deleting the shared memory. In normal
+R is terminated abnormally without clearing the shared memory. In normal
 case, R's garbage collector will free the shared memory and there is no
 need to call this function.
 

@@ -2,6 +2,26 @@
 #define WINDOWS_OS
 #endif
 
+/*
+We will call:
+managed shared object-> segment
+shared object -> shared object
+mapped_region -> region
+
+The usage of each macro:
+OS_SHARED_OBJECT_PKG_SPACE: The name of the segment that manages process data (managed_shared_memory object)
+OS_DATA_INFO_MAP_NAME: The name of the shared memory that stores a map that maps from data id to data info
+OS_USED_KEY_SET_NAME: The name of the shared memory that stores a set of used key(shared by all process)
+
+
+Normal initialize process:
+R process -> 
+initial/open process data shared memory -> 
+register the data info map and used key set under the current process shared memory space
+
+When crash, the process and data info is still in the shared memory and can be accessed from the process data shared memory.
+*/
+
 
 #ifdef  WINDOWS_OS 
 #include <boost/interprocess/managed_windows_shared_memory.hpp>
@@ -21,7 +41,6 @@
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/map.hpp>
-#include <boost/interprocess/containers/set.hpp>
 #include <boost/foreach.hpp>
 #include "tools.h"
 #include "memoryManager.h"
@@ -31,17 +50,12 @@ using namespace boost::interprocess;
 using std::string;
 using std::pair;
 using std::to_string;
-//The name of the memoryManager system
-#define SHARED_OBJECT_PKG_SPACE OS_SHARED_OBJECT_PKG_SPACE
-//The name of data info map
-#define DATA_INFO_MAP_NAME OS_DATA_INFO_MAP_NAME
-#define USED_KEY_SET_NAME OS_USED_KEY_SET_NAME
-
 
 
 #define DATA_LIST_SIZE 1024*1024*8
 
-
+// managed_shared_memory or shared_memory_object
+// Two classes need different method to access them.
 enum sharedSystem { MSM, SMO };
 
 //Define dataID to dataInfo map
@@ -49,28 +63,28 @@ typedef std::pair<const DID, dataInfo> dataInfoPair;
 typedef allocator<dataInfoPair, OS_managed_shared_memory::segment_manager> dataInfoAllocator;
 typedef map<DID, dataInfo, std::less<DID>, dataInfoAllocator> sharedDataInfoMap;
 
-typedef allocator<DID, OS_managed_shared_memory::segment_manager> usedKeySetAllocator;
-typedef set<DID, std::less<DID>, usedKeySetAllocator> sharedUsedKeySet;
 
-
-
+//local variables to keep track of the opened 
+//shared memory object and mapped region object 
 std::map<DID, OS_shared_memory_object*> sharedMemoryList;
 std::map<DID, mapped_region*> segmentList;
-//The main segment that maps the shared memory into the current process
-//The shared memory contains dataInfoMap
-OS_managed_shared_memory* processInfoSegment = nullptr;
+
+//A map from data id to data info
+//Shared by all processes
+OS_managed_shared_memory* processInfoSegment;
 sharedDataInfoMap* dataInfoMap = nullptr;
-sharedUsedKeySet* usedKeyset = nullptr;
 
-
+//Delete the data pointer in vec[key] if it exist.
 #define removeVectorKeyAndValueIfExist(vec,key)\
 if (vec.find(key) != vec.end()) {\
 delete(vec.at(key));\
 vec.erase(key);\
 }\
 
-
-bool valid(const char* name, sharedSystem ss)
+/*  Check whether the shared memory is readable
+	There is no API to test if a shared memory exist,
+	this function is an alternative way to test the existance*/
+bool hasSharedMemory(const char* name, sharedSystem ss)
 {
 	try
 	{
@@ -90,6 +104,8 @@ bool valid(const char* name, sharedSystem ss)
 	return false;
 }
 
+/* Remove the shared memory
+   For windows there is no API to remove the memory, alway return True.*/
 bool removeSharedMemory(const char* name) {
 #ifdef WINDOWS_OS 
 	return true;
@@ -98,22 +114,16 @@ bool removeSharedMemory(const char* name) {
 #endif
 }
 
-bool hasDataID(DID did) {
-	if (dataInfoMap->find(did) == dataInfoMap->end()) {
-		return false;
-	}
-	else {
-		return true;
-	}
-}
+
 bool removeDataID(DID did) {
 	dataInfoMap->erase(did);
 	return true;
 }
 
+//Get the key to access a shared data that is used in R
 string getDataMemoryKey(DID did) {
 	//common name + DID
-	return(string(SHARED_OBJECT_PKG_SPACE).append("DID") + to_string(did));
+	return(string(OS_SHARED_OBJECT_PKG_SPACE).append("DID") + to_string(did));
 }
 
 
@@ -122,7 +132,7 @@ OS_managed_shared_memory* openOrCreateSharedSegment(const char* name, size_t siz
 
 	boost::interprocess::permissions perm;
 	perm.set_unrestricted();
-	if (!valid(name, sharedSystem::MSM)) {
+	if (!hasSharedMemory(name, sharedSystem::MSM)) {
 		removeSharedMemory(name);
 		segment = new OS_managed_shared_memory(create_only, name, size, 0, perm);
 	}
@@ -146,8 +156,7 @@ mapType* openOrCreateSharedMap(OS_managed_shared_memory * segment, const char* n
 }
 
 
-
-
+//This function will be called when the package is loaded
 void initialSharedMemory() {
 	try
 	{
@@ -156,11 +165,8 @@ void initialSharedMemory() {
 		if (processInfoSegment == nullptr) {
 			//printf("not initialized\n");
 			//Create shared memory space if not exist
-			processInfoSegment = openOrCreateSharedSegment(SHARED_OBJECT_PKG_SPACE, DATA_LIST_SIZE);
-			dataInfoMap = openOrCreateSharedMap< dataInfoAllocator, sharedDataInfoMap, DID>(processInfoSegment, DATA_INFO_MAP_NAME);
-			usedKeyset = openOrCreateSharedMap< usedKeySetAllocator, sharedUsedKeySet, DID>(processInfoSegment, USED_KEY_SET_NAME);
-
-			//processInfoMap = segment.find<sharedProcessInfoMap>(PROCESS_SHARED_NAME).first;
+			processInfoSegment = openOrCreateSharedSegment(OS_SHARED_OBJECT_PKG_SPACE, DATA_LIST_SIZE);
+			dataInfoMap = openOrCreateSharedMap< dataInfoAllocator, sharedDataInfoMap, DID>(processInfoSegment, OS_DATA_INFO_MAP_NAME);
 		}
 	}
 	catch (const std::exception & ex) {
@@ -172,17 +178,29 @@ void initialSharedMemory() {
 /*
 #####################above is internal API###########################
 */
+
+/* Check if the data ID exist in the data info map*/
+bool hasDataID(DID did) {
+	if (dataInfoMap->find(did) == dataInfoMap->end()) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
 // Check the availablility of the key
 // If the key is in used, return a new key, otherwise return the same key
-DID findAvailableKey(DID dataID) {
+DID findAvailableDataId(DID dataID) {
 	initialSharedMemory();
-	while (usedKeyset->find(dataID) != usedKeyset->end()) {
+	while (hasDataID(dataID)) {
 		dataID += 1;
 	}
 	return dataID;
 }
 
-
+/*
+  Nasty code to create a shared memory object that works for both Windows and Linux
+*/
 #ifdef WINDOWS_OS
 #define CREATE_SHARED_MEM(obj,openType,name,mode,permission,size) \
 OS_shared_memory_object* obj=new OS_shared_memory_object(openType, name, mode,size, permission);
@@ -193,14 +211,28 @@ obj->truncate(size);
 #endif
 
 
+void* createSharedObject(const void* data, dataInfo DI) {
+	initialSharedMemory();
+	//Allocate memory in the shared space
+	void* dataPtr = allocateSharedMemory(DI.dataId, DI.totalSize);
+	//Write to shared memory
+	copyRData(dataPtr, data, DI.typeId, DI.totalSize);
+	//Record the data info
+	insertDataInfo(DI);
+	DEBUG(printf("A shared object is created with id: %llu\n", DI.dataId));
+	return dataPtr;
+}
 
 /*
-Create a shared memory
-add the shared_memory object into the sharedMemoryList
-add the mapped_region object into the segmentList
-If fail, automatically remove the key(dataID) from the sharedMemoryList and segmentList
+allocate a shared memory given the ID and size
+
+return the data pointer to the shared memory
 */
-void* reserveSpace(DID dataID, ULLong size) {
+
+void* allocateSharedMemory(DID dataID, ULLong size) {
+	if (hasDataID(dataID)) {
+		errorHandle("Cannot allocate shared memory with the ID %lld: The data ID exists", dataID);
+	}
 	//Get the string key for the data key
 	string dataKey = getDataMemoryKey(dataID);
 	try
@@ -209,21 +241,24 @@ void* reserveSpace(DID dataID, ULLong size) {
 		boost::interprocess::permissions perm;
 		perm.set_unrestricted();
 		CREATE_SHARED_MEM(sharedData, create_only, dataKey.c_str(), read_write, perm, size);
+		sharedMemoryList.insert(pair<DID, OS_shared_memory_object*>(dataID, sharedData));
 		return(readSharedObject(dataID, dataKey.c_str()));
 	}
 	catch (const std::exception & ex) {
 		removeSharedMemory(dataKey.c_str());
-		errorHandle("Can't create a shared object, data ID %llu, has key:%d \n%s", dataID, dataInfoMap->find(dataID) != dataInfoMap->end(), ex.what());
+		errorHandle("Can't create a shared object, data ID %llu, has key:%d \n%s", dataID, hasDataID(dataID), ex.what());
 	}
 	return nullptr;
 }
 
-void insertDataInfo(const dataInfo DI) {
+
+
+// update dataInfoMap and usedKeySet
+void insertDataInfo(dataInfo DI) {
 	try
 	{
 		//Insert the data info into the record
 		dataInfoMap->insert(dataInfoPair(DI.dataId, DI));
-		usedKeyset->insert(DI.dataId);
 	}
 	catch (const std::exception & ex) {
 		errorHandle("error in recording a shared memory info\n");
@@ -251,22 +286,13 @@ void copyRData(void* target, const void* RData, int typeID, ULLong size) {
 	}
 }
 
-void* createSharedObject(const void* data, const dataInfo DI) {
-	initialSharedMemory();
-	//Allocate memory in the shared space
-	void* dataPtr = reserveSpace(DI.dataId, DI.totalSize);
-	//Write to shared memory
-	copyRData(dataPtr, data, DI.typeId, DI.totalSize);
-	//Record the data info
-	insertDataInfo(DI);
-	DEBUG(printf("A shared object is created with id: %llu\n", DI.dataId));
-	return dataPtr;
-}
+
 
 void* readSharedObject(DID dataID) {
 	string signature = getDataMemoryKey(dataID);
 	return(readSharedObject(dataID, signature.c_str()));
 }
+
 /*
 Read a shared object by ID
 If the shared oject is not recorded in sharedMemoryList or segmentList, it will be recorded
@@ -276,30 +302,30 @@ void* readSharedObject(DID dataID, const char* signature) {
 	initialSharedMemory();
 	try
 	{
-		if (sharedMemoryList.find(dataID) != sharedMemoryList.end()) {
-			if (segmentList.find(dataID) != segmentList.end()) {
-				return segmentList[dataID]->get_address();
-			}
-			else {
-				mapped_region* region = new mapped_region(*sharedMemoryList.find(dataID)->second, read_write);
-				//segmentList
-				segmentList.insert(pair<DID, mapped_region*>(dataID, region));
-				return region->get_address();
-			}
+		OS_shared_memory_object* sharedData;
+		mapped_region* region;
+		if (sharedMemoryList.find(dataID) == sharedMemoryList.end()) {
+			sharedData = new OS_shared_memory_object(open_only, signature, read_write);
+			sharedMemoryList.insert(pair<DID, OS_shared_memory_object*>(dataID, sharedData));
 		}
 		else {
-			OS_shared_memory_object* sharedData = new OS_shared_memory_object(open_only, signature, read_write);
-			sharedMemoryList.insert(pair<DID, OS_shared_memory_object*>(dataID, sharedData));
-			mapped_region* region = new mapped_region(*sharedData, read_write);
-			//segmentList
-			segmentList.insert(pair<DID, mapped_region*>(dataID, region));
-			return(region->get_address());
+			sharedData = sharedMemoryList[dataID];
 		}
+		if (segmentList.find(dataID) == segmentList.end()) {
+			region = new mapped_region(*sharedData, read_write);
+			//Record the shared memory and region
+			segmentList.insert(pair<DID, mapped_region*>(dataID, region));
+		}
+		else {
+			region = segmentList[dataID];
+		}
+
+		return region->get_address();
 	}
 	catch (const std::exception & ex) {
 		removeVectorKeyAndValueIfExist(sharedMemoryList, dataID);
 		removeVectorKeyAndValueIfExist(segmentList, dataID)
-			errorHandle("Can't read shared object:%s\n", ex.what());
+		errorHandle("Can't read shared object:%s\n", ex.what());
 	}
 	return(NULL);
 }
@@ -315,16 +341,16 @@ void destroyObject(DID dataID) {
 		else {
 			string dataKey = getDataMemoryKey(dataID);
 			DEBUG(printf("removing data %llu\n", dataID));
+			//printf("removing memory mapped address\n");
+			removeVectorKeyAndValueIfExist(segmentList, dataID);
+			//printf("removing share memory object\n");
+			removeVectorKeyAndValueIfExist(sharedMemoryList, dataID);
 			//remove the data
 			bool removed = removeSharedMemory(dataKey.c_str());
 			if (!removed) printf("fail to remove the data\n");
 			//remove the key from the data info map
 			//printf("removing data key\n");
 			removeDataID(dataID);
-			//printf("removing memory mapped address\n");
-			removeVectorKeyAndValueIfExist(segmentList, dataID);
-			//printf("removing share memory object\n");
-			removeVectorKeyAndValueIfExist(sharedMemoryList, dataID);
 		}
 	}
 	catch (const std::exception & ex)
@@ -361,12 +387,3 @@ std::vector<double> getDataIdList() {
 	return v;
 }
 
-
-std::vector<double> getUsedKey() {
-	initialSharedMemory();
-	std::vector<double> v;
-	BOOST_FOREACH(DID & dip, *usedKeyset) {
-		v.push_back(dip);
-	}
-	return v;
-}

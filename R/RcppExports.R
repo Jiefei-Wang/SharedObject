@@ -25,6 +25,10 @@ C_findAvailableKey <- function(dataID) {
     .Call(`_SharedObject_C_findAvailableKey`, dataID)
 }
 
+C_hasDataID <- function(key) {
+    .Call(`_SharedObject_C_hasDataID`, key)
+}
+
 C_clearObj <- function(dataID) {
     invisible(.Call(`_SharedObject_C_clearObj`, dataID))
 }
@@ -43,26 +47,6 @@ C_attachAttr <- function(R_source, R_tag, R_attr) {
 
 C_ALTREP <- function(x) {
     .Call(`_SharedObject_C_ALTREP`, x)
-}
-
-C_getUsedKey <- function() {
-    .Call(`_SharedObject_C_getUsedKey`)
-}
-
-C_testFunc <- function(a) {
-    .Call(`_SharedObject_C_testFunc`, a)
-}
-
-C_test1 <- function(f, x) {
-    .Call(`_SharedObject_C_test1`, f, x)
-}
-
-C_test2 <- function(expr, env) {
-    .Call(`_SharedObject_C_test2`, expr, env)
-}
-
-C_test3 <- function(f, x) {
-    .Call(`_SharedObject_C_test3`, f, x)
 }
 
 C_getDataID <- function(did) {

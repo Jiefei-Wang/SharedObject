@@ -146,7 +146,7 @@ test_that("Shared Object API", {
 
     #Shared object API
     x = share(data)
-    getSharedProperty(x)
+    getSharedProperties(x)
     expect_equal(getCopyOnWrite(x), FALSE)
     expect_equal(getSharedCopy(x), FALSE)
     expect_equal(getSharedSubset(x), FALSE)
@@ -159,13 +159,21 @@ test_that("Shared Object API", {
 test_that("Key management", {
     #Shared object API
     x = share(data)
-    sp = getSharedProperty(x)
+    sp = getSharedProperties(x)
     key = sp[["dataId"]]
     rm("x", "sp")
-    gc()
-    gc()
+    gc(full = TRUE)
 
-    expect_warning(share(data, dataId = key))
+    ## The fist call should be no error
+    ## The garbage collector should remove the key
+    expect_equal({
+        x = share(data, dataId = key)
+        x
+    }, data)
+    ## The key should be the key we provided
+    expect_equal(getSharedProperties(x)$dataId, key)
+    ## The second call will throw an error since the key has existed
+    expect_error(share(data, dataId = key))
 })
 
 test_that("data frame", {

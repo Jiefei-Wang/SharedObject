@@ -6,7 +6,7 @@
 #' provided by the argument `dataId`. Any try to read the data after the
 #' function call might crash R. If `dataId` is set to "all",
 #' the function will delete all data. This function is for the case where
-#' R is terminated abnormally without deleting the shared memory. In normal
+#' R is terminated abnormally without clearing the shared memory. In normal
 #' case, R's garbage collector will free the shared memory and there is no
 #' need to call this function.
 #' @examples
@@ -43,10 +43,6 @@ removeSingleObject <- function(dataId) {
     C_clearObj(dataId)
 }
 
-getUsedDataId <- function() {
-    C_getUsedKey()
-}
-
 getDataIdList <- function() {
     C_getDataIdList()
 }
@@ -69,8 +65,8 @@ getDataInfo <- function(data_ids = NULL) {
         res = data.frame(matrix(
             vector(),
             0,
-            length(dataInfoName),
-            dimnames = list(c(), dataInfoName)
+            length(dataInfoNames),
+            dimnames = list(c(), dataInfoNames)
         ),
         stringsAsFactors = FALSE)
         return(res)
@@ -86,6 +82,6 @@ getDataInfo <- function(data_ids = NULL) {
 
 getSingleDataInfo <- function(data_ids) {
     res = C_getDataInfo(data_ids)
-    names(res) = dataInfoName
+    names(res) = dataInfoNames
     res
 }

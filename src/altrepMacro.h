@@ -1,5 +1,5 @@
 #pragma once
-#include "C_memoryManagerInterface.h"
+#include "C_interface.h"
 
 //get properties from dataReferenceInfo(DRI)
 //The dataReferenceInfo is from the data1 slot of an ALTREP object

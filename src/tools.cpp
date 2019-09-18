@@ -12,9 +12,6 @@ using namespace std;
 	FUNC(buf);\
 	}
 
-#define X(id,type, name) const ULLong dataInfo_##name=id;
-DATAINFO_FIELDS
-#undef X
 
 
 string OS_ADDRESS_SIZE = "X" + to_string(sizeof(void*) * 8);

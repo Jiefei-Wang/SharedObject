@@ -129,7 +129,7 @@ them via
 
 ```{r}
 ## get a summary report
-getSharedProperty(A_shr)
+getSharedProperties(A_shr)
 
 ## Internal function to check the properties
 ## All properties can be accessed via the similar way
@@ -239,7 +239,7 @@ overwritten via:
 
 ```{r}
 A_shr=share(A,sharedSubset=FALSE,sharedCopy=TRUE)
-getSharedProperty(A_shr)
+getSharedProperties(A_shr)
 ```
 
 Please note that `sharedCopy` is only available when

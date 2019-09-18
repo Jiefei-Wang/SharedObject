@@ -3,12 +3,17 @@
 #include "tools.h"
 #include "memoryManager.h"
 #include "altrepMacro.h"
-#include "altrepCommonFunc.h"
+#include "altrep.h"
 #include "C_interface.h"
 
 // [[Rcpp::plugins(unwindProtect)]]
 using namespace Rcpp;
 using std::string;
+
+//Put the declaration in the front
+SEXP C_readSharedMemory(DID dataID, bool ownData);
+SEXP makeExternalSharedPtr(void* ptr, DID dataId, bool ownData);
+static void ptr_finalizer(SEXP extPtr);
 
 
 // [[Rcpp::export]]
@@ -25,7 +30,6 @@ SEXP C_createSharedMemory(SEXP x, SEXP R_dataInfo) {
 	createSharedObject(data, di);
 	return C_readSharedMemory(di.dataId, true);
 }
-
 
 // [[Rcpp::export]]
 SEXP C_readSharedMemory(DID dataID, bool ownData) {
@@ -50,7 +54,6 @@ SEXP C_createAltrep(SEXP dataReferenceInfo) {
 	UNPROTECT(2);
 	return res;
 }
-
 
 SEXP makeExternalSharedPtr(void* ptr, DID dataId, bool ownData) {
 	NumericVector info = NumericVector::create(dataId, ownData);
@@ -99,7 +102,11 @@ SEXP C_getAltData2(SEXP x) {
 
 // [[Rcpp::export]]
 DID C_findAvailableKey(DID dataID) {
-	return findAvailableKey(dataID);
+	return findAvailableDataId(dataID);
+}
+// [[Rcpp::export]]
+bool C_hasDataID(DID key) {
+	return hasDataID(key);
 }
 
 
@@ -131,8 +138,10 @@ SEXP C_getDataInfo(DID dataID) {
 
 // [[Rcpp::export]]
 SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr) {
+	R_attr = PROTECT(Rf_duplicate(R_attr));
 	const char* tag = R_CHAR(Rf_asChar(R_tag));
 	Rf_setAttrib(R_source, Rf_install(tag), R_attr);
+	UNPROTECT(1);
 	return R_NilValue;
 }
 
@@ -141,47 +150,62 @@ bool C_ALTREP(SEXP x) {
 	return ALTREP(x);
 }
 
+
 // [[Rcpp::export]]
-std::vector<double> C_getUsedKey() {
-	return getUsedKey();
+DID C_getDataID(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.dataId;
+}
+// [[Rcpp::export]]
+PID C_getProcessID(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.processId;
+}
+// [[Rcpp::export]]
+int C_getTypeID(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.typeId;
+}
+// [[Rcpp::export]]
+ULLong C_getLength(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.length;
+}
+// [[Rcpp::export]]
+ULLong C_getTotalSize(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.totalSize;
+}
+// [[Rcpp::export]]
+bool C_getCopyOnWrite(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.copyOnWrite;
+}
+// [[Rcpp::export]]
+bool C_getSharedSubset(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.sharedSubset;
+}
+// [[Rcpp::export]]
+bool C_getSharedCopy(DID did) {
+	dataInfo& info = getDataInfo(did);
+	return info.sharedCopy;
 }
 
 
-
-
 // [[Rcpp::export]]
-SEXP C_testFunc(SEXP a)
-{
-	/* creating a pointer to a vector<int> */
-	std::vector<int>* v = new std::vector<int>;
-	v->push_back(1);
-	v->push_back(2);
-
-	Rcpp::XPtr< std::vector<int> > p(v, true);
-	Environment package_env("SharedObject");
-	return(package_env);
+void C_setCopyOnWrite(DID did, bool value) {
+	dataInfo& info = getDataInfo(did);
+	info.copyOnWrite = value;
 }
-
-
-
-
 // [[Rcpp::export]]
-SEXP C_test1(SEXP f, SEXP x) {
-	SEXP call = PROTECT(Rf_lang2(f, x));
-	SEXP val = R_forceAndCall(call, 1, R_GlobalEnv);
-	UNPROTECT(1);
-	return val;
+void C_setSharedSubset(DID did, bool value) {
+	dataInfo& info = getDataInfo(did);
+	info.sharedSubset = value;
 }
-
 // [[Rcpp::export]]
-SEXP C_test2(SEXP expr, SEXP env) {
-	SEXP val = Rf_eval(expr, env);
-	return val;
-}
-
-// [[Rcpp::export]]
-SEXP C_test3(SEXP f, SEXP x) {
-	Function fun(f);
-	return fun(x);
+void C_setSharedCopy(DID did, bool value) {
+	dataInfo& info = getDataInfo(did);
+	info.sharedCopy = value;
 }
 

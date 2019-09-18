@@ -22,13 +22,13 @@ Imports:
     BiocGenerics
 biocViews: Infrastructure
 BugReports: https://github.com/Jiefei-Wang/SharedObject/issues
-RoxygenNote: 6.1.1
-Roxygen: list(markdown = TRUE)
 Suggests: 
     testthat,
     parallel,
     knitr,
     rmarkdown,
     BiocStyle
+RoxygenNote: 6.1.1
+Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Encoding: UTF-8

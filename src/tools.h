@@ -27,10 +27,6 @@
     X(6,bool, sharedSubset)\
 	X(7,bool, sharedCopy)
 
-#define X(id,type, name) extern const ULLong dataInfo_##name;
-DATAINFO_FIELDS
-#undef X
-
 extern std::string OS_ADDRESS_SIZE;
 
 void errorHandle(std::string msg);

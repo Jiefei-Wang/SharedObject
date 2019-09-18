@@ -15,7 +15,7 @@ globalSettings$sharedCopy = FALSE
 #' `getSharedObjectOptions`: A list of the package options
 #' @examples
 #' getSharedObjectOptions()
-#' setSharedObjectOptions(copyOnWrite=FALSE)
+#' setSharedObjectOptions(copyOnWrite = FALSE)
 #' getSharedObjectOptions()
 #' getSharedObjectOptions("copyOnWrite")
 #'

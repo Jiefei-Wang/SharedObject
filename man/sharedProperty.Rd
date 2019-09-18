@@ -37,7 +37,7 @@ a single value or a vector. If the length of \code{value} does not match the col
 Get or set the properties of a shared object
 }
 \examples{
-x=share(1:20)
+x = share(1:20)
 ## Check the default values
 getCopyOnWrite(x)
 getSharedSubset(x)

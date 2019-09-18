@@ -32,7 +32,8 @@ getTypeNameByID <- function(id) {
 }
 
 
-
+## Copy all attributes from source to target without
+## duplicate source
 copyAttribute <- function(source, target) {
     att = attributes(source)
     for (i in names(att)) {
@@ -41,33 +42,21 @@ copyAttribute <- function(source, target) {
     target
 }
 
-generateKey <- function() {
+generateDataId <- function() {
     key = round(runif(1, 0, 2 ^ 53))
-    key
+    C_findAvailableKey(key)
+}
+hasDataID<-function(dataId){
+    C_hasDataID(dataId)
 }
 
-findUniqueKey <- function(x, warning = TRUE) {
-    x_new = C_findAvailableKey(x)
-    if (warning && x_new != x) {
-        warning(
-            "The key ",
-            as.character(x),
-            " has existed in the shared memory. ",
-            "A new key ",
-            as.character(x_new),
-            " is generated."
-        )
-    }
-    x_new
-}
-
-#' Is an Object a desired type?
+#' Is an object of a desired type?
 #'
 #' @param x an R object
 #' @return A logical value
 #' @rdname typeCheck
 #' @examples
-#' x=share(1:10)
+#' x = share(1:10)
 #' is.altrep(x)
 #' is.shared(x)
 #' @export
@@ -110,15 +99,15 @@ is.shared <- function(x, recursive = TRUE) {
 
 
 
-.createInheritedParms <- function(x) {
-    sharedProperty = getSharedProperty(x)
+createInheritedParms <- function(x) {
+    sharedProperty = .getSharedProperties(x)[[1]]
     parms = as.list(sharedProperty[sharedOptions])
     parms
 }
 
 
 
-calculateSharedMemerySize <- function(x) {
+calculateSharedMemorySize <- function(x) {
     n = length(x)
     if (typeof(x) == "character") {
         char_size = sum(vapply(x, length, numeric(1))) + n

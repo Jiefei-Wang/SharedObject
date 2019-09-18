@@ -24,7 +24,7 @@ Get or set the global options for the SharedObject package
 }
 \examples{
 getSharedObjectOptions()
-setSharedObjectOptions(copyOnWrite=FALSE)
+setSharedObjectOptions(copyOnWrite = FALSE)
 getSharedObjectOptions()
 getSharedObjectOptions("copyOnWrite")
 

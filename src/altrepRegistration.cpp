@@ -1,7 +1,54 @@
+#include "altrep.h"
 #include "altrepNumericCommonFunc.h"
-#include "altrepRegistration.h"
-#include "altrepMacro.h"
 #include "tools.h"
+
+
+const void* getPointer(SEXP x) {
+	const void* ptr;
+	switch (TYPEOF(x))
+	{
+	case INTSXP:
+	case REALSXP:
+	case LGLSXP:
+	case RAWSXP:
+		ptr = DATAPTR_OR_NULL(x);
+		if (ptr == NULL) {
+			return DATAPTR(x);
+		}
+		else {
+			return ptr;
+		}
+	case STRSXP:
+		return x;
+	default:
+		errorHandle("Unexpected SEXP of type %d\n", TYPEOF(x));
+		// Just for suppressing the annoying warning, it should never be excuted
+		return nullptr;
+	}
+}
+
+R_altrep_class_t getAltClass(int type) {
+	switch (type) {
+	case REAL_TYPE:
+		return shared_real_class;
+	case INT_TYPE:
+		return shared_integer_class;
+	case LOGICAL_TYPE:
+		return shared_logical_class;
+	case RAW_TYPE:
+		return shared_raw_class;
+	case STR_TYPE:
+		//return shared_str_class;
+	default: errorHandle("Type of %d is not supported yet", type);
+	}
+	// Just for suppressing the annoying warning, it should never be excuted
+	return shared_real_class;
+}
+
+
+/*
+Register ALTREP class
+*/
 
 #define ALT_NUM_COMMOM_REG(ALT_CLASS,ALT_TYPE,C_TYPE,R_TYPE)\
 	ALT_CLASS =R_make_##ALT_TYPE##_class(class_name, PACKAGE_NAME, dll);\
