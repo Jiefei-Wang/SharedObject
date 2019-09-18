@@ -11,15 +11,18 @@ mapped_region -> region
 The usage of each macro:
 OS_SHARED_OBJECT_PKG_SPACE: The name of the segment that manages process data (managed_shared_memory object)
 OS_DATA_INFO_MAP_NAME: The name of the shared memory that stores a map that maps from data id to data info
-OS_USED_KEY_SET_NAME: The name of the shared memory that stores a set of used key(shared by all process)
+					    It is a member of the segment in OS_SHARED_OBJECT_PKG_SPACE
 
 
-Normal initialize process:
+first initialize process:
 R process -> 
-initial/open process data shared memory -> 
-register the data info map and used key set under the current process shared memory space
+initial OS_SHARED_OBJECT_PKG_SPACE segment -> 
+register the data info map under the OS_SHARED_OBJECT_PKG_SPACE segment->
+allocate process sharedMemoryList, segmentList to store opened object.
 
-When crash, the process and data info is still in the shared memory and can be accessed from the process data shared memory.
+
+When crash, the OS_SHARED_OBJECT_PKG_SPACE segment is still in the memory and can be retrived
+
 */
 
 
@@ -29,14 +32,12 @@ When crash, the process and data info is still in the shared memory and can be a
 #define OS_shared_memory_object windows_shared_memory 
 #define OS_SHARED_OBJECT_PKG_SPACE ("Local\\shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
 #define OS_DATA_INFO_MAP_NAME ("Local\\data_info_map"+OS_ADDRESS_SIZE).c_str()
-#define OS_USED_KEY_SET_NAME ("Local\\used_key_set"+OS_ADDRESS_SIZE).c_str()
 #else
 #include <boost/interprocess/managed_shared_memory.hpp>
 #define OS_managed_shared_memory managed_shared_memory
 #define OS_shared_memory_object shared_memory_object 
 #define OS_SHARED_OBJECT_PKG_SPACE ("shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
 #define OS_DATA_INFO_MAP_NAME ("data_info_map"+OS_ADDRESS_SIZE).c_str()
-#define OS_USED_KEY_SET_NAME ("used_key_set"+OS_ADDRESS_SIZE).c_str()
 #endif //  WINDOWS_OS 
 
 #include <boost/interprocess/allocators/allocator.hpp>

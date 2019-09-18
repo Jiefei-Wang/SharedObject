@@ -30,6 +30,9 @@
         if (identical(pmatch(dataId, "all"), 1L)) {
             dataId = getDataIdList()
         }
+        if(all(!is.na(as.numeric(dataId)))){
+            dataId=as.numeric(dataId)
+        }
     }
     if (!is.numeric(dataId)) {
         stop("Unknown dataID argument: ", dataId)
