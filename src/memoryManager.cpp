@@ -364,7 +364,7 @@ dataInfo& getDataInfo(DID dataID) {
 	initialSharedMemory();
 	try {
 		if (!hasDataID(dataID)) {
-			errorHandle("The infomation of data %llu does not exist\n", dataID);
+			errorHandle("Cannot find the information of data %llu\n", dataID);
 		}
 		return dataInfoMap->at(dataID);
 	}

@@ -242,8 +242,13 @@ A_shr=share(A,sharedSubset=FALSE,sharedCopy=TRUE)
 getSharedProperties(A_shr)
 ```
 
-Please note that `sharedCopy` is only available when
+Please note that `sharedCopy` is only effective when
 `copyOnWrite=TRUE`.
+
+# Last word on Linux system
+
+There is a certain limitation on how many shared objects a process can create on Linux system. In case if you see the error message "Too many open files", it means either you have explictly created too many shared objects, or you have implicitly generated too many shared subsets via `[` operator. You can turn `sharedSubset` off for reducing the number of opened files, or check your system settings to increase the number of opened files that one process can have.
+
 
 # Session Information
 
