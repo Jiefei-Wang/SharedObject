@@ -182,11 +182,12 @@ void initialSharedMemory() {
 
 /* Check if the data ID exist in the data info map*/
 bool hasDataID(DID did) {
-	if (dataInfoMap->find(did) == dataInfoMap->end()) {
-		return false;
+	//dataInfoMap->find(did) != dataInfoMap->end()
+	if (dataInfoMap->contains(did)) {
+		return true;
 	}
 	else {
-		return true;
+		return false;
 	}
 }
 // Check the availablility of the key
@@ -382,8 +383,10 @@ dataInfo& getDataInfo(DID dataID) {
 std::vector<double> getDataIdList() {
 	initialSharedMemory();
 	std::vector<double> v;
-	BOOST_FOREACH(dataInfoPair & dip, *dataInfoMap) {
-		v.push_back(dip.first);
+	auto iter = dataInfoMap->begin();
+	for (; iter != dataInfoMap->end(); iter++)
+	{
+		v.push_back(iter->first);
 	}
 	return v;
 }
