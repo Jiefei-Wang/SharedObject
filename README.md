@@ -1,6 +1,6 @@
 # SharedObject
 This package is designed for sharing objects across multiple R
-processes. Users can call `sharedObject` function to create a shared
+processes. Users can call `share` function to create a shared
 object. shared objects behave the same as R vectors(AKA atomic),
 users should not be able to see any notable changes after converting a
 vector into a shared object. Shared objects can be exported through
