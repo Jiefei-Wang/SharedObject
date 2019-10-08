@@ -164,7 +164,8 @@ void initialSharedMemory() {
 		//If it is the first time to run the program, check if the shared memory exist
 		//If it does not exist, create it
 		if (processInfoSegment == nullptr) {
-			//printf("not initialized\n");
+			//
+			f("not initialized\n");
 			//Create shared memory space if not exist
 			processInfoSegment = openOrCreateSharedSegment(OS_SHARED_OBJECT_PKG_SPACE, DATA_LIST_SIZE);
 			dataInfoMap = openOrCreateSharedMap< dataInfoAllocator, sharedDataInfoMap, DID>(processInfoSegment, OS_DATA_INFO_MAP_NAME);
@@ -342,14 +343,14 @@ void destroyObject(DID dataID) {
 		}
 		else {
 			string dataKey = getDataMemoryKey(dataID);
-			DEBUG(printf("removing data %llu\n", dataID));
+			DEBUG(Rprintf("removing data %llu\n", dataID));
 			//printf("removing memory mapped address\n");
 			removeVectorKeyAndValueIfExist(segmentList, dataID);
 			//printf("removing share memory object\n");
 			removeVectorKeyAndValueIfExist(sharedMemoryList, dataID);
 			//remove the data
 			bool removed = removeSharedMemory(dataKey.c_str());
-			if (!removed) printf("fail to remove the data\n");
+			if (!removed) warningHandle("fail to remove the data\n");
 			//remove the key from the data info map
 			//printf("removing data key\n");
 			removeDataID(dataID);
