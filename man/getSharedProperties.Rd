@@ -10,7 +10,7 @@ getSharedProperties(x, as.list = FALSE)
 \item{x}{A shared object}
 
 \item{as.list}{Logical, Whether the result should be a list of shared properties even
-when only one shared property is reported.}
+when only one sharedProperty object is reported.}
 }
 \value{
 If x is not a shared object, return \code{NULL}.

@@ -15,8 +15,8 @@ OS_DATA_INFO_MAP_NAME: The name of the shared memory that stores a map that maps
 
 
 first initialize process:
-R process -> 
-initial OS_SHARED_OBJECT_PKG_SPACE segment -> 
+R process ->
+initial OS_SHARED_OBJECT_PKG_SPACE segment ->
 register the data info map under the OS_SHARED_OBJECT_PKG_SPACE segment->
 allocate process sharedMemoryList, segmentList to store opened object.
 
@@ -26,19 +26,19 @@ When crash, the OS_SHARED_OBJECT_PKG_SPACE segment is still in the memory and ca
 */
 
 
-#ifdef  WINDOWS_OS 
+#ifdef  WINDOWS_OS
 #include <boost/interprocess/managed_windows_shared_memory.hpp>
 #define OS_managed_shared_memory managed_windows_shared_memory
-#define OS_shared_memory_object windows_shared_memory 
+#define OS_shared_memory_object windows_shared_memory
 #define OS_SHARED_OBJECT_PKG_SPACE ("Local\\shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
 #define OS_DATA_INFO_MAP_NAME ("Local\\data_info_map"+OS_ADDRESS_SIZE).c_str()
 #else
 #include <boost/interprocess/managed_shared_memory.hpp>
 #define OS_managed_shared_memory managed_shared_memory
-#define OS_shared_memory_object shared_memory_object 
+#define OS_shared_memory_object shared_memory_object
 #define OS_SHARED_OBJECT_PKG_SPACE ("shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
 #define OS_DATA_INFO_MAP_NAME ("data_info_map"+OS_ADDRESS_SIZE).c_str()
-#endif //  WINDOWS_OS 
+#endif //  WINDOWS_OS
 
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/map.hpp>
@@ -65,8 +65,8 @@ typedef allocator<dataInfoPair, OS_managed_shared_memory::segment_manager> dataI
 typedef map<DID, dataInfo, std::less<DID>, dataInfoAllocator> sharedDataInfoMap;
 
 
-//local variables to keep track of the opened 
-//shared memory object and mapped region object 
+//local variables to keep track of the opened
+//shared memory object and mapped region object
 std::map<DID, OS_shared_memory_object*> sharedMemoryList;
 std::map<DID, mapped_region*> segmentList;
 
@@ -108,7 +108,7 @@ bool hasSharedMemory(const char* name, sharedSystem ss)
 /* Remove the shared memory
    For windows there is no API to remove the memory, alway return True.*/
 bool removeSharedMemory(const char* name) {
-#ifdef WINDOWS_OS 
+#ifdef WINDOWS_OS
 	return true;
 #else
 	return OS_shared_memory_object::remove(name);
@@ -164,8 +164,6 @@ void initialSharedMemory() {
 		//If it is the first time to run the program, check if the shared memory exist
 		//If it does not exist, create it
 		if (processInfoSegment == nullptr) {
-			//
-			f("not initialized\n");
 			//Create shared memory space if not exist
 			processInfoSegment = openOrCreateSharedSegment(OS_SHARED_OBJECT_PKG_SPACE, DATA_LIST_SIZE);
 			dataInfoMap = openOrCreateSharedMap< dataInfoAllocator, sharedDataInfoMap, DID>(processInfoSegment, OS_DATA_INFO_MAP_NAME);
