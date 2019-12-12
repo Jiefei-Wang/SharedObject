@@ -14,7 +14,7 @@ using namespace std;
 
 
 
-string OS_ADDRESS_SIZE = "X" + to_string(sizeof(void*) * 8);
+const string OS_ADDRESS_SIZE = "X" + to_string(sizeof(void*) * 8);
 
 void errorHandle(string msg) {
 	errorHandle(msg.c_str());

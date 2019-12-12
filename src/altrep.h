@@ -13,9 +13,6 @@ Altrep common functions, functions include:
 have to registered with.
 */
 
-//Get the pointer of an SEXP
-//If the SEXP is STREXP, return itself.
-const void* getPointer(SEXP x);
 
 //Get the ALTREP class object by type id
 //Type id is defined in tools.h

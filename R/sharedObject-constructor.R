@@ -1,4 +1,4 @@
-dataInfoPropNames = c("dataId", "processId", "typeId", "length", "totalSize")
+dataInfoPropNames = c("dataId", "length", "totalSize", "ownData")
 sharedOptions = c("copyOnWrite", "sharedSubset", "sharedCopy")
 dataInfoNames = c(dataInfoPropNames, sharedOptions)
 dataInfoTemplate = rep(0.0, length(dataInfoNames))
@@ -166,15 +166,7 @@ initialSharedMemoryByData <- function(x, options = list()) {
     options = completeOptions(options)
     #Construct dataInfo vector
     dataInfo = dataInfoTemplate
-    if (!is.null(options$dataId)) {
-        dataId = options$dataId
-        if(hasDataID(dataId)){
-            stop("The data Id ",dataId," has existed in the shared memory")
-        }
-    } else{
-        dataId = generateDataId()
-    }
-    dataInfo["dataId"] = dataId
+    dataInfo["dataId"] = double(1)
     dataInfo["processId"] = .globals$getProcessID()
     dataInfo["typeId"] = getTypeIDByName(typeof(x))
     dataInfo["length"] = length(x)
