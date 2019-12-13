@@ -2,7 +2,6 @@
 #include "R_ext/Altrep.h"
 #include "tools.h"
 #include "sharedMemory.h"
-#include "altrepMacro.h"
 #include "altrep.h"
 #include "C_interface.h"
 #include "macro.h"
@@ -11,23 +10,65 @@
 using namespace Rcpp;
 using std::string;
 
+static void ptrFinalizer(SEXP extPtr);
 
-// [[Rcpp::export]]
-SEXP C_createSharedMemory(SEXP x, List dataInfo) {
-	uint64_t dataSize = as<uint64_t>(SLOT_TOTALSIZE(dataInfo));
+
+SEXP C_createEmptySharedMemory(List dataInfo) {
+	uint64_t dataSize = as<uint64_t>(dataInfo[INFO_TOTALSIZE]);
+	//Allocate the shared memory
 	uint32_t id = allocateSharedMemory(dataSize);
-	SET_SLOT_DATAID(dataInfo, Rf_ScalarReal(id));
-
+	SEXP R_id = PROTECT(Rf_ScalarReal(id));
+	dataInfo[INFO_DATAID] = R_id;
+	//Map the shared memory to the current process
 	void* ptr = mapSharedMemory(id);
-	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_NilValue, R_NilValue));
-	R_altrep_class_t alt_class = getAltClass(TYPEOF(x));
-	SEXP res = PROTECT(R_new_altrep(alt_class, sharedExtPtr,dataInfo));
-	UNPROTECT(2);
+	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, R_NilValue));
+
+	//Create altrep
+	R_altrep_class_t alt_class = getAltClass(as<int>(dataInfo[INFO_DATATYPE]));
+	SEXP res = PROTECT(R_new_altrep(alt_class, sharedExtPtr, dataInfo));
+	if (as<bool>(dataInfo[INFO_OWNDATA]))
+		R_RegisterCFinalizer(sharedExtPtr, ptrFinalizer);
+	UNPROTECT(3);
 	return res;
 }
+// [[Rcpp::export]]
+SEXP C_createSharedMemory(SEXP x, List dataInfo) {
+	uint64_t dataSize = as<uint64_t>(dataInfo[INFO_TOTALSIZE]);
+	SEXP R_type = PROTECT(Rf_ScalarReal(TYPEOF(x)));
+	dataInfo[INFO_DATATYPE] = R_type;
+	SEXP result = C_createEmptySharedMemory(dataInfo);
+	memcpy(ALT_EXTPTR(result), DATAPTR(x), dataSize);
+	UNPROTECT(1);
+	return result;
+}
+
+
+
+
+
+
+static void ptrFinalizer(SEXP extPtr) {
+	uint32_t id = as<uint32_t>(R_ExternalPtrTag(extPtr));
+	freeSharedMemory(id);
+	DEBUG(Rprintf("finalizing data\n"));
+	return;
+}
+
 
 // [[Rcpp::export]]
-SEXP C_readSharedMemory(DID dataID) {
+SEXP C_readSharedMemory(SEXP dataInfo) {
+	SEXP R_id = GET_SLOT(dataInfo,INFO_DATAID);
+	//Map the shared memory to the current process
+	void* ptr = mapSharedMemory(as<uint32_t>(R_id));
+	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, R_NilValue));
+
+	//Create altrep
+	R_altrep_class_t alt_class = getAltClass(as<int>(GET_SLOT(dataInfo,INFO_DATATYPE)));
+	SEXP res = PROTECT(R_new_altrep(alt_class, sharedExtPtr, dataInfo));
+	if (as<bool>(GET_SLOT(dataInfo, INFO_OWNDATA)))
+		R_RegisterCFinalizer(sharedExtPtr, ptrFinalizer);
+	UNPROTECT(2);
+	return res;
 }
 
 
@@ -44,12 +85,6 @@ SEXP C_getAltData2(SEXP x) {
 
 // [[Rcpp::export]]
 void C_clearObj(double dataID) {
-	try {
-		destroyObject(dataID);
-	}
-	catch (const std::exception & ex) {
-		errorHandle("Unexpected error in removing object: \n%s", ex.what());
-	}
 }
 
 // [[Rcpp::export]]

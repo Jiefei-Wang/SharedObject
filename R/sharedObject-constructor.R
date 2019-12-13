@@ -1,4 +1,4 @@
-dataInfoPropNames = c("dataId", "length", "totalSize", "ownData")
+dataInfoPropNames = c("dataId", "length", "totalSize", "dataType","ownData")
 sharedOptions = c("copyOnWrite", "sharedSubset", "sharedCopy")
 dataInfoNames = c(dataInfoPropNames, sharedOptions)
 dataInfoTemplate = rep(0.0, length(dataInfoNames))
@@ -120,10 +120,19 @@ setGeneric("share", function(x, ...) {
 
 shareAtomic <- function(x, ...) {
     options = as.list(unlist(list(...)))
-    dataReferenceInfo = initialSharedMemoryByData(x, options)
-    obj = C_createAltrep(dataReferenceInfo)
-    obj = copyAttribute(x, obj)
-    obj
+    options = completeOptions(options)
+    #Construct dataInfo vector
+    dataInfo = dataInfoTemplate
+    dataInfo["dataId"] = double(1)
+    dataInfo["processId"] = .globals$getProcessID()
+    dataInfo["typeId"] = getTypeIDByName(typeof(x))
+    dataInfo["length"] = length(x)
+    dataInfo["totalSize"] = calculateSharedMemorySize(x)
+    for (i in sharedOptions) {
+        dataInfo[i] = options[[i]]
+    }
+
+    C_createSharedMemory(x,dataInfo)
 }
 
 setMethod("share", signature(x = "vector"), shareAtomic)

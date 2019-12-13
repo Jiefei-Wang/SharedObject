@@ -1,17 +1,18 @@
-#ifndef _WIN32
+#ifdef _WIN32
 #define WINDOWS_OS
 #endif
 
 #ifdef  WINDOWS_OS
+#include <boost/interprocess/windows_shared_memory.hpp>
 #define OS_shared_memory_object windows_shared_memory
 #define OS_SHARED_OBJECT_PKG_SPACE ("Local\\shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
 #else
+#include <boost/interprocess/shared_memory_object.hpp>
 #define OS_shared_memory_object shared_memory_object
 #define OS_SHARED_OBJECT_PKG_SPACE ("shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
 #endif //  WINDOWS_OS
 
 #include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/shared_memory_object.hpp>
 #include <map>
 #include "sharedMemory.h"
 #include "tools.h"
@@ -25,15 +26,18 @@ static std::map<uint32_t, OS_shared_memory_object*> sharedMemoryList;
 static std::map<uint32_t, mapped_region*> segmentList;
 static uint32_t* last_id = nullptr;
 
-
+void allocateSharedMemoryInternal(uint32_t id, size_t size_in_byte);
 /*
 Initialize the variable last_id which is located in the shared memory
 the variable serves as a hint for what the next id should be
 */
 void initialSharedmemory() {
 	if (last_id == nullptr) {
-		allocateSharedMemoryInternal(0, sizeof(uint32_t));
+		if (!hasSharedMemory((uint32_t)0)) {
+			allocateSharedMemoryInternal(0, sizeof(uint32_t));
+		}
 		last_id = (uint32_t*)mapSharedMemory(0);
+
 	}
 }
 
@@ -60,8 +64,7 @@ uint32_t getNextId() {
 		*last_id = *last_id + 1L;
 		if (*last_id == 0L) * last_id = 1L;
 
-		string key = getDataMemoryKey(*last_id);
-		if (!hasSharedMemory(key.c_str()))
+		if (!hasSharedMemory(*last_id))
 			return *last_id;
 	} while (*last_id != initial);
 	Rf_error("Unable to find an available key for creating a shared memory, all keys are in used.");
@@ -89,6 +92,7 @@ bool hasSharedMemory(const char* name)
 
 //allocate shared memory without doing any memory check
 void allocateSharedMemoryInternal(uint32_t id, size_t size_in_byte) {
+	Rprintf("internal shared memory, id:%d \n",id);
 	boost::interprocess::permissions perm;
 	perm.set_unrestricted();
 	string key = getDataMemoryKey(id);
@@ -113,9 +117,11 @@ uint32_t allocateSharedMemory(size_t size_in_byte) {
 	uint32_t id = getNextId();
 	allocateSharedMemoryInternal(id, size_in_byte);
 	return id;
-};
+}
+
 void* mapSharedMemory(uint32_t id) {
-	initialSharedmemory();
+	if(id!=0)
+		initialSharedmemory();
 	try {
 		if (keyInMap(segmentList, id)) {
 			return segmentList[id]->get_address();
@@ -149,7 +155,8 @@ void unmapSharedMemory(uint32_t id) {
 		delete segmentList[id];
 		segmentList.erase(id);
 	}
-};
+}
+
 bool freeSharedMemory(uint32_t id) {
 	initialSharedmemory();
 #ifdef WINDOWS_OS
@@ -169,4 +176,10 @@ bool freeSharedMemory(uint32_t id) {
 		return false;
 	}
 #endif
-};
+}
+
+
+int32_t getLastIndex() {
+	initialSharedmemory();
+	return *last_id;
+}

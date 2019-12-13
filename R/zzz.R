@@ -20,6 +20,5 @@
 
 
 .onUnload <- function(libpath) {
-    library.dynam.unload("SharedObject", libpath)
     .globals$setPackageUnloaded()
 }
