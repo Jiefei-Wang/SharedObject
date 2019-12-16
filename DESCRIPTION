@@ -28,7 +28,13 @@ Suggests:
     knitr,
     rmarkdown,
     BiocStyle
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Encoding: UTF-8
+Collate: 
+    'RcppExports.R'
+    'pkgSetting.R'
+    'sharedObject-constructor.R'
+    'utils.R'
+    'sharedObject-method.R'

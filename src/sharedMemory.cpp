@@ -143,7 +143,7 @@ void* mapSharedMemory(uint32_t id) {
 		return region->get_address();
 	}
 	catch (const std::exception & ex) {
-		Rf_error("An error has occured in mapping shared memory: %s", ex.what());
+		Rf_warning("An error has occured in mapping shared memory: %s", ex.what());
 		return nullptr;
 	}
 	
@@ -172,7 +172,7 @@ bool freeSharedMemory(uint32_t id) {
 	return OS_shared_memory_object::remove(key.c_str());
 	}
 	catch (const std::exception& ex) {
-		Rf_error("An error has occured in deallocating shared memory: %s", ex.what());
+		Rf_warning("An error has occured in deallocating shared memory: %s", ex.what());
 		return false;
 	}
 #endif
@@ -182,4 +182,32 @@ bool freeSharedMemory(uint32_t id) {
 int32_t getLastIndex() {
 	initialSharedmemory();
 	return *last_id;
+}
+
+
+double getSharedMemorySize(uint32_t id) {
+	initialSharedmemory();
+	if (hasSharedMemory(id)) {
+		if (keyInMap(sharedMemoryList, id)) {
+			offset_t size;
+#ifdef WINDOWS_OS
+			size = sharedMemoryList[id]->get_size();
+#else
+			sharedMemoryList[id]->get_size(size);
+#endif 
+			return size;
+		}
+		else {
+			OS_shared_memory_object sharedMemory(open_only, getDataMemoryKey(id).c_str(), read_write);
+			offset_t size;
+#ifdef WINDOWS_OS
+			size = sharedMemory.get_size();
+#else
+			sharedMemory.get_size(size);
+#endif 
+			return size;
+		}
+	}
+	return 0;
+
 }

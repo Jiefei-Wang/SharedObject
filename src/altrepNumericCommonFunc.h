@@ -39,16 +39,23 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 		if (copyOnWrite) {
 			if (sharedCopy) {
 				List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
-				newDataInfo[INFO_OWNDATA] = Rf_ScalarReal(1);
+				newDataInfo[INFO_OWNDATA] = Rf_ScalarReal(true);
 				SEXP result = C_createSharedMemory(x, wrap(newDataInfo));
 				return(result);
 			}
 			else {
-				return(NULL);
+				SEXP result = PROTECT(Rf_allocVector(TYPEOF(x), XLENGTH(x)));
+				memcpy(DATAPTR(result), DATAPTR(x), as<R_xlen_t>(GET_ALT_SLOT(x, INFO_TOTALSIZE)));
+				UNPROTECT(1);
+				return result;
 			}
 		}
 		else {
-			return(x);
+			Rprintf("return itself\n");
+			List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
+			newDataInfo[INFO_OWNDATA] = Rf_ScalarReal(false);
+			SEXP result = C_readSharedMemory(newDataInfo);
+			return(result);
 		}
 	}
 	catch (const std::exception & ex) {

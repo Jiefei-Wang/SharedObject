@@ -28,6 +28,49 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_hasSharedMemory
+bool C_hasSharedMemory(uint32_t id);
+RcppExport SEXP _SharedObject_C_hasSharedMemory(SEXP idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< uint32_t >::type id(idSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_hasSharedMemory(id));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getLastIndex
+uint32_t C_getLastIndex();
+RcppExport SEXP _SharedObject_C_getLastIndex() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(C_getLastIndex());
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_getSharedMemorySize
+double C_getSharedMemorySize(uint32_t id);
+RcppExport SEXP _SharedObject_C_getSharedMemorySize(SEXP idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< uint32_t >::type id(idSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getSharedMemorySize(id));
+    return rcpp_result_gen;
+END_RCPP
+}
+// C_ALTREP
+bool C_ALTREP(SEXP x);
+RcppExport SEXP _SharedObject_C_ALTREP(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_ALTREP(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_getAltData1
 SEXP C_getAltData1(SEXP x);
 RcppExport SEXP _SharedObject_C_getAltData1(SEXP xSEXP) {
@@ -50,13 +93,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// C_clearObj
-void C_clearObj(double dataID);
-RcppExport SEXP _SharedObject_C_clearObj(SEXP dataIDSEXP) {
+// C_setAltData1
+void C_setAltData1(SEXP x, SEXP data);
+RcppExport SEXP _SharedObject_C_setAltData1(SEXP xSEXP, SEXP dataSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type dataID(dataIDSEXP);
-    C_clearObj(dataID);
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
+    C_setAltData1(x, data);
+    return R_NilValue;
+END_RCPP
+}
+// C_setAltData2
+void C_setAltData2(SEXP x, SEXP data);
+RcppExport SEXP _SharedObject_C_setAltData2(SEXP xSEXP, SEXP dataSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
+    C_setAltData2(x, data);
     return R_NilValue;
 END_RCPP
 }
@@ -73,26 +128,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// C_ALTREP
-bool C_ALTREP(SEXP x);
-RcppExport SEXP _SharedObject_C_ALTREP(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_ALTREP(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_createSharedMemory", (DL_FUNC) &_SharedObject_C_createSharedMemory, 2},
     {"_SharedObject_C_readSharedMemory", (DL_FUNC) &_SharedObject_C_readSharedMemory, 1},
+    {"_SharedObject_C_hasSharedMemory", (DL_FUNC) &_SharedObject_C_hasSharedMemory, 1},
+    {"_SharedObject_C_getLastIndex", (DL_FUNC) &_SharedObject_C_getLastIndex, 0},
+    {"_SharedObject_C_getSharedMemorySize", (DL_FUNC) &_SharedObject_C_getSharedMemorySize, 1},
+    {"_SharedObject_C_ALTREP", (DL_FUNC) &_SharedObject_C_ALTREP, 1},
     {"_SharedObject_C_getAltData1", (DL_FUNC) &_SharedObject_C_getAltData1, 1},
     {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},
-    {"_SharedObject_C_clearObj", (DL_FUNC) &_SharedObject_C_clearObj, 1},
+    {"_SharedObject_C_setAltData1", (DL_FUNC) &_SharedObject_C_setAltData1, 2},
+    {"_SharedObject_C_setAltData2", (DL_FUNC) &_SharedObject_C_setAltData2, 2},
     {"_SharedObject_C_attachAttr", (DL_FUNC) &_SharedObject_C_attachAttr, 3},
-    {"_SharedObject_C_ALTREP", (DL_FUNC) &_SharedObject_C_ALTREP, 1},
     {NULL, NULL, 0}
 };
 

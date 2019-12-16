@@ -1,11 +1,62 @@
 dataInfoPropNames = c("dataId", "length", "totalSize", "dataType","ownData")
 sharedOptions = c("copyOnWrite", "sharedSubset", "sharedCopy")
 dataInfoNames = c(dataInfoPropNames, sharedOptions)
-dataInfoTemplate = rep(0.0, length(dataInfoNames))
+dataInfoTemplate = as.list(rep(0, length(dataInfoNames)))
 names(dataInfoTemplate) = dataInfoNames
 
 #############################
-## constructor for a shared object(exported)
+## Internal functions
+#############################
+
+## Fill the options with their default argument
+## if not specified
+completeOptions <- function(options) {
+    for (i in seq_along(sharedOptions)) {
+        name = sharedOptions[i]
+        if (is.null(options[[name]])) {
+            options[[name]] = globalSettings[[name]]
+        }
+    }
+    options
+}
+
+shareAtomic <- function(x, ...) {
+    options <- list(...)
+    options <- completeOptions(options)
+    #Construct dataInfo vector
+    dataInfo = dataInfoTemplate
+    dataInfo[["dataId"]] <- double(1)
+    dataInfo[["length"]] <- length(x)
+    dataInfo[["totalSize"]] <- calculateSharedMemorySize(x)
+    dataInfo[["dataType"]] <- 0
+    dataInfo[["ownData"]] <- TRUE
+
+    for (i in sharedOptions) {
+        dataInfo[i] <- options[[i]]
+    }
+
+    result <- C_createSharedMemory(x,dataInfo)
+    copyAttribute(result,x)
+    result
+}
+promptError <- function(x, ...){
+    options <- list(...)
+    if(!is.null(options$noError)){
+        if(options$noError)
+            return(x)
+    }else{
+        if(globalSettings$noError)
+            return(x)
+    }
+    stop("The object of type `", class(x),"' cannot be shared.\n",
+         "To suppress this error and return the same object, \n",
+         "provide `noError = TRUE` as a function argument\n",
+         "or change its default value in the package settings")
+}
+
+
+#############################
+## constructor for a shared object
 #############################
 #' Create an R object in the shared memory
 #'
@@ -118,92 +169,17 @@ setGeneric("share", function(x, ...) {
     standardGeneric("share")
 })
 
-shareAtomic <- function(x, ...) {
-    options = as.list(unlist(list(...)))
-    options = completeOptions(options)
-    #Construct dataInfo vector
-    dataInfo = dataInfoTemplate
-    dataInfo["dataId"] = double(1)
-    dataInfo["processId"] = .globals$getProcessID()
-    dataInfo["typeId"] = getTypeIDByName(typeof(x))
-    dataInfo["length"] = length(x)
-    dataInfo["totalSize"] = calculateSharedMemorySize(x)
-    for (i in sharedOptions) {
-        dataInfo[i] = options[[i]]
-    }
-
-    C_createSharedMemory(x,dataInfo)
-}
-
+setMethod("share", signature(x = "ANY"), promptError)
+setMethod("share", signature(x = "character"), promptError)
 setMethod("share", signature(x = "vector"), shareAtomic)
 setMethod("share", signature(x = "matrix"), shareAtomic)
-setMethod("share", signature(x = "data.frame"), function(x, ...) {
-    options = as.list(unlist(list(...)))
-    obj = vector("list", length = length(x))
-    for (i in seq_along(obj)) {
-        sm = share(x[[i]], options = options)
-        obj[[i]] = sm
-    }
-    obj = copyAttribute(x, obj)
-    obj
-
-})
 setMethod("share", signature(x = "list"), function(x, ...) {
-    stop("Shared list cannot be automatically created. Please create it manually")
+    result <- vector("list", length = length(x))
+    for (i in seq_along(result)) {
+        result[[i]] <- share(x[[i]], ...)
+    }
+    copyAttribute(result,x)
+    result
 })
 
-#############################
-## constructor for a shared object(internal)
-#############################
 
-## Fill the options with their default argument
-## if not specified
-completeOptions <- function(options) {
-    for (i in seq_along(sharedOptions)) {
-        name = sharedOptions[i]
-        if (is.null(options[[name]])) {
-            options[[name]] = globalSettings[[name]]
-        }
-    }
-    options
-}
-
-## Initialize shared memory space by R data
-## The return value is a list of data info
-## that will be used to create an ALTREP
-initialSharedMemoryByData <- function(x, options = list()) {
-    options = completeOptions(options)
-    #Construct dataInfo vector
-    dataInfo = dataInfoTemplate
-    dataInfo["dataId"] = double(1)
-    dataInfo["processId"] = .globals$getProcessID()
-    dataInfo["typeId"] = getTypeIDByName(typeof(x))
-    dataInfo["length"] = length(x)
-    dataInfo["totalSize"] = calculateSharedMemorySize(x)
-    for (i in sharedOptions) {
-        dataInfo[i] = options[[i]]
-    }
-
-    dataPtr = C_createSharedMemory(x, dataInfo)
-    list(dataId = dataId,
-         dataPtr = dataPtr,
-         typeName = typeof(x))
-}
-
-## Get the shared memory pointer
-## by data ID
-initialSharedMemoryByID = function(dataId) {
-    dataPtr = C_readSharedMemory(dataId, ownData = FALSE)
-    typeName = getTypeNameByID(C_getTypeID(dataId))
-    list(dataId = dataId,
-         dataPtr = dataPtr,
-         typeName = typeName)
-}
-
-
-## Used by unserialize function
-makeSharedVectorById <- function(dataId) {
-    dataReferenceInfo = initialSharedMemoryByID(dataId)
-    obj = C_createAltrep(dataReferenceInfo)
-    obj
-}

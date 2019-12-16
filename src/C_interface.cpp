@@ -71,7 +71,27 @@ SEXP C_readSharedMemory(SEXP dataInfo) {
 	return res;
 }
 
+// [[Rcpp::export]]
+bool C_hasSharedMemory(uint32_t id) {
+	return hasSharedMemory(id);
+}
 
+// [[Rcpp::export]]
+uint32_t C_getLastIndex() {
+	return getLastIndex();
+}
+// [[Rcpp::export]]
+double C_getSharedMemorySize(uint32_t id) {
+	return getSharedMemorySize(id);
+}
+
+
+
+
+// [[Rcpp::export]]
+bool C_ALTREP(SEXP x) {
+	return ALTREP(x);
+}
 
 // [[Rcpp::export]]
 SEXP C_getAltData1(SEXP x) {
@@ -82,10 +102,15 @@ SEXP C_getAltData2(SEXP x) {
 	return R_altrep_data2(x);
 }
 
-
 // [[Rcpp::export]]
-void C_clearObj(double dataID) {
+void C_setAltData1(SEXP x, SEXP data) {
+	R_set_altrep_data1(x, data);
 }
+// [[Rcpp::export]]
+void C_setAltData2(SEXP x, SEXP data) {
+	R_set_altrep_data2(x, data);
+}
+
 
 // [[Rcpp::export]]
 SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr) {
@@ -96,8 +121,4 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr) {
 	return R_NilValue;
 }
 
-// [[Rcpp::export]]
-bool C_ALTREP(SEXP x) {
-	return ALTREP(x);
-}
 

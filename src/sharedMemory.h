@@ -10,5 +10,6 @@ bool freeSharedMemory(uint32_t id);
 bool hasSharedMemory(uint32_t id);
 bool hasSharedMemory(const char* name);
 int32_t getLastIndex();
+double getSharedMemorySize(uint32_t id);
 
 

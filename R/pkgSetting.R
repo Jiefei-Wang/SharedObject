@@ -1,7 +1,17 @@
+#' @useDynLib SharedObject, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+#' @importFrom stats runif
+#' @importFrom methods is new
+#' @importFrom xptr xptr_tag
+#' @import BiocGenerics
+NULL
+
+
 globalSettings = new.env()
 globalSettings$copyOnWrite = TRUE
 globalSettings$sharedSubset = TRUE
 globalSettings$sharedCopy = FALSE
+globalSettings$noError = FALSE
 
 #' Get or set the global options for the SharedObject package
 #'

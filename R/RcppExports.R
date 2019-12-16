@@ -9,6 +9,22 @@ C_readSharedMemory <- function(dataInfo) {
     .Call(`_SharedObject_C_readSharedMemory`, dataInfo)
 }
 
+C_hasSharedMemory <- function(id) {
+    .Call(`_SharedObject_C_hasSharedMemory`, id)
+}
+
+C_getLastIndex <- function() {
+    .Call(`_SharedObject_C_getLastIndex`)
+}
+
+C_getSharedMemorySize <- function(id) {
+    .Call(`_SharedObject_C_getSharedMemorySize`, id)
+}
+
+C_ALTREP <- function(x) {
+    .Call(`_SharedObject_C_ALTREP`, x)
+}
+
 C_getAltData1 <- function(x) {
     .Call(`_SharedObject_C_getAltData1`, x)
 }
@@ -17,15 +33,15 @@ C_getAltData2 <- function(x) {
     .Call(`_SharedObject_C_getAltData2`, x)
 }
 
-C_clearObj <- function(dataID) {
-    invisible(.Call(`_SharedObject_C_clearObj`, dataID))
+C_setAltData1 <- function(x, data) {
+    invisible(.Call(`_SharedObject_C_setAltData1`, x, data))
+}
+
+C_setAltData2 <- function(x, data) {
+    invisible(.Call(`_SharedObject_C_setAltData2`, x, data))
 }
 
 C_attachAttr <- function(R_source, R_tag, R_attr) {
     .Call(`_SharedObject_C_attachAttr`, R_source, R_tag, R_attr)
-}
-
-C_ALTREP <- function(x) {
-    .Call(`_SharedObject_C_ALTREP`, x)
 }
 
