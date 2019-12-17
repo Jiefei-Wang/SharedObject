@@ -3,7 +3,11 @@
 \docType{methods}
 \name{getSharedObjectProperty}
 \alias{getSharedObjectProperty}
-\alias{setSharedObjectProperty,ANY,characterOrNULL-method}
+\alias{getSharedObjectProperty,ANY,characterOrNULLOrMissing-method}
+\alias{getSharedObjectProperty,list,characterOrNULLOrMissing-method}
+\alias{setSharedObjectProperty}
+\alias{setSharedObjectProperty,ANY,characterOrNULLOrMissing-method}
+\alias{setSharedObjectProperty,list,characterOrNULLOrMissing-method}
 \alias{getCopyOnWrite}
 \alias{getSharedSubset}
 \alias{getSharedCopy}
@@ -14,8 +18,19 @@
 \usage{
 getSharedObjectProperty(x, property, ...)
 
-\S4method{setSharedObjectProperty}{ANY,characterOrNULL}(x, property, value,
-  ...)
+\S4method{getSharedObjectProperty}{ANY,characterOrNULLOrMissing}(x,
+  property, ...)
+
+\S4method{getSharedObjectProperty}{list,characterOrNULLOrMissing}(x,
+  property, ...)
+
+setSharedObjectProperty(x, property, value, ...)
+
+\S4method{setSharedObjectProperty}{ANY,characterOrNULLOrMissing}(x,
+  property, value, ...)
+
+\S4method{setSharedObjectProperty}{list,characterOrNULLOrMissing}(x,
+  property, value, ...)
 
 getCopyOnWrite(x)
 
@@ -33,7 +48,7 @@ setSharedCopy(x, value)
 \item{x}{A shared object}
 
 \item{property}{A character vector, the name of the property(s),
-if the value is \code{NULL}, it represents all properties.}
+if the argument is missing or the value is \code{NULL}, it represents all properties.}
 
 \item{...}{Not used}
 

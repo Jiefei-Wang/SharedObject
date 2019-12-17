@@ -49,7 +49,7 @@ is.shared.data.frame <- function(x) {
 #'
 #' @param x A shared object
 #' @param property A character vector, the name of the property(s),
-#' if the value is `NULL`, it represents all properties.
+#' if the argument is missing or the value is `NULL`, it represents all properties.
 #' @param ... Not used
 #' @return
 #' get: The property(s) of a shared object
@@ -59,33 +59,31 @@ setGeneric("getSharedObjectProperty", function(x, property, ...) {
     standardGeneric("getSharedObjectProperty")
 })
 
-
-setMethod("getSharedObjectProperty", signature(x = "ANY", property = "characterOrNULL"),
+#' @rdname sharedObjectProperty
+#' @export
+setMethod("getSharedObjectProperty", signature(x = "ANY", property = "characterOrNULLOrMissing"),
           function(x, property, ...) {
               if (is.shared(x)) {
+                  if (missing(property)||is.null(property)){
+                      property <- names(dataInfoTemplate)
+                  }
                   info <- C_getAltData2(x)
-                  if (!is.null(property)) {
                       property <- property[property%in%names(dataInfoTemplate)]
                       if(length(property)==1){
                           return(info[[property]])
                       }else{
                           return(info[property])
                       }
-                  } else{
-                      return(info)
-                  }
               }
               NULL
           })
-setMethod("getSharedObjectProperty", signature(x = "list", property = "characterOrNULL"),
+
+#' @rdname sharedObjectProperty
+#' @export
+setMethod("getSharedObjectProperty", signature(x = "list", property = "characterOrNULLOrMissing"),
           function(x, property, ...) {
               lapply(x, getSharedObjectProperty, property = property, ...)
           })
-
-setGeneric("setSharedObjectProperty",
-           function(x, property, value, ...) {
-               standardGeneric("setSharedObjectProperty")
-           })
 
 #' @param value The new value of the property, if the length of value
 #' does not match the length of the property, the argument `value` will
@@ -94,14 +92,21 @@ setGeneric("setSharedObjectProperty",
 #' @return
 #' set: No return value
 #' @export
+setGeneric("setSharedObjectProperty",
+           function(x, property, value, ...) {
+               standardGeneric("setSharedObjectProperty")
+           })
+
+#' @rdname sharedObjectProperty
+#' @export
 setMethod("setSharedObjectProperty", signature(
     x = "ANY",
-    property = "characterOrNULL",
+    property = "characterOrNULLOrMissing",
     value = "ANY"
 )
 , function(x, property, value, ...) {
     if (is.shared(x)) {
-        if (is.null(property)) {
+        if (missing(property)||is.null(property)){
             property <- names(dataInfoTemplate)
         }
         if(any(!property%in%names(dataInfoTemplate))){
@@ -119,9 +124,11 @@ setMethod("setSharedObjectProperty", signature(
     }
     invisible()
 })
+#' @rdname sharedObjectProperty
+#' @export
 setMethod("setSharedObjectProperty", signature(
     x = "list",
-    property = "characterOrNULL",
+    property = "characterOrNULLOrMissing",
     value = "ANY"
 )
 , function(x, property, value, ...) {

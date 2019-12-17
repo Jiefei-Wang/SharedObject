@@ -10,5 +10,13 @@ listSharedObject()
 A data.frame object with shared object id and size
 }
 \description{
-Get the shared object usage report
+Get the shared object usage report. The size is the real memory size
+that a system allocates for the shared object, so it might be larger
+than the object size. The size unit is byte.
+}
+\details{
+Since the records of shared objects created by the package are not located in
+the shared memory, this function finds all shared objects by searching possible IDs
+within a specific range. Therefore, if there are too many shared objects(over 4 billions)
+,the object id can be out of the searching range, so the result list may not be complete.
 }

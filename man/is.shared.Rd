@@ -26,3 +26,7 @@ to each element of the list.
 \description{
 Test whether the object is a shared object
 }
+\examples{
+x <- share(1:10)
+is.shared(x)
+}

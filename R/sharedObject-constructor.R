@@ -61,9 +61,9 @@ promptError <- function(x, ...){
 #' Create an R object in the shared memory
 #'
 #' This function will create an object in the shared memory for the function argument `x`
-#' and return a shared object. There is no duplication of the shared object when it is
-#' exported to the other processes. All the shared objects will use the data located in
-#' the same shared memory space.
+#' and return a shared object if the object can be shared. There is no duplication
+#' of the shared object when a shared object is exported to the other processes.
+#' `tryShare` is equivalent to `share` with argument `noError = TRUE`.
 #'
 #' @param x An R object that you want to shared. The supported data types are
 #' `raw`, `logical`, `integer` and `real`. The data structure can be `vector`,
@@ -74,9 +74,24 @@ promptError <- function(x, ...){
 #'
 #' @return A shared object
 #' @details
-#' When the function argument `x` is an atomic object(e.g vector, matrix),
+#'
+#' The function returns a shared object corresponding to the argument `x` if it
+#' is sharable. An error will be given if the argument `x` is not sharable. specifying
+#' `noError = TRUE` will suppress the error. This feature is useful when sharing a list
+#' object that consists of both sharable and non-sharable objects. Alternatively, `tryShare`
+#' function can be used. It is equivalent to the function `share` with the argument
+#' `noError = TRUE`.
+#'
+#' **Supported types**
+#'
+#' The function supports sharing `raw`,`logical` ,`integer`, `double` data types.
+#' When the argument `x` is an atomic object(e.g vector, matrix),
 #' the function will create an ALTREP object to replace it.
-#' When `x` is a data frame, each column of `x` will be replaced by an ALTREP object.
+#' When `x` is a list, each column of `x` will be replaced by an ALTREP object.
+#' The function `share` is an S4 generic, Package developers can
+#' add their classes to the supported classes by defining an S4 `share` function.
+#'
+#' **Behavior control**
 #'
 #' In the R level, the behaviors of an ALTREP object is exactly the same as an atomic object
 #' but the data of an ALTREP object is allocated in the shared memory space. Therefore an
@@ -94,7 +109,7 @@ promptError <- function(x, ...){
 #' `copyOnWrite` is `FALSE`, a shared object might not behaves as user expects.
 #' Please refer to the example code to see the exceptions.
 #'
-#' `sharedSubset`` determines whether the subset of a shared object is still a shared object.
+#' `sharedSubset` determines whether the subset of a shared object is still a shared object.
 #'  The default value is `TRUE`, and can be changed by passing `sharedSubset=FALSE`
 #'  to the function
 #'
@@ -108,7 +123,7 @@ promptError <- function(x, ...){
 #' for creating a shared object and lead to a serious performance problem. Therefore,
 #' the default value is `FALSE`, user can alter it by passing `sharedCopy=FALSE`
 #' to the function.
-#'alter
+#'
 #'
 #' @examples
 #' ## For vector
@@ -164,6 +179,7 @@ promptError <- function(x, ...){
 #' ## The reason is that the minus function trys to dulplicate so1 object,
 #' ## but the dulplicate function will return so1 itself, so the value in so1 also get changed.
 #'
+#' @rdname share
 #' @export
 setGeneric("share", function(x, ...) {
     standardGeneric("share")
@@ -181,5 +197,13 @@ setMethod("share", signature(x = "list"), function(x, ...) {
     copyAttribute(result,x)
     result
 })
+
+#' @rdname share
+#' @export
+tryShare <- function(x, ...){
+    options <- list(x = x, ...)
+    options["noError"] <- TRUE
+    do.call(share,options)
+}
 
 

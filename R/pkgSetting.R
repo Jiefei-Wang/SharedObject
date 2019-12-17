@@ -1,8 +1,7 @@
 #' @useDynLib SharedObject, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @importFrom stats runif
-#' @importFrom methods is new
-#' @importFrom xptr xptr_tag
+#' @importFrom methods is new as
 #' @import BiocGenerics
 NULL
 

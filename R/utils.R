@@ -1,4 +1,4 @@
-setClassUnion("characterOrNULL", c("character", "NULL"))
+setClassUnion("characterOrNULLOrMissing", c("character", "NULL","missing"))
 
 typeSize <- c(4, 4, 8, 1, 1)
 names(typeSize) <- c("logical", "integer", "double", "raw", "character")
@@ -35,11 +35,11 @@ copyAttribute <- function(target, source) {
 #' than the object size. The size unit is byte.
 #'
 #' @details
-#' Since the records of shared objects created by the package are not stored in
-#' a shared memory, the function finds all shared memory by searching possible IDs
-#' within a specific range. Therefore, the function may not be able to find
-#' all shared objects. However, If there are less than 4 billions shared object created,
-#' the returned result is complete.
+#' Since the records of shared objects created by the package are not located in
+#' the shared memory, this function finds all shared objects by searching possible IDs
+#' within a specific range. Therefore, if there are too many shared objects(over 4 billions)
+#' ,the object id can be out of the searching range, so the result list may not be complete.
+#'
 #'
 #' @return A data.frame object with shared object id and size
 #' @export
@@ -56,7 +56,14 @@ listSharedObject<-function(){
 
 
 
-
+#' Whether an object is an ALTREP object
+#'
+#' Whether an object is an ALTREP object
+#' @param x an R object
+#' @examples
+#' x <- share(runif(10))
+#' is.altrep(x)
+#' @export
 is.altrep <- function(x) {
     C_ALTREP(x)
 }

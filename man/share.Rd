@@ -6,9 +6,12 @@
 \alias{share,matrix-method}
 \alias{share,data.frame-method}
 \alias{share,list-method}
+\alias{tryShare}
 \title{Create an R object in the shared memory}
 \usage{
 share(x, ...)
+
+tryShare(x, ...)
 }
 \arguments{
 \item{x}{An R object that you want to shared. The supported data types are
@@ -22,14 +25,28 @@ A shared object
 }
 \description{
 This function will create an object in the shared memory for the function argument \code{x}
-and return a shared object. There is no duplication of the shared object when it is
-exported to the other processes. All the shared objects will use the data located in
-the same shared memory space.
+and return a shared object if the object can be shared. There is no duplication
+of the shared object when a shared object is exported to the other processes.
+\code{tryShare} is equivalent to \code{share} with argument \code{noError = TRUE}.
 }
 \details{
-When the function argument \code{x} is an atomic object(e.g vector, matrix),
+The function returns a shared object corresponding to the argument \code{x} if it
+is sharable. An error will be given if the argument \code{x} is not sharable. specifying
+\code{noError = TRUE} will suppress the error. This feature is useful when sharing a list
+object that consists of both sharable and non-sharable objects. Alternatively, \code{tryShare}
+function can be used. It is equivalent to the function \code{share} with the argument
+\code{noError = TRUE}.
+
+\strong{Supported types}
+
+The function supports sharing \code{raw},\code{logical} ,\code{integer}, \code{double} data types.
+When the argument \code{x} is an atomic object(e.g vector, matrix),
 the function will create an ALTREP object to replace it.
-When \code{x} is a data frame, each column of \code{x} will be replaced by an ALTREP object.
+When \code{x} is a list, each column of \code{x} will be replaced by an ALTREP object.
+The function \code{share} is an S4 generic, Package developers can
+add their classes to the supported classes by defining an S4 \code{share} function.
+
+\strong{Behavior control}
 
 In the R level, the behaviors of an ALTREP object is exactly the same as an atomic object
 but the data of an ALTREP object is allocated in the shared memory space. Therefore an
@@ -47,7 +64,8 @@ Please note that the no-copy-on-write feature is not fully supported by R. When
 \code{copyOnWrite} is \code{FALSE}, a shared object might not behaves as user expects.
 Please refer to the example code to see the exceptions.
 
-\code{sharedSubset`` determines whether the subset of a shared object is still a shared object. The default value is }TRUE\code{, and can be changed by passing }sharedSubset=FALSE`
+\code{sharedSubset} determines whether the subset of a shared object is still a shared object.
+The default value is \code{TRUE}, and can be changed by passing \code{sharedSubset=FALSE}
 to the function
 
 At the time this documentation is being written, The shared subset feature will
@@ -60,7 +78,6 @@ cannot be triggered. In current version (R 3.6), an object will be duplicated fo
 for creating a shared object and lead to a serious performance problem. Therefore,
 the default value is \code{FALSE}, user can alter it by passing \code{sharedCopy=FALSE}
 to the function.
-alter
 }
 \examples{
 ## For vector
