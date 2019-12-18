@@ -51,7 +51,6 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 			}
 		}
 		else {
-			Rprintf("return itself\n");
 			List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
 			newDataInfo[INFO_OWNDATA] = Rf_ScalarReal(false);
 			SEXP result = C_readSharedMemory(newDataInfo);

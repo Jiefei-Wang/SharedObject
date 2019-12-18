@@ -184,11 +184,20 @@ promptError <- function(x, ...){
 setGeneric("share", function(x, ...) {
     standardGeneric("share")
 })
-
+#' @rdname share
+#' @export
 setMethod("share", signature(x = "ANY"), promptError)
+#' @rdname share
+#' @export
 setMethod("share", signature(x = "character"), promptError)
+#' @rdname share
+#' @export
 setMethod("share", signature(x = "vector"), shareAtomic)
+#' @rdname share
+#' @export
 setMethod("share", signature(x = "matrix"), shareAtomic)
+#' @rdname share
+#' @export
 setMethod("share", signature(x = "list"), function(x, ...) {
     result <- vector("list", length = length(x))
     for (i in seq_along(result)) {
