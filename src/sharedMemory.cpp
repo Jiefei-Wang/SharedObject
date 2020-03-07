@@ -12,6 +12,7 @@
 #define OS_SHARED_OBJECT_PKG_SPACE ("shared_object_package_space"+OS_ADDRESS_SIZE).c_str()
 #endif //  WINDOWS_OS
 
+#include <Rcpp.h>
 #include <boost/interprocess/mapped_region.hpp>
 #include <map>
 #include "sharedMemory.h"
@@ -142,10 +143,13 @@ void allocateSharedMemory(const char* name, size_t size_in_byte) {
 	allocateSharedMemoryInternal(string(name), size_in_byte,sharedNamedMemoryList);
 }
 
+
+// Open the shared memory and return the data pointer
+// The memory must have been allocated!!
 template<class T1, class T2, class T3>
 static void* mapSharedMemoryInternal(const T1& id, T2& sharedMemoryList, T3& segmentList, bool isInitial = false) {
 	/*
-	initialSharedmemory will call mapSharedMemoryInternal
+	the function initialSharedmemory will call mapSharedMemoryInternal
 	so the argument isInitial is for preventing the infinite loop.
 	*/
 	if(!isInitial)
@@ -155,19 +159,21 @@ static void* mapSharedMemoryInternal(const T1& id, T2& sharedMemoryList, T3& seg
 			return segmentList[id]->get_address();
 		}
 
+		OS_shared_memory_object* shm;
 		mapped_region* region;
+
+		// Check if the segment has been opened
 		if (keyInMap(sharedMemoryList, id)) {
-			OS_shared_memory_object* shm = sharedMemoryList[id];
-			region = new mapped_region(*shm, read_write);
-			segmentList.insert(pair<T1, mapped_region*>(id, region));
+			shm = sharedMemoryList[id];
 		}
 		else {
 			string key = getDataMemoryKey(id);
-			OS_shared_memory_object* shm = new OS_shared_memory_object(open_only, key.c_str(), read_write);
-			region = new mapped_region(*shm, read_write);
+			shm = new OS_shared_memory_object(open_only, key.c_str(), read_write);
 			sharedMemoryList.insert(pair<T1, OS_shared_memory_object*>(id, shm));
-			segmentList.insert(pair<T1, mapped_region*>(id, region));
 		}
+
+		region = new mapped_region(*shm, read_write);
+		segmentList.insert(pair<T1, mapped_region*>(id, region));
 		return region->get_address();
 	}
 	catch (const std::exception& ex) {
@@ -183,6 +189,8 @@ void* mapSharedMemory(const char* name) {
 	return mapSharedMemoryInternal(string(name), sharedNamedMemoryList, namedSegmentList);
 }
 
+
+//Unmap the region, but not releasing the memory
 template<class T1, class T2>
 static void unmapSharedMemoryInternal(const T1& id, T2& segmentList) {
 	initialSharedmemory();
@@ -191,11 +199,7 @@ static void unmapSharedMemoryInternal(const T1& id, T2& segmentList) {
 		segmentList.erase(id);
 	}
 }
-#ifndef WINDOWS_OS
-static void unmapSharedMemory(const string name) {
-	unmapSharedMemoryInternal(name, namedSegmentList);
-}
-#endif
+
 void unmapSharedMemory(uint32_t id) {
 	unmapSharedMemoryInternal(id, segmentList);
 }
@@ -203,26 +207,55 @@ void unmapSharedMemory(const char* name) {
 	unmapSharedMemoryInternal(string(name), namedSegmentList);
 }
 
+void unmapSharedMemory(const string& name) {
+	unmapSharedMemoryInternal(name, namedSegmentList);
+}
+
+//remove the shared memory object from the record
+//but the data may be still in the shared memory
+template<class T1, class T2>
+bool closeSharedMemoryInternal(const T1& id, T2& sharedMemoryList) {
+	initialSharedmemory();
+	unmapSharedMemory(id);
+	try {
+		if (keyInMap(sharedMemoryList, id)) {
+			delete sharedMemoryList[id];
+			sharedMemoryList.erase(id);
+		}
+	}
+	catch (const std::exception& ex) {
+		Rf_warning("An error has occured in closing the shared memory object: %s", ex.what());
+		return false;
+	}
+	return true;
+}
+
+bool closeSharedMemory(uint32_t id) {
+	return closeSharedMemoryInternal(id, sharedMemoryList);
+}
+bool closeSharedMemory(const char* name) {
+	return closeSharedMemoryInternal(string(name), sharedNamedMemoryList);
+}
 
 
 
+// Close and destroy the shared memory
 template<class T1, class T2>
 bool freeSharedMemoryInternal(const T1& id, T2& sharedMemoryList) {
 	initialSharedmemory();
+	bool success = closeSharedMemoryInternal(id, sharedMemoryList);
+	if (!success) {
+		return success;
+	}
 #ifdef WINDOWS_OS
 	return true;
 #else
 	try {
 		string key = getDataMemoryKey(id);
-		unmapSharedMemory(id);
-		if (keyInMap(sharedMemoryList, id)) {
-			delete sharedMemoryList[id];
-			sharedMemoryList.erase(id);
-		}
 		return OS_shared_memory_object::remove(key.c_str());
 	}
 	catch (const std::exception& ex) {
-		Rf_warning("An error has occured in deallocating shared memory: %s", ex.what());
+		Rf_warning("An error has occured in removing the shared memory: %s", ex.what());
 		return false;
 	}
 #endif

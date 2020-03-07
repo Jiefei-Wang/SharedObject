@@ -1,8 +1,8 @@
-setClassUnion("characterOrNULLOrMissing", c("character", "NULL","missing"))
+setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 
 typeSize <- c(4, 4, 8, 1, 1)
-names(typeSize) <- c("logical", "integer", "double", "raw", "character")
-
+names(typeSize) <-
+    c("logical", "integer", "double", "raw", "character")
 
 ## the size of the type
 getTypeSize <- function(x) {
@@ -43,10 +43,10 @@ copyAttribute <- function(target, source) {
 #'
 #' @return A data.frame object with shared object id and size
 #' @export
-listSharedObject<-function(){
+listSharedObject <- function() {
     ids <- seq_len(getLastIndex())
-    usedId <- ids[vapply(ids,C_hasSharedMemory,logical(1))]
-    memorySize <- vapply(usedId,C_getSharedMemorySize,double(1))
+    usedId <- ids[vapply(ids, C_hasSharedMemory, logical(1))]
+    memorySize <- vapply(usedId, C_getSharedMemorySize, double(1))
     data.frame(Id = usedId, size = memorySize)
 }
 
@@ -63,11 +63,13 @@ listSharedObject<-function(){
 #' @examples
 #' x <- share(runif(10))
 #' is.altrep(x)
+#' @return
+#' A logical value
 #' @export
 is.altrep <- function(x) {
     C_ALTREP(x)
 }
-getLastIndex<-function(){
+getLastIndex <- function() {
     C_getLastIndex()
 }
 
@@ -88,4 +90,35 @@ setAltData1 <- function(x, value) {
 setAltData2 <- function(x, value) {
     return(C_setAltData2(x, value))
 }
+
+
+#' Find path of the shared memory header file
+#'
+#' This function will return the path of the shared memory header or
+#' the flags that are used to compile the package
+#' for the developers who want to use C++ level implementation of the
+#' `SharedObject` package
+#'
+#' @param x Character, "PKG_LIBS" or "PKG_CPPFLAGS"
+#' @return path to the header or compiler flags
+#' @example
+#' pkgconfig("PKG_LIBS")
+#' pkgconfig("PKG_CPPFLAGS")
+#' @export
+pkgconfig <- function(x){
+  space <- .Machine$sizeof.pointer
+  if(space==8){
+    folder <- "libs/x64"
+  }else{
+    folder <- "libs/i386"
+  }
+  if(x == "PKG_LIBS"){
+    system.file(folder,
+                package = "SharedObject", mustWork = TRUE)
+  }else{
+    ""
+  }
+}
+
+
 

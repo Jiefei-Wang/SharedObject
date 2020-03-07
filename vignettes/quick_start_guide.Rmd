@@ -23,10 +23,10 @@ knitr::opts_chunk$set(
 library("SharedObject")
 ```
 # Introduction
-The `SharedObject` package is designed for sharing data across multiple R processes, where all processes can read the data located in the same memory location. This sharing mechanism has the potential to save the memory usage and reduce the overhead of data transmission in the parallel computing. The use of the package arises from many data-science subjects such as high-throughput gene data analysis, in which case A paralle computing is desirable and the data is very large. Blindly calling an export function such as `clusterExport` will duplicate the data for each process and it is obviously unnecessary if the data is read-only in the parallel computing. The `sharedObject` package can share the data without duplications and is able to reduce the time cost. A new set of R APIs called `ALTREP` is used to provide a seamless experience when sharing an object.
+The `SharedObject` package is designed for sharing data across multiple R processes, where all processes can read the data located in the same memory location. This sharing mechanism has the potential to save the memory usage and reduce the overhead of data transmission in the parallel computing. The use of the package arises from many data-science subjects such as high-throughput gene data analysis, in which case a parallel computing is desirable and the data is very large. Blindly calling an export function such as `clusterExport` will duplicate the data for each process and it is obviously unnecessary if the data is just read-only. The `sharedObject` package can share the data without duplications and is able to reduce the time cost. A new set of R APIs called `ALTREP` is used to provide a seamless experience when sharing an object.
 
-#Quick example
-We first illustrate the package with an example. In the example, we create a cluster with 4 cores and share an n-by-n matrix `A`, we use the function `share` to create the shared object `A_shr` and call the function `clusterExport` to export it:
+# Quick example
+We first demonstrate the package with an example. In this example, we create a cluster with 4 cores and share an n-by-n matrix `A`, we use the function `share` to create the shared object `shared_A` and call the function `clusterExport` to export it:
 
 ```{r}
 library(parallel)
@@ -36,118 +36,158 @@ cl <- makeCluster(1)
 n <- 3
 A <- matrix(runif(n^2),n,n)
 ## create shared object
-A_shr <- share(A)
+shared_A <- share(A)
 ## export the shared object
-clusterExport(cl,"A_shr")
+clusterExport(cl,"shared_A")
 
 stopCluster(cl)
 ```
-As the code shows above, the procedure of sharing a shared object is similar to the procedure of sharing an R object, except that we replace the matrix `A` with a shared object `A_shr`. Notably, there is no different between the matrix `A` and the shared object `A_shr`. The shared object `A_shr` is neither an S3 nor S4 object and its behaviors are exactly the same as the matrix `A`, so there is no need to change the existing code to work with the shared object. We can verify this through
+As the code shows above, the procedure of exporting a shared object with the other R processes is similar to the procedure of exporting an R object, except that we replace the matrix `A` with a shared object `shared_A`. Notably, there is no different between the matrix `A` and the shared object `shared_A`. The shared object `shared_A` is neither an S3 nor S4 object and its behaviors are exactly the same as the matrix `A`, so there is no need to change the existing code to work with the shared object. We can verify this through
 ```{r}
 ## check the data
 A
-A_shr
+shared_A
 ## check the properties
 attributes(A)
-attributes(A_shr)
+attributes(shared_A)
 ## check the class
 class(A)
-class(A_shr)
+class(shared_A)
 ```
-Users can treate the shared object as a matrix and do operations on it as usual.
+Users can treate the shared object `shared_A` as a matrix and do operations on it as usual. For reducing the unnecessary creation of a shared object, the subset of a shared object is a regular R object. Users can verify this by calling `is.shared`
+```{r}
+## `shared_A` is a shared object
+is.shared(shared_A)
 
-#Supported data types and structures
+## The subset of `shared_A` is not
+is.shared(shared_A[1:2])
+```
+This behavior, however, can be altered via the argument `sharedSubset`. Therefore, if the shared object `shared_A` is made by `share(A, sharedSubset = TRUE)`, then all the subsets of the object `shared_A` will be shared objects automatically. 
 
-Currently, the package supports `raw`, `logical`, `integer` and `double` data types. `character` is not supported. The data structure `atomic`(aka `vector`), `matrix`, `data.frame` and `list` can be shared by the function `share`. The function `share` is an S4 generic, developers can define an S4 `share` function to support their data structures.
+# Supported data types and structures
+Currently, the package supports `raw`, `logical`, `integer` and `double` data types. `character` is not supported. Sharing the data structure `atomic`(aka `vector`), `matrix`, `data.frame` and `list` is also available. The function `share` is an S4 generic, developers can define an S4 `share` function to support their own data structures.
 
-Please note that sharing a list object will not sharing the list itself, but instead sharing each element of the list object. Therefore, adding or replace an element in a list will not implicitly share the element. Users should be aware of such operations. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle as sharing a list. 
+Please note that sharing a list object will not sharing the list itself, but sharing each element of the list object instead. Therefore, adding or replace an element on a shared list in the main process will not implicitly change the shared list on the other processes. Users should be cautious about it. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle as sharing a list. 
 
-#Check object class
+When a list consists of sharable and non-sharable objects, `noError` argument can be used in the `share` function to share the sharable elements and keep the non-sharable elements same. Alternatively, the function `tryShare` is a shortcut for `share(..., noError = TRUE)`
+```{r}
+## the element `a` is sharable and b is not
+mydata <- list(a = 1:3, b = letters[1:3])
+
+## expect error if we directly share the object
+tryCatch(share(mydata), error = function(e) print(e))
+
+## Use the `noError` argument to suppress the error message
+sharedList1 <- share(mydata, noError = TRUE)
+
+## Use the function `tryShare`
+## this is equivalent to `share(mydata, noError = TRUE)`
+sharedList2 <- tryShare(mydata)
+
+## Only the element `a` is a shared object
+is.shared(sharedList1)
+```
+
+
+# Check object class
 In order to distinguish a shared object, the package provide `is.shared` function to identify a shared object
 
 ```{r}
 ## Check if an object is a shared object
 ## This works for both vector and data.frame
 is.shared(A)
-is.shared(A_shr)
+is.shared(shared_A)
 ```
-For an atomic object, `is.shared` returns a logical value indicating whether the object is a shared object. For a list object, it returns a list of logical values with each element represent the corresponding element in the list object.
+For an atomic object, `is.shared` returns a logical value indicating whether the object is a shared object. For a list object, it returns a list of logical values with each element representing the corresponding element in the list object.
 
 There are several properties with the shared object, one can check them via
 ```{r}
 ## get a summary report
-getSharedObjectProperty(A_shr)
+getSharedObjectProperty(shared_A)
 
 ## Internal function to check the properties
 ## get the individual properties
-getCopyOnWrite(A_shr)
-getSharedSubset(A_shr)
-getSharedCopy(A_shr)
+getCopyOnWrite(shared_A)
+getSharedSubset(shared_A)
+getSharedCopy(shared_A)
 ```
-Please see the advanced topic in the next section to see which properties are changable and how to change them in a proper way.
+Please see the advanced topic to see which properties are changable and how to change them in a proper way.
 
+# Global options
+There are some options that can control the default behavior of a shared object, you can view them via
+```{r}
+getSharedObjectOptions()
+```
+As beforementioned, the option `sharedSubset` controls whether the subset of a shared object is still a shared object. The option `noError` suppress the error message when the function `share` encounter a non-sharable object and return the same object. We will talk about the options `copyOnWrite` and `sharedCopy` in the advanced section, but for most users these should not be changed. The global setting can be modified via `setSharedObjectOptions`
+```{r}
+## change the default setting
+setSharedObjectOptions(noError = TRUE)
+## Check if the change is made
+getSharedObjectOptions("noError")
+```
 
-#Advanced topic: Copy-On-Write
-
-Because all cores are using the shared object `A_shr` located in the same memory location, a reckless change made on the matrix `A_shr` in one process will immediately be broadcasted to the other process. To prevent users from changing the values of a shared object without awareness, a shared object will duplicate itself if a change of its value is made. Therefore, the code like
+# Advanced topic: Copy-On-Write
+Because all cores are using the shared object `shared_A` located in the same memory location, a reckless change made on the matrix `shared_A` on one process will immediately be broadcasted to the other process. To prevent users from changing the values of a shared object without awareness, a shared object will duplicate itself if a change of its value is made. Therefore, the code like
 
 ```{r}
-A_shr2=A_shr
-A_shr[1,1]=10
+shared_A2 <- shared_A
+shared_A[1,1] <- 10
 
-A_shr
-A_shr2
+shared_A
+shared_A2
 ```
-will result in a memory dulplication. The matrix `A_shr2` is not affected. This default behavior can be overwritten by passing an argument `copyOnWrite` to the function `share`. For example
+will result in a memory dulplication. The matrix `shared_A` is not affected. This default behavior can be overwritten by passing an argument `copyOnWrite` to the function `share`. For example
 
 ```{r}
-A_shr=share(A,copyOnWrite=FALSE)
-A_shr2=A_shr
-A_shr[1,1]=10
+shared_A <- share(A, copyOnWrite=FALSE)
+shared_A2 <- shared_A
+shared_A[1,1] <- 10
 
-A_shr
-A_shr2
+shared_A
+shared_A2
 ```
-A change in the matrix `A_shr` cause a change in `A_shr2`. This feature could be potentially useful to return the result from each R process without additional memory allocation, so `A_shr` can be both the initial data and the final result. However, due to the limitation of R, only copy-on-write feature is fully supported, not the reverse. it is possible to change the value of a shared object unexpectly.
+A change in the matrix `shared_A` cause a change in `shared_A2`. This feature could be potentially useful to return the result from each R process without additional memory allocation, so `shared_A` can be both the initial data and the final result. However, due to the limitation of R, it is possible to change the value of a shared object unexpectly. For example
 
 ```{r}
-A_shr=share(A,copyOnWrite=FALSE)
--A_shr
-A_shr
+shared_A <- share(A, copyOnWrite = FALSE)
+-shared_A
+shared_A
 ```
-The above example shows an unexpected result when the copy-on-write feature is off. Simply calling an unary function can change the values of a shared object. Therefore, for the safty of the naive user, the copy-on-write feature is active by default. For the experienced user, the the copy-on-write feature can be altered via `setCopyOnwrite` funtion. There is no return value for the function.
+The above example shows an unexpected result when the copy-on-write feature is off. Simply calling an unary function can change the values of a shared object. Therefore, for the safty of the naive user, the copy-on-write feature is active by default. For the sophisticated R user, the copy-on-write feature of an object can be altered via `setCopyOnwrite` funtion. The old value will be invisibly returned by the function.
 
 ```{r}
-A_shr=share(A, copyOnWrite=FALSE)
-#Assign A_shr to another object
-A_shr2=A_shr
-#change the value of A_shr
-A_shr[1,1]=10
-#Both A_shr and A_shr2 are affected
-A_shr
-A_shr2
-#Enable copy-on-write
-setCopyOnWrite(A_shr,TRUE)
-#The unary function does not affect the variable A_shr
--A_shr
-A_shr
+shared_A <- share(A, copyOnWrite = FALSE)
+## Assign shared_A to another object
+shared_A2 <- shared_A
+## change the value of shared_A
+shared_A[1,1] <- 10
+## Both shared_A and shared_A2 are affected
+shared_A
+shared_A2
+## Enable copy-on-write
+setCopyOnWrite(shared_A, TRUE)
+## shared_A is now independent with shared_A2
+shared_A[1,2] <- 10
+shared_A
+shared_A2
 
-getCopyOnWrite(A_shr)
+## shared_A became a regular R object
+is.shared(shared_A)
 ```
 These flexibilities provide us a way to do safe operations during the computation and return the results without memory duplications.
 
-##Warning
+## Warning
 If a high-precision value is assigned to a low-precision shared object, An implicit type conversion will be triggered for correctly storing the change. The resulting object would be a regular R object, not a shared object. Therefore, the change will not be broadcasted even if the copy-on-write feature is off. The most common senario is to assign a numeric value to an integer shared object. Users should be caution with the data type that a shared object is using.
 
-#Advanced topic: shared subset and shared copy
-The options `sharedSubset` controls whether to create a shared object when subsetting a shared object. `sharedCopy` determines if the duplication of a shared object is still a shared object. For performance consideration, the default settings are `sharedSubset=TRUE` and `sharedDuplicate=FALSE`, but they can be overwritten via:
+# Advanced topic: shared subset and shared copy
+The options `sharedSubset` controls whether to create a shared object when subsetting a shared object. `sharedCopy` determines if the duplication of a shared object is still a shared object. For performance consideration, the default settings are `sharedSubset =  FALSE` and `sharedDuplicate=FALSE`, but they can be temporary overwritten via:
 ```{r}
-A_shr=share(A,sharedSubset=FALSE,sharedCopy=TRUE)
-getSharedObjectProperty(A_shr)
+shared_A <- share(A, sharedSubset = TRUE, sharedCopy = TRUE)
+getSharedObjectProperty(shared_A)
 ```
-Please note that `sharedCopy` is only available when `copyOnWrite=TRUE`.
+Please note that `sharedCopy` is only available when `copyOnWrite = TRUE`.
 
-#Session Information
+# Session Information
 ```{r}
 sessionInfo()
 ```

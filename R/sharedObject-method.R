@@ -64,16 +64,17 @@ setGeneric("getSharedObjectProperty", function(x, property, ...) {
 setMethod("getSharedObjectProperty", signature(x = "ANY", property = "characterOrNULLOrMissing"),
           function(x, property, ...) {
               if (is.shared(x)) {
-                  if (missing(property)||is.null(property)){
+                  if (missing(property) || is.null(property)) {
                       property <- names(dataInfoTemplate)
                   }
                   info <- C_getAltData2(x)
-                      property <- property[property%in%names(dataInfoTemplate)]
-                      if(length(property)==1){
-                          return(info[[property]])
-                      }else{
-                          return(info[property])
-                      }
+                  property <-
+                      property[property %in% names(dataInfoTemplate)]
+                  if (length(property) == 1) {
+                      return(info[[property]])
+                  } else{
+                      return(info[property])
+                  }
               }
               NULL
           })
@@ -106,23 +107,28 @@ setMethod("setSharedObjectProperty", signature(
 )
 , function(x, property, value, ...) {
     if (is.shared(x)) {
-        if (missing(property)||is.null(property)){
+        if (missing(property) || is.null(property)) {
             property <- names(dataInfoTemplate)
         }
-        if(any(!property%in%names(dataInfoTemplate))){
+        if (any(!property %in% names(dataInfoTemplate))) {
             stop("The property '",
-                 paste0(property[!property%in%names(dataInfoTemplate)],collapse=", "),
-                 "' is not supported"
-                 )
+                 paste0(property[!property %in% names(dataInfoTemplate)], collapse =
+                            ", "),
+                 "' is not supported")
         }
         value <- rep_len(value, length(property))
         info <- C_getAltData2(x)
+        old_info <- info[property]
         for (i in seq_along(property)) {
-            info[[property[i]]] <- as(value[i],class(info[[property[i]]]))
+            info[[property[i]]] <- as(value[i], class(info[[property[i]]]))
         }
         setAltData2(x, info)
     }
-    invisible()
+    if(length(property)==1){
+        invisible(old_info[[1]])
+    }else{
+        invisible(old_info)
+    }
 })
 #' @rdname sharedObjectProperty
 #' @export

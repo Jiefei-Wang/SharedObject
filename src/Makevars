@@ -1,3 +1,13 @@
 CXX_STD=CXX11
 
 PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT
+
+.PHONY: all copy-header
+
+
+all: copy-header SharedObject.dll
+
+
+copy-header:
+	 rm -f "../inst/include/sharedMemory.h" && cp "sharedMemory.h" "../inst/include/"
+

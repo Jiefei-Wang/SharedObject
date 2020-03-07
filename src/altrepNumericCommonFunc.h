@@ -39,7 +39,7 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 		if (copyOnWrite) {
 			if (sharedCopy) {
 				List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
-				newDataInfo[INFO_OWNDATA] = Rf_ScalarReal(true);
+				newDataInfo[INFO_OWNDATA] = Rf_ScalarLogical(true);
 				SEXP result = C_createSharedMemory(x, wrap(newDataInfo));
 				return(result);
 			}
@@ -52,7 +52,7 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 		}
 		else {
 			List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
-			newDataInfo[INFO_OWNDATA] = Rf_ScalarReal(false);
+			newDataInfo[INFO_OWNDATA] = Rf_ScalarLogical(false);
 			SEXP result = C_readSharedMemory(newDataInfo);
 			return(result);
 		}
@@ -68,7 +68,7 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 SEXP sharedVector_serialized_state(SEXP x) {
 	DEBUG(Rprintf("serialize state\n"));
 	SEXP dataInfo = PROTECT(Rf_duplicate(ALT_DATAINFO(x)));
-	SET_SLOT(dataInfo, INFO_OWNDATA, Rf_ScalarReal(0));
+	SET_SLOT(dataInfo, INFO_OWNDATA, Rf_ScalarLogical(0));
 	UNPROTECT(1);
 	return(dataInfo);
 }
@@ -179,7 +179,7 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 
 			newDataInfo[INFO_LENGTH] = Rf_ScalarReal(Rf_xlength(indx));
 			newDataInfo[INFO_TOTALSIZE] = Rf_ScalarReal(Rf_xlength(indx) * sizeof(C_TYPE));
-			newDataInfo[INFO_OWNDATA] = Rf_ScalarReal(true);
+			newDataInfo[INFO_OWNDATA] = Rf_ScalarLogical(true);
 
 			subVector = PROTECT(C_createEmptySharedMemory(newDataInfo));
 		}

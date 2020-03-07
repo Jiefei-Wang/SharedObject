@@ -21,13 +21,12 @@ SEXP C_createEmptySharedMemory(List dataInfo) {
 	dataInfo[INFO_DATAID] = R_id;
 	//Map the shared memory to the current process
 	void* ptr = mapSharedMemory(id);
-	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, R_NilValue));
+	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, dataInfo[INFO_OWNDATA]));
+	R_RegisterCFinalizer(sharedExtPtr, ptrFinalizer);
 
 	//Create altrep
 	R_altrep_class_t alt_class = getAltClass(as<int>(dataInfo[INFO_DATATYPE]));
 	SEXP res = PROTECT(R_new_altrep(alt_class, sharedExtPtr, dataInfo));
-	if (as<bool>(dataInfo[INFO_OWNDATA]))
-		R_RegisterCFinalizer(sharedExtPtr, ptrFinalizer);
 	UNPROTECT(3);
 	return res;
 }
@@ -49,7 +48,13 @@ SEXP C_createSharedMemory(SEXP x, List dataInfo) {
 
 static void ptrFinalizer(SEXP extPtr) {
 	uint32_t id = as<uint32_t>(R_ExternalPtrTag(extPtr));
-	freeSharedMemory(id);
+	bool own_data = as<bool>(R_ExternalPtrProtected(extPtr));
+	if (own_data) {
+		freeSharedMemory(id);
+	}
+	else {
+		closeSharedMemory(id);
+	}
 	DEBUG(Rprintf("finalizing data\n"));
 	return;
 }
@@ -60,13 +65,12 @@ SEXP C_readSharedMemory(SEXP dataInfo) {
 	SEXP R_id = GET_SLOT(dataInfo,INFO_DATAID);
 	//Map the shared memory to the current process
 	void* ptr = mapSharedMemory(as<uint32_t>(R_id));
-	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, R_NilValue));
+	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, GET_SLOT(dataInfo, INFO_OWNDATA)));
+	R_RegisterCFinalizer(sharedExtPtr, ptrFinalizer);
 
 	//Create altrep
 	R_altrep_class_t alt_class = getAltClass(as<int>(GET_SLOT(dataInfo,INFO_DATATYPE)));
 	SEXP res = PROTECT(R_new_altrep(alt_class, sharedExtPtr, dataInfo));
-	if (as<bool>(GET_SLOT(dataInfo, INFO_OWNDATA)))
-		R_RegisterCFinalizer(sharedExtPtr, ptrFinalizer);
 	UNPROTECT(2);
 	return res;
 }

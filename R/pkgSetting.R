@@ -8,7 +8,7 @@ NULL
 
 globalSettings = new.env()
 globalSettings$copyOnWrite = TRUE
-globalSettings$sharedSubset = TRUE
+globalSettings$sharedSubset = FALSE
 globalSettings$sharedCopy = FALSE
 globalSettings$noError = FALSE
 
@@ -45,7 +45,7 @@ getSharedObjectOptions <- function(...) {
     options = c(...)
     if (length(options) == 0) {
         return(as.list(globalSettings))
-    }else{
+    } else{
         return(as.list(globalSettings)[options])
     }
 }

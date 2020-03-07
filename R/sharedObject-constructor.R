@@ -1,59 +1,11 @@
-dataInfoPropNames = c("dataId", "length", "totalSize", "dataType","ownData")
+#' @include sharedObject-internal.R
+NULL
+
+dataInfoPropNames = c("dataId", "length", "totalSize", "dataType", "ownData")
 sharedOptions = c("copyOnWrite", "sharedSubset", "sharedCopy")
 dataInfoNames = c(dataInfoPropNames, sharedOptions)
 dataInfoTemplate = as.list(rep(0, length(dataInfoNames)))
 names(dataInfoTemplate) = dataInfoNames
-
-#############################
-## Internal functions
-#############################
-
-## Fill the options with their default argument
-## if not specified
-completeOptions <- function(options) {
-    for (i in seq_along(sharedOptions)) {
-        name = sharedOptions[i]
-        if (is.null(options[[name]])) {
-            options[[name]] = globalSettings[[name]]
-        }
-    }
-    options
-}
-
-shareAtomic <- function(x, ...) {
-    options <- list(...)
-    options <- completeOptions(options)
-    #Construct dataInfo vector
-    dataInfo = dataInfoTemplate
-    dataInfo[["dataId"]] <- double(1)
-    dataInfo[["length"]] <- length(x)
-    dataInfo[["totalSize"]] <- calculateSharedMemorySize(x)
-    dataInfo[["dataType"]] <- 0
-    dataInfo[["ownData"]] <- TRUE
-
-    for (i in sharedOptions) {
-        dataInfo[i] <- options[[i]]
-    }
-
-    result <- C_createSharedMemory(x,dataInfo)
-    copyAttribute(result,x)
-    result
-}
-promptError <- function(x, ...){
-    options <- list(...)
-    if(!is.null(options$noError)){
-        if(options$noError)
-            return(x)
-    }else{
-        if(globalSettings$noError)
-            return(x)
-    }
-    stop("The object of type `", class(x),"' cannot be shared.\n",
-         "To suppress this error and return the same object, \n",
-         "provide `noError = TRUE` as a function argument\n",
-         "or change its default value in the package settings")
-}
-
 
 #############################
 ## constructor for a shared object
@@ -78,9 +30,9 @@ promptError <- function(x, ...){
 #' The function returns a shared object corresponding to the argument `x` if it
 #' is sharable. An error will be given if the argument `x` is not sharable. specifying
 #' `noError = TRUE` will suppress the error. This feature is useful when sharing a list
-#' object that consists of both sharable and non-sharable objects. Alternatively, `tryShare`
-#' function can be used. It is equivalent to the function `share` with the argument
-#' `noError = TRUE`.
+#' object that consists of both sharable and non-sharable objects. Alternatively,
+#' the `tryShare` function can be used and it is equivalent to the function
+#' `share` with the argument `noError = TRUE`.
 #'
 #' **Supported types**
 #'
@@ -88,8 +40,8 @@ promptError <- function(x, ...){
 #' When the argument `x` is an atomic object(e.g vector, matrix),
 #' the function will create an ALTREP object to replace it.
 #' When `x` is a list, each column of `x` will be replaced by an ALTREP object.
-#' The function `share` is an S4 generic, Package developers can
-#' add their classes to the supported classes by defining an S4 `share` function.
+#' The function `share` is an S4 generic, Package developers can provide their own
+#' shared object by defining an S4 `share` function.
 #'
 #' **Behavior control**
 #'
@@ -127,26 +79,26 @@ promptError <- function(x, ...){
 #'
 #' @examples
 #' ## For vector
-#' x = runif(10)
-#' so = share(x)
+#' x <- runif(10)
+#' so <- share(x)
 #' x
 #' so
 #'
 #' ## For matrix
-#' x = matrix(runif(10), 2, 5)
-#' so = share(x)
+#' x <- matrix(runif(10), 2, 5)
+#' so <- share(x)
 #' x
 #' so
 #'
 #' ## For data frame
-#' x = as.data.frame(matrix(runif(10), 2, 5))
-#' so = share(x)
+#' x <- as.data.frame(matrix(runif(10), 2, 5))
+#' so <- share(x)
 #' x
 #' so
 #'
 #' ## export the object
 #' library(parallel)
-#' cl = makeCluster(1)
+#' cl <- makeCluster(1)
 #' clusterExport(cl, "so")
 #' ## check the exported object in the other process
 #' clusterEvalQ(cl, so)
@@ -156,18 +108,18 @@ promptError <- function(x, ...){
 #'
 #' ## Copy-on-write
 #' ## This is the default setting
-#' x = runif(10)
-#' so1 = share(x, copyOnWrite = TRUE)
-#' so2 = so1
-#' so2[1] = 10
+#' x <- runif(10)
+#' so1 <- share(x, copyOnWrite = TRUE)
+#' so2 <- so1
+#' so2[1] <- 10
 #' ## so1 is unchanged since copy-on-write feature is on.
 #' so1
 #' so2
 #'
 #' ## No-copy-on-write
-#' so1 = share(x, copyOnWrite = FALSE)
-#' so2 = so1
-#' so2[1] = 10
+#' so1 <- share(x, copyOnWrite = FALSE)
+#' so2 <- so1
+#' so2[1] <- 10
 #' #so1 is changed
 #' so1
 #' so2
@@ -203,16 +155,19 @@ setMethod("share", signature(x = "list"), function(x, ...) {
     for (i in seq_along(result)) {
         result[[i]] <- share(x[[i]], ...)
     }
-    copyAttribute(result,x)
+    copyAttribute(result, x)
     result
 })
 
 #' @rdname share
 #' @export
-tryShare <- function(x, ...){
+tryShare <- function(x, ...) {
     options <- list(x = x, ...)
     options["noError"] <- TRUE
-    do.call(share,options)
+    do.call(share, options)
 }
+
+
+
 
 

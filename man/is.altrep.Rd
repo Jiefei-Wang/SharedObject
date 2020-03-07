@@ -9,6 +9,9 @@ is.altrep(x)
 \arguments{
 \item{x}{an R object}
 }
+\value{
+A logical value
+}
 \description{
 Whether an object is an ALTREP object
 }
