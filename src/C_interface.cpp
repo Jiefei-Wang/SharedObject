@@ -10,9 +10,14 @@
 using namespace Rcpp;
 using std::string;
 
+
+
+/*
+##########################################
+## Create shared objects
+##########################################
+*/
 static void ptrFinalizer(SEXP extPtr);
-
-
 SEXP C_createEmptySharedMemory(List dataInfo) {
 	uint64_t dataSize = as<uint64_t>(dataInfo[INFO_TOTALSIZE]);
 	//Allocate the shared memory
@@ -42,24 +47,6 @@ SEXP C_createSharedMemory(SEXP x, List dataInfo) {
 }
 
 
-
-
-
-
-static void ptrFinalizer(SEXP extPtr) {
-	uint32_t id = as<uint32_t>(R_ExternalPtrTag(extPtr));
-	bool own_data = as<bool>(R_ExternalPtrProtected(extPtr));
-	if (own_data) {
-		freeSharedMemory(id);
-	}
-	else {
-		closeSharedMemory(id);
-	}
-	DEBUG(Rprintf("finalizing data\n"));
-	return;
-}
-
-
 // [[Rcpp::export]]
 SEXP C_readSharedMemory(SEXP dataInfo) {
 	SEXP R_id = GET_SLOT(dataInfo,INFO_DATAID);
@@ -75,23 +62,24 @@ SEXP C_readSharedMemory(SEXP dataInfo) {
 	return res;
 }
 
-// [[Rcpp::export]]
-bool C_hasSharedMemory(uint32_t id) {
-	return hasSharedMemory(id);
+static void ptrFinalizer(SEXP extPtr) {
+	uint32_t id = as<uint32_t>(R_ExternalPtrTag(extPtr));
+	bool own_data = as<bool>(R_ExternalPtrProtected(extPtr));
+	if (own_data) {
+		freeSharedMemory(id);
+	}
+	else {
+		unmapSharedMemory(id);
+	}
+	DEBUG(Rprintf("finalizing data\n"));
+	return;
 }
 
-// [[Rcpp::export]]
-uint32_t C_getLastIndex() {
-	return getLastIndex();
-}
-// [[Rcpp::export]]
-double C_getSharedMemorySize(uint32_t id) {
-	return getSharedMemorySize(id);
-}
-
-
-
-
+/*
+##########################################
+## ALTREP related C API
+##########################################
+*/
 // [[Rcpp::export]]
 bool C_ALTREP(SEXP x) {
 	return ALTREP(x);
@@ -126,3 +114,63 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr) {
 }
 
 
+
+/*
+##########################################
+## Export sharedMemory function to R
+##########################################
+*/
+// [[Rcpp::export]]
+int32_t C_getLastIndex() {
+	return getLastIndex();
+}
+// [[Rcpp::export]]
+uint32_t C_allocateSharedMemory(size_t size_in_byte) {
+	return allocateSharedMemory(size_in_byte);
+}
+// [[Rcpp::export]]
+SEXP C_mapSharedMemory(uint32_t id) {
+	return R_MakeExternalPtr(mapSharedMemory(id), R_NilValue, R_NilValue);
+}
+// [[Rcpp::export]]
+bool C_unmapSharedMemory(uint32_t id) {
+	return unmapSharedMemory(id);
+}
+// [[Rcpp::export]]
+bool C_freeSharedMemory(uint32_t id) {
+	return freeSharedMemory(id);
+}
+// [[Rcpp::export]]
+bool C_hasSharedMemory(uint32_t id) {
+	return hasSharedMemory(id);
+}
+// [[Rcpp::export]]
+double C_getSharedMemorySize(uint32_t id) {
+	return getSharedMemorySize(id);
+}
+
+// [[Rcpp::export]]
+void C_allocateNamedSharedMemory(const char* name, size_t size_in_byte) {
+	allocateSharedMemory(name, size_in_byte);
+}
+// [[Rcpp::export]]
+SEXP C_mapNamedSharedMemory(const char* name) {
+	return R_MakeExternalPtr(mapSharedMemory(name), R_NilValue, R_NilValue);
+}
+// [[Rcpp::export]]
+bool C_unmapNamedSharedMemory(const char* name) {
+	return unmapSharedMemory(name);
+}
+// [[Rcpp::export]]
+bool C_freeNamedSharedMemory(const char* name) {
+	return freeSharedMemory(name);
+}
+// [[Rcpp::export]]
+bool C_hasNamedSharedMemory(const char* name) {
+	return hasSharedMemory(name);
+}
+
+// [[Rcpp::export]]
+double C_getNamedSharedMemorySize(const char* name) {
+	return getSharedMemorySize(name);
+}

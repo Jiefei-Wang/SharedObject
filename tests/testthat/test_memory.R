@@ -2,7 +2,7 @@ context("Shared vector memory burden test")
 gc()
 
 library(parallel)
-cl = makeCluster(16)
+cl = makeCluster(2)
 
 N <- 100
 n<- 1000

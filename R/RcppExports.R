@@ -9,18 +9,6 @@ C_readSharedMemory <- function(dataInfo) {
     .Call(`_SharedObject_C_readSharedMemory`, dataInfo)
 }
 
-C_hasSharedMemory <- function(id) {
-    .Call(`_SharedObject_C_hasSharedMemory`, id)
-}
-
-C_getLastIndex <- function() {
-    .Call(`_SharedObject_C_getLastIndex`)
-}
-
-C_getSharedMemorySize <- function(id) {
-    .Call(`_SharedObject_C_getSharedMemorySize`, id)
-}
-
 C_ALTREP <- function(x) {
     .Call(`_SharedObject_C_ALTREP`, x)
 }
@@ -43,5 +31,57 @@ C_setAltData2 <- function(x, data) {
 
 C_attachAttr <- function(R_source, R_tag, R_attr) {
     .Call(`_SharedObject_C_attachAttr`, R_source, R_tag, R_attr)
+}
+
+C_getLastIndex <- function() {
+    .Call(`_SharedObject_C_getLastIndex`)
+}
+
+C_allocateSharedMemory <- function(size_in_byte) {
+    .Call(`_SharedObject_C_allocateSharedMemory`, size_in_byte)
+}
+
+C_mapSharedMemory <- function(id) {
+    .Call(`_SharedObject_C_mapSharedMemory`, id)
+}
+
+C_unmapSharedMemory <- function(id) {
+    .Call(`_SharedObject_C_unmapSharedMemory`, id)
+}
+
+C_freeSharedMemory <- function(id) {
+    .Call(`_SharedObject_C_freeSharedMemory`, id)
+}
+
+C_hasSharedMemory <- function(id) {
+    .Call(`_SharedObject_C_hasSharedMemory`, id)
+}
+
+C_getSharedMemorySize <- function(id) {
+    .Call(`_SharedObject_C_getSharedMemorySize`, id)
+}
+
+C_allocateNamedSharedMemory <- function(name, size_in_byte) {
+    invisible(.Call(`_SharedObject_C_allocateNamedSharedMemory`, name, size_in_byte))
+}
+
+C_mapNamedSharedMemory <- function(name) {
+    .Call(`_SharedObject_C_mapNamedSharedMemory`, name)
+}
+
+C_unmapNamedSharedMemory <- function(name) {
+    .Call(`_SharedObject_C_unmapNamedSharedMemory`, name)
+}
+
+C_freeNamedSharedMemory <- function(name) {
+    .Call(`_SharedObject_C_freeNamedSharedMemory`, name)
+}
+
+C_hasNamedSharedMemory <- function(name) {
+    .Call(`_SharedObject_C_hasNamedSharedMemory`, name)
+}
+
+C_getNamedSharedMemorySize <- function(name) {
+    .Call(`_SharedObject_C_getNamedSharedMemorySize`, name)
 }
 

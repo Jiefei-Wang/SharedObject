@@ -192,31 +192,26 @@ void* mapSharedMemory(const char* name) {
 
 //Unmap the region, but not releasing the memory
 template<class T1, class T2>
-static void unmapSharedMemoryInternal(const T1& id, T2& segmentList) {
+static bool removeSegmentInternal(const T1& id, T2& segmentList) {
 	initialSharedmemory();
+	try {
 	if (keyInMap(segmentList, id)) {
 		delete segmentList[id];
 		segmentList.erase(id);
 	}
-}
-
-void unmapSharedMemory(uint32_t id) {
-	unmapSharedMemoryInternal(id, segmentList);
-}
-void unmapSharedMemory(const char* name) {
-	unmapSharedMemoryInternal(string(name), namedSegmentList);
-}
-
-void unmapSharedMemory(const string& name) {
-	unmapSharedMemoryInternal(name, namedSegmentList);
+	}
+	catch (const std::exception& ex) {
+		Rf_warning("An error has occured in closing the shared memory object: %s", ex.what());
+		return false;
+	}
+	return true;
 }
 
 //remove the shared memory object from the record
 //but the data may be still in the shared memory
 template<class T1, class T2>
-bool closeSharedMemoryInternal(const T1& id, T2& sharedMemoryList) {
+bool removeSharedMemoryInternal(const T1& id, T2& sharedMemoryList) {
 	initialSharedmemory();
-	unmapSharedMemory(id);
 	try {
 		if (keyInMap(sharedMemoryList, id)) {
 			delete sharedMemoryList[id];
@@ -230,20 +225,27 @@ bool closeSharedMemoryInternal(const T1& id, T2& sharedMemoryList) {
 	return true;
 }
 
-bool closeSharedMemory(uint32_t id) {
-	return closeSharedMemoryInternal(id, sharedMemoryList);
-}
-bool closeSharedMemory(const char* name) {
-	return closeSharedMemoryInternal(string(name), sharedNamedMemoryList);
+bool unmapSharedMemory(uint32_t id) {
+	bool result1 = removeSegmentInternal(id, segmentList);
+	bool result2 = removeSharedMemoryInternal(id, sharedMemoryList);
+	return result1 && result2;
 }
 
+bool unmapSharedMemory(const string& name) {
+	bool result1 = removeSegmentInternal(name, namedSegmentList);
+	bool result2 = removeSharedMemoryInternal(name, sharedNamedMemoryList);
+	return result1 && result2;
+}
+bool unmapSharedMemory(const char* name) {
+	return unmapSharedMemory(string(name));
+}
 
 
 // Close and destroy the shared memory
 template<class T1, class T2>
 bool freeSharedMemoryInternal(const T1& id, T2& sharedMemoryList) {
 	initialSharedmemory();
-	bool success = closeSharedMemoryInternal(id, sharedMemoryList);
+	bool success = unmapSharedMemory(id);
 	if (!success) {
 		return success;
 	}

@@ -49,6 +49,6 @@ promptError <- function(x, ...) {
         "' cannot be shared.\n",
         "To suppress this error and return the same object, \n",
         "provide `noError = TRUE` as a function argument\n",
-        "or change its default value in the package settings"
+        "or change its default value in the package settings\n"
     )
 }

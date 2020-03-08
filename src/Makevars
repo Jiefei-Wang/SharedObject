@@ -9,5 +9,6 @@ all: copy-header SharedObject.dll
 
 
 copy-header:
-	 rm -f "../inst/include/sharedMemory.h" && cp "sharedMemory.h" "../inst/include/"
+	 rm -f "../inst/include/SharedObject/sharedMemory.h" &&\
+	 cp "sharedMemory.h" "../inst/include/SharedObject/"
 

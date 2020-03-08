@@ -8,7 +8,9 @@
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
 	void (*inspect_subtree)(SEXP, int, int, int))
 {
-	Rprintf(" Share object of type %d\n", TYPEOF(x));
+	Rprintf(" (len=%llu, type=%d) shared object ID:%d\n", Rf_xlength(x),TYPEOF(x), 
+		Rcpp::as<int>(GET_ALT_SLOT(x, INFO_DATAID)));
+
 	return TRUE;
 }
 

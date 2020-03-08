@@ -18,3 +18,7 @@ the flags that are used to compile the package
 for the developers who want to use C++ level implementation of the
 \code{SharedObject} package
 }
+\examples{
+pkgconfig("PKG_LIBS")
+pkgconfig("PKG_CPPFLAGS")
+}

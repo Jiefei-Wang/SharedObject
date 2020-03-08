@@ -34,25 +34,36 @@ copyAttribute <- function(target, source) {
 #' that a system allocates for the shared object, so it might be larger
 #' than the object size. The size unit is byte.
 #'
+#' @param start the start of the ID, the default is `NULL`. see details.
+#' @param end the end of the ID, the default is `NULL`. see details.
+#'
 #' @details
 #' Since the records of shared objects created by the package are not located in
 #' the shared memory, this function finds all shared objects by searching possible IDs
 #' within a specific range. Therefore, if there are too many shared objects(over 4 billions)
 #' ,the object id can be out of the searching range, so the result list may not be complete.
 #'
+#' @examples
+#' ## Automatically determine the search range
+#' listSharedObject()
 #'
+#' ## specify the search range
+#' listSharedObject(start = 10, end = 20)
 #' @return A data.frame object with shared object id and size
 #' @export
-listSharedObject <- function() {
-    ids <- seq_len(getLastIndex())
+listSharedObject <- function(start = NULL, end = NULL) {
+    if(is.null(start))
+        start <- 0
+    if(is.null(end))
+        end <- getLastIndex()
+    if(end < start)
+        ids <- c()
+    else
+        ids <- seq_len(end - start + 1) + start - 1
     usedId <- ids[vapply(ids, C_hasSharedMemory, logical(1))]
     memorySize <- vapply(usedId, C_getSharedMemorySize, double(1))
     data.frame(Id = usedId, size = memorySize)
 }
-
-
-
-
 
 
 
@@ -101,23 +112,34 @@ setAltData2 <- function(x, value) {
 #'
 #' @param x Character, "PKG_LIBS" or "PKG_CPPFLAGS"
 #' @return path to the header or compiler flags
-#' @example
+#' @examples
 #' pkgconfig("PKG_LIBS")
 #' pkgconfig("PKG_CPPFLAGS")
 #' @export
 pkgconfig <- function(x){
-  space <- .Machine$sizeof.pointer
-  if(space==8){
-    folder <- "libs/x64"
-  }else{
-    folder <- "libs/i386"
-  }
-  if(x == "PKG_LIBS"){
-    system.file(folder,
-                package = "SharedObject", mustWork = TRUE)
-  }else{
-    ""
-  }
+    space <- .Machine$sizeof.pointer
+    if(space==8){
+        folder <- "libs/x64"
+    }else{
+        folder <- "libs/i386"
+    }
+    if(x == "PKG_LIBS"){
+        folder <- system.file(folder,
+                    package = "SharedObject", mustWork = TRUE)
+        files <- list.files(folder)
+        if(length(files)>1){
+            ind <- max(which(endsWith(files,".a")),0)
+            if(ind == 0){
+                ind <- max(which(endsWith(files,".dll")),0)
+                stopifnot(ind != 0)
+            }
+            files <- files[ind]
+        }
+        result <- paste0(folder,"/",files)
+    }else{
+        result <- ""
+    }
+    cat(result)
 }
 
 
