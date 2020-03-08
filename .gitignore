@@ -1,9 +1,6 @@
 Meta
 doc
-inst/doc
-inst/include
-inst/note
-inst/test
+
 src-i386/
 src-x64/
 .Rproj.user
