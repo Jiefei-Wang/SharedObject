@@ -43,7 +43,7 @@ stopCluster(cl)
 ```
 
 ## For package developers
-The package provide three levels of APIs to help the package developers to build their own shared memory object without worrying too much about the C++ implementation. Developers are refered to the package vignette to see details.
+The package provide three levels of APIs to help the package developers to build their own shared memory object without worrying too much about the C++ implementation. Developers are refered to the package vignette to see the details.
 
 
 
