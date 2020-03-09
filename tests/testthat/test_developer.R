@@ -29,6 +29,8 @@ test_that("Create memory by ID", {
     size <- 10
     id <- allocateSharedMemory(size)
     expect_true(is.numeric(id))
+    result <- hasSharedMemory(id)
+    expect_true(result)
     ptr <- mapSharedMemory(id)
     expect_true(is(ptr,"externalptr"))
     result <- getSharedMemorySize(id)
@@ -57,6 +59,8 @@ test_that("Create memory by name", {
     expect_true(noMemory)
     if(noMemory){
         allocateNamedSharedMemory(name,size)
+        result <- hasSharedMemory(name)
+        expect_true(result)
         ptr <- mapSharedMemory(name)
         expect_true(is(ptr,"externalptr"))
         result <- getSharedMemorySize(name)

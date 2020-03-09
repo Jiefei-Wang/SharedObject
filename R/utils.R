@@ -49,9 +49,12 @@ copyAttribute <- function(target, source) {
 #'
 #' ## specify the search range
 #' listSharedObject(start = 10, end = 20)
+#'
+#' ## Search from 0 to 20
+#' listSharedObject(20)
 #' @return A data.frame object with shared object id and size
 #' @export
-listSharedObject <- function(start = NULL, end = NULL) {
+listSharedObject <- function(end = NULL,start = NULL) {
     if(is.null(start))
         start <- 0
     if(is.null(end))
@@ -113,9 +116,8 @@ setAltData2 <- function(x, value) {
 #' @param x Character, "PKG_LIBS" or "PKG_CPPFLAGS"
 #' @return path to the header or compiler flags
 #' @examples
-#' pkgconfig("PKG_LIBS")
-#' pkgconfig("PKG_CPPFLAGS")
-#' @export
+#' SharedObject:::pkgconfig("PKG_LIBS")
+#' SharedObject:::pkgconfig("PKG_CPPFLAGS")
 pkgconfig <- function(x){
     space <- .Machine$sizeof.pointer
     if(space==8){

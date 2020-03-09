@@ -4,12 +4,12 @@
 \alias{listSharedObject}
 \title{Get the shared object usage report}
 \usage{
-listSharedObject(start = NULL, end = NULL)
+listSharedObject(end = NULL, start = NULL)
 }
 \arguments{
-\item{start}{the start of the ID, the default is \code{NULL}. see details.}
-
 \item{end}{the end of the ID, the default is \code{NULL}. see details.}
+
+\item{start}{the start of the ID, the default is \code{NULL}. see details.}
 }
 \value{
 A data.frame object with shared object id and size
@@ -31,4 +31,7 @@ listSharedObject()
 
 ## specify the search range
 listSharedObject(start = 10, end = 20)
+
+## Search from 0 to 20
+listSharedObject(20)
 }

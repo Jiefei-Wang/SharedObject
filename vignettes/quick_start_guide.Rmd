@@ -217,9 +217,9 @@ In C++ code files, include the header of the shared object `#include "SharedObje
 ### Step 3
 To compile and link your package successfully against the `SharedObject` C++ library, you must include a src/Makevars file.
 ```
-SHARED_OBJECT_LIBS = $(shell echo 'SharedObject::pkgconfig("PKG_LIBS")'|\
+SHARED_OBJECT_LIBS = $(shell echo 'SharedObject:::pkgconfig("PKG_LIBS")'|\
                      "${R_HOME}/bin/R" --vanilla --slave)
-SHARED_OBJECT_CPPFLAGS = $(shell echo 'SharedObject::pkgconfig("PKG_CPPFLAGS")'|\
+SHARED_OBJECT_CPPFLAGS = $(shell echo 'SharedObject:::pkgconfig("PKG_CPPFLAGS")'|\
                          "${R_HOME}/bin/R" --vanilla --slave)
 
 PKG_LIBS := $(PKG_LIBS) $(SHARED_OBJECT_LIBS)
