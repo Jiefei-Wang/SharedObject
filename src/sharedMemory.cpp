@@ -147,7 +147,7 @@ void allocateSharedMemory(const char* name, size_t size_in_byte) {
 // Open the shared memory and return the data pointer
 // The memory must have been allocated!!
 template<class T1, class T2, class T3>
-static void* mapSharedMemoryInternal(const T1& id, T2& sharedMemoryList, T3& segmentList, bool isInitial = false) {
+static void* mapSharedMemoryInternal(const T1& id, T2& sharedMemoryList, T3& segmentList, bool isInitial) {
 	/*
 	the function initialSharedmemory will call mapSharedMemoryInternal
 	so the argument isInitial is for preventing the infinite loop.

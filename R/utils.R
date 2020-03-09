@@ -119,9 +119,9 @@ setAltData2 <- function(x, value) {
 pkgconfig <- function(x){
     space <- .Machine$sizeof.pointer
     if(space==8){
-        folder <- "libs/x64"
+        folder <- "lib/x64"
     }else{
-        folder <- "libs/i386"
+        folder <- "lib/i386"
     }
     if(x == "PKG_LIBS"){
         folder <- system.file(folder,

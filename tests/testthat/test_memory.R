@@ -22,7 +22,8 @@ test_that("Testing small memory alloc/free", {
     }
 })
 
-
+## use 1GB + 1GB each time
+## If not shared, use 4GB in total each time
 N <- 10
 n<- round(10^9/8)
 test_that("Testing big memory alloc/free", {

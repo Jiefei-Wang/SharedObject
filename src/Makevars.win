@@ -6,7 +6,7 @@ MKDIR_P = mkdir -p
 
 lib_path = ../inst/lib/$(shell echo 'if(.Machine$$sizeof.pointer==8){cat("x64")}else{cat("i386")}'|\
                          "${R_HOME}/bin/R" --vanilla --slave)
-package_lib= SharedObject.so
+package_lib= SharedObject.dll
 
 
 .PHONY: all copy-header
