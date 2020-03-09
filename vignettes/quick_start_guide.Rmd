@@ -73,8 +73,8 @@ When a list consists of both sharable and non-sharable objects, `noError` argume
 ## the element `a` is sharable and b is not
 mydata <- list(a = 1:3, b = letters[1:3])
 
-## expect error if we directly share the object
-tryCatch(share(mydata), error = function(e) print(e))
+## Will get an error if we directly share the object
+## share(mydata)
 
 ## Use the `noError` argument to suppress the error message
 sharedList1 <- share(mydata, noError = TRUE)
