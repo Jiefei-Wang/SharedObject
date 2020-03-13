@@ -34,7 +34,7 @@ is.shared(so)
 .Internal(inspect(so))
 
 ## Export the shared object
-## Only the infomation of the shared object is exported.
+## Only the ID of the shared object is exported.
 library(parallel)
 cl <- makeCluster(1)
 clusterExport(cl, "so")
