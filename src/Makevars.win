@@ -4,27 +4,20 @@ PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT
 MKDIR_P = mkdir -p
 
 
-lib_path = ../inst/lib/$(shell echo 'if(.Machine$$sizeof.pointer==8){cat("x64")}else{cat("i386")}'|\
-                         "${R_HOME}/bin/R" --vanilla --slave)
 package_lib= SharedObject.dll
 
 
 .PHONY: all copy-header
 
 
-all: remove-file copy-header ${package_lib} copy-lib
+all: remove-file copy-header ${package_lib}
 
-remove-file: 
+remove-file:
 	 rm -f "../inst/include/SharedObject/sharedMemory.h" &&\
-	 rm -f "../inst/lib/${lib_path}/${package_lib}"&&\
 	 ${MKDIR_P} ../inst/include&&\
-	 ${MKDIR_P} ../inst/include/SharedObject&&\
-	 ${MKDIR_P} ../inst/lib&&\
-	 ${MKDIR_P} ${lib_path}
+	 ${MKDIR_P} ../inst/include/SharedObject
 
 
 copy-header:
 	 cp "sharedMemory.h" "../inst/include/SharedObject/"
 
-copy-lib:
-	 cp "${package_lib}" "${lib_path}"

@@ -121,16 +121,16 @@ setAltData2 <- function(x, value) {
 pkgconfig <- function(x){
     space <- .Machine$sizeof.pointer
     if(space==8){
-        folder <- "lib/x64"
+        folder <- "libs/x64"
     }else{
-        folder <- "lib/i386"
+        folder <- "libs/i386"
     }
     if(x == "PKG_LIBS"){
         folder <- system.file(folder,
                     package = "SharedObject", mustWork = TRUE)
         files <- list.files(folder)
         if(length(files)>1){
-            ind <- max(which(endsWith(files,".a")),0)
+            ind <- max(which(endsWith(files,".so")),0)
             if(ind == 0){
                 ind <- max(which(endsWith(files,".dll")),0)
                 stopifnot(ind != 0)
