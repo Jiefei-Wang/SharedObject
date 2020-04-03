@@ -113,3 +113,4 @@ test_that("Create memory by name without unmap", {
         expect_false(result)
     }
 })
+gc()

@@ -4,11 +4,12 @@ checkID <- function(x){
 }
 checkNumericID <- function(id){
     stopifnot(is.numeric(id))
-    stopifnot(length(id)==1)
+    assert(length(id)==1, "The id must be a length 1 vector")
 }
 checkNamedID <- function(name){
+    assert(is.na(suppressWarnings(as.numeric(name))), "The named id must not be a number")
     stopifnot(is.character(name))
-    stopifnot(length(name)==1)
+    assert(length(name)==1, "The named id must be a length 1 vector")
 }
 
 #' Functions to manipulate shared memory
@@ -20,7 +21,8 @@ checkNamedID <- function(name){
 #'
 #' @param name character(1), a single name that names the shared memory
 #' @param x integer(1) or character(1), an ID or a name that is used to find
-#' the shared memory.
+#' the shared memory. If x is a character with pure number, it will be
+#' treated as an ID.
 #' @param size numeric(1), the size of the shared memory that you want to allocate
 #'
 #' @details
@@ -78,6 +80,7 @@ checkNamedID <- function(name){
 #' `hasSharedMemory`: Logical value indicating whether the shared memory exist
 #'
 #' `getSharedMemorySize`: A numeric value
+#' @seealso \code{\link{listSharedObject}}
 #' @rdname developer-API
 #' @examples
 #' size <- 10L
@@ -122,6 +125,7 @@ allocateNamedSharedMemory <- function(name,size){
 #' @export
 mapSharedMemory <- function(x){
     checkID(x)
+    x <- tryChar2Int(x)
     if(is.numeric(x)){
         C_mapSharedMemory(x)
     }else{
@@ -132,6 +136,7 @@ mapSharedMemory <- function(x){
 #' @export
 unmapSharedMemory <- function(x){
     checkID(x)
+    x <- tryChar2Int(x)
     if(is.numeric(x)){
         C_unmapSharedMemory(x)
     }else{
@@ -142,6 +147,7 @@ unmapSharedMemory <- function(x){
 #' @export
 freeSharedMemory <- function(x){
     checkID(x)
+    x <- tryChar2Int(x)
     if(is.numeric(x)){
         C_freeSharedMemory(x)
     }else{
@@ -152,6 +158,7 @@ freeSharedMemory <- function(x){
 #' @export
 hasSharedMemory <- function(x){
     checkID(x)
+    x <- tryChar2Int(x)
     if(is.numeric(x)){
         C_hasSharedMemory(x)
     }else{
@@ -162,6 +169,7 @@ hasSharedMemory <- function(x){
 #' @export
 getSharedMemorySize <- function(x){
     checkID(x)
+    x <- tryChar2Int(x)
     if(is.numeric(x)){
         C_getSharedMemorySize(x)
     }else{

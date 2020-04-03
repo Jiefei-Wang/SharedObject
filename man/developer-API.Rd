@@ -33,7 +33,8 @@ getSharedMemorySize(x)
 \item{name}{character(1), a single name that names the shared memory}
 
 \item{x}{integer(1) or character(1), an ID or a name that is used to find
-the shared memory.}
+the shared memory. If x is a character with pure number, it will be
+treated as an ID.}
 }
 \value{
 \code{getLastIndex}: An interger ID served as a hint of the last created shared memory ID.
@@ -118,4 +119,7 @@ if(!hasSharedMemory(name)){
     freeSharedMemory(name)
     hasSharedMemory(name)
 }
+}
+\seealso{
+\code{\link{listSharedObject}}
 }
