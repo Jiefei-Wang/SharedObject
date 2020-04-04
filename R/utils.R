@@ -157,7 +157,11 @@ pkgconfig <- function(x){
     if(x == "PKG_LIBS"){
         folder <- system.file(folder,
                               package = "SharedObject", mustWork = FALSE)
-        files <- "Sharedobject.a"
+        if(folder == ""){
+            folder <- system.file("usrlib",
+                                  package = "SharedObject", mustWork = TRUE)
+        }
+        files <- "SharedObject.a"
         result <- paste0(folder,"/",files)
     }else{
         result <- ""

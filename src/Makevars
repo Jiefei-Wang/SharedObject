@@ -1,3 +1,6 @@
 package_lib= SharedObject.so
+MKDIR= mkdir
+RM=rm -f
+CP=cp
 
 include Makevars.common
