@@ -32,7 +32,7 @@ copyAttribute <- function(target, source) {
 #'
 #' Get the shared object usage report. The size is the real memory size
 #' that a system allocates for the shared object, so it might be larger
-#' than the object size. The size unit is byte. 
+#' than the object size. The size unit is byte.
 #'
 #' @param start the start value of the ID. The default is `NULL`. See details.
 #' @param end the end value of the ID. The default is `NULL`. See details.
@@ -42,11 +42,11 @@ copyAttribute <- function(target, source) {
 #' @details
 #' The parameter `start` and `end` specify the range of the ID. If not specified, all
 #' IDs will be listed.
-#' 
-#' On Ubuntu or many other Unix-like operating systems, the shared objects 
+#'
+#' On Ubuntu or many other Unix-like operating systems, the shared objects
 #' can be found in the folder `/dev/shm`. The function can find all shared objects
 #' if the folder exists.
-#' 
+#'
 #' On Windows, since there is no easy way to find all shared objects.
 #' the function will guess the range of the shared object IDs and search all IDs
 #' within the range. Therefore, if there are too many shared objects(over 4 billions)
@@ -62,8 +62,8 @@ copyAttribute <- function(target, source) {
 #'
 #' ## Search from 0 to 20
 #' listSharedObject(20)
-#' @seealso \code{\link{getLastIndex}}, \code{\link{allocateSharedMemory}}, 
-#' \code{\link{allocateNamedSharedMemory}}, \code{\link{mapSharedMemory}}, \code{\link{unmapSharedMemory}}, 
+#' @seealso \code{\link{getLastIndex}}, \code{\link{allocateSharedMemory}},
+#' \code{\link{allocateNamedSharedMemory}}, \code{\link{mapSharedMemory}}, \code{\link{unmapSharedMemory}},
 #' \code{\link{freeSharedMemory}}, \code{\link{hasSharedMemory}}, \code{\link{getSharedMemorySize}}
 #' @return A data.frame object with shared object id and size
 #' @export
@@ -150,27 +150,14 @@ getOSBit <- function(){
 #' SharedObject:::pkgconfig("PKG_CPPFLAGS")
 pkgconfig <- function(x){
     if(getOSBit() == 64){
-        folder <- "libs/x64"
+        folder <- "usrlib/x64"
     }else{
-        folder <- "libs/i386"
+        folder <- "usrlib/i386"
     }
     if(x == "PKG_LIBS"){
         folder <- system.file(folder,
                               package = "SharedObject", mustWork = FALSE)
-        ## Ubuntu will put its compiled library under the folder "libs/" 
-        if(folder == ""){
-            folder <- system.file("libs",
-                                  package = "SharedObject", mustWork = TRUE)
-        }
-        files <- list.files(folder)
-        if(length(files)>1){
-            ind <- max(which(endsWith(files,".so")),0)
-            if(ind == 0){
-                ind <- max(which(endsWith(files,".dll")),0)
-                stopifnot(ind != 0)
-            }
-            files <- files[ind]
-        }
+        files <- "Sharedobject.a"
         result <- paste0(folder,"/",files)
     }else{
         result <- ""
@@ -215,6 +202,6 @@ tryChar2Int <-function(x){
     if(is.charInteger(x)){
         x <- as.numeric(x)
     }
-    x 
+    x
 }
 

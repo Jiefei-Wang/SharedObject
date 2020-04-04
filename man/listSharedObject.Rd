@@ -4,14 +4,15 @@
 \alias{listSharedObject}
 \title{Get the shared object usage report}
 \usage{
-listSharedObject(end = NULL, start = NULL, includeCharId = TRUE)
+listSharedObject(end = NULL, start = NULL, includeCharId = FALSE)
 }
 \arguments{
-\item{end}{the end value of the ID, the default is \code{NULL}. See details.}
+\item{end}{the end value of the ID. The default is \code{NULL}. See details.}
 
-\item{start}{the start value of the ID, the default is \code{NULL}. See details.}
+\item{start}{the start value of the ID. The default is \code{NULL}. See details.}
 
-\item{includeCharId}{Whether the character ID should also be listed, the default is \code{TRUE}}
+\item{includeCharId}{Whether including the shared objects named by a character ID, it only works
+on Unix-like systems. See \code{?allocateNamedSharedMemory} for more information. The default is \code{FALSE}.}
 }
 \value{
 A data.frame object with shared object id and size
@@ -25,11 +26,15 @@ than the object size. The size unit is byte.
 The parameter \code{start} and \code{end} specify the range of the ID. If not specified, all
 IDs will be listed.
 
-On Ubuntu, the shared objects can be found in the folder \verb{/dev/shm}. On Windows,
-since the package does not keep track of the shared objects it creates,
-the function needs to guess the range of the shared object IDs and search all IDs
+On Ubuntu or many other Unix-like operating systems, the shared objects
+can be found in the folder \verb{/dev/shm}. The function can find all shared objects
+if the folder exists.
+
+On Windows, since there is no easy way to find all shared objects.
+the function will guess the range of the shared object IDs and search all IDs
 within the range. Therefore, if there are too many shared objects(over 4 billions)
 ,the object id can be out of the searching range and the result may not be complete.
+Furthermore, there will be no named shared object in the returned list.
 }
 \examples{
 ## Automatically determine the search range

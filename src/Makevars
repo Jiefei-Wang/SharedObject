@@ -1,23 +1,3 @@
-CXX_STD=CXX11
-
-PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT
-MKDIR_P = mkdir -p
-
-
 package_lib= SharedObject.so
 
-
-.PHONY: all copy-header
-
-
-all: remove-file copy-header ${package_lib}
-
-remove-file:
-	 rm -f "../inst/include/SharedObject/sharedMemory.h" &&\
-	 ${MKDIR_P} ../inst/include&&\
-	 ${MKDIR_P} ../inst/include/SharedObject
-
-
-copy-header:
-	 cp "sharedMemory.h" "../inst/include/SharedObject/"
-
+include Makevars.common
