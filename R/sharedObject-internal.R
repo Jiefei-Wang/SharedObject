@@ -27,7 +27,7 @@ shareAtomic <- function(x, ...) {
     
     sharableMemory <- getSharableMemoryInfo()
     
-    if(FALSE&&sharableMemory$available < dataInfo[["totalSize"]]){
+    if(sharableMemory$available < dataInfo[["totalSize"]]){
         stop("Unable to allocate shared memory, insufficient sharable memory size:\n",
              "Required: ",dataInfo[["totalSize"]], "  Available: ",sharableMemory$available)
     }
