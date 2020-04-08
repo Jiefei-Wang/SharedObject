@@ -26,7 +26,7 @@ test_that("Testing small memory alloc/free", {
 ## If not shared, use 4GB in total each time
 N <- 10
 sharableMemory <- getSharableMemoryInfo()
-n <- min(round(10^9/8), round(sharableMemory$available/2))
+n <- min(round(10^9/8), round(sharableMemory$available/2/8))
 test_that("Testing big memory alloc/free", {
     mydata <- runif(n)
     for(i in seq_len(N)){
