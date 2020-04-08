@@ -173,8 +173,21 @@ static void* mapSharedMemoryInternal(const T1& id, T2& sharedMemoryList, T3& seg
 		}
 
 		region = new mapped_region(*shm, read_write);
+		size_t dataSize = region-> get_size();
+		void* ptr = region->get_address();
+		//Test the shared memory
+		//If there is any problem, I hope to catch them before it go further
+		try{
+		  if(dataSize>=sizeof(bool)){
+		    bool test;
+		    memcpy(&test, (char*)ptr + dataSize - sizeof(bool), sizeof(bool));
+		  }
+		}catch (const std::exception& ex) {
+		  Rf_error("An error has occured in reading shared memory: %s", ex.what());
+		}
+		
 		segmentList.insert(pair<T1, mapped_region*>(id, region));
-		return region->get_address();
+		return ptr;
 	}
 	catch (const std::exception& ex) {
 		Rf_warning("An error has occured in mapping shared memory: %s", ex.what());
