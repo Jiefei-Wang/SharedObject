@@ -197,7 +197,7 @@ getSharableMemoryInfo <- function(){
         used <- as.numeric(res[3])
         available <- as.numeric(res[4])
     }else{
-        available <- .Machine$double.xmax
+        available <- Inf
         used <- 0
     }
     list(used = used, available = available)
