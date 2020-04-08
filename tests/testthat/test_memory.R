@@ -25,7 +25,7 @@ test_that("Testing small memory alloc/free", {
 ## use 1GB + 1GB each time
 ## If not shared, use 4GB in total each time
 N <- 10
-sharableMemory <- getSharableMemoryInfo()
+sharableMemory <- SharedObject:::getSharableMemoryInfo()
 n <- min(round(10^9/8), round(sharableMemory$available/2/8))
 test_that("Testing big memory alloc/free", {
     mydata <- runif(n)
@@ -33,11 +33,14 @@ test_that("Testing big memory alloc/free", {
         so = share(mydata)
         clusterExport(cl, "so", envir = environment())
         res = clusterEvalQ(cl, {
-            gc()
             so[1:10]
         })
         expect_equal(mydata[1:10], res[[1]][1:10])
         rm(list="so")
+        clusterEvalQ(cl,{
+            rm(list="so")
+            gc()
+        })
         gc()
     }
 })
