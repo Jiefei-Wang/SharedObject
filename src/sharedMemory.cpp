@@ -111,15 +111,17 @@ bool hasSharedMemory(uint32_t id)
 {
     return hasSharedMemoryInternal(getDataMemoryKey(id).c_str());
 }
+//These are for testing the shared memory on Linux system
 #ifndef WINDOWS_OS
 #include <csignal>
 jmp_buf reset;
-
 void termination_handler(int signum)
 {
     longjmp(reset, 1);
 }
+bool freeSharedMemory(const string& name);
 #endif
+
 template<class T1, class T2>
 void allocateSharedMemoryInternal(const T1& id, size_t size_in_byte, T2& sharedMemoryList) {
     boost::interprocess::permissions perm;
@@ -134,23 +136,23 @@ void allocateSharedMemoryInternal(const T1& id, size_t size_in_byte, T2& sharedM
 
         //Test the shared memory
         //If there is any problem, I hope to catch them before it go further
-        Rprintf("Testing allocation:%llu\n",size_in_byte);
+        DEBUG(Rprintf("Testing allocation:%llu\n",size_in_byte));
         mapped_region* region = new mapped_region(*shm, read_write);
         void* ptr = region->get_address();
 
         if (setjmp(reset) != 0)
         {
-            Rf_error("An error has occured in testing shared memory, your shared memory space might be insufficient");
+            freeSharedMemory(id);
+            Rf_error("An error has occured in allocating shared memory, your shared memory space might be insufficient");
         }else{
             sighandler_t old = std::signal(SIGBUS, termination_handler);
-            memset(ptr, 0, 1);
+            memset(ptr, 0, size_in_byte);
             if(old!=SIG_ERR){
                 std::signal(SIGBUS, old);
             }
         }
 
         delete region;
-        Rprintf("Done\n");
 #endif
         sharedMemoryList.insert(pair<T1, OS_shared_memory_object*>(id, shm));
     }
@@ -295,8 +297,11 @@ bool freeSharedMemoryInternal(const T1& id, T2& sharedMemoryList) {
 bool freeSharedMemory(uint32_t id) {
     return freeSharedMemoryInternal(id, sharedMemoryList);
 }
+bool freeSharedMemory(const string& name) {
+    return freeSharedMemoryInternal(name, sharedNamedMemoryList);
+}
 bool freeSharedMemory(const char* name) {
-    return freeSharedMemoryInternal(string(name), sharedNamedMemoryList);
+    return freeSharedMemory(string(name));
 }
 
 
