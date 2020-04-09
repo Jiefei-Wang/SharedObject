@@ -145,11 +145,11 @@ void allocateSharedMemoryInternal(const T1& id, size_t size_in_byte, T2& sharedM
             freeSharedMemory(id);
             Rf_error("An error has occured in allocating shared memory, your shared memory space might be insufficient");
         }else{
-            sighandler_t old = std::signal(SIGBUS, termination_handler);
+            //sighandler_t old = std::signal(SIGBUS, termination_handler);
             memset(ptr, 0, size_in_byte);
-            if(old!=SIG_ERR){
-                std::signal(SIGBUS, old);
-            }
+            //if(old!=SIG_ERR){
+            //    std::signal(SIGBUS, old);
+            //}
         }
 
         delete region;
