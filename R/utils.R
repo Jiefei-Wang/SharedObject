@@ -68,7 +68,7 @@ copyAttribute <- function(target, source) {
 #' @return A data.frame object with shared object id and size
 #' @export
 listSharedObject <- function(end = NULL,start = NULL, includeCharId = FALSE) {
-    if(.Platform$OS.type=="unix" & file.exists("/dev/shm")){
+    if(file.exists("/dev/shm")){
         num_name <- paste0(getOSBit(),"_num")
         char_name <- paste0(getOSBit(),"_char")
         all_ids <- getSharedFiles(showInternal = FALSE)
@@ -80,14 +80,14 @@ listSharedObject <- function(end = NULL,start = NULL, includeCharId = FALSE) {
         if(includeCharId)
             usedId <- c(usedId, all_ids[[char_name]])
     }else{
-        if(is.null(start))
-            start <- 0
-        if(is.null(end))
-            end <- getLastIndex()
-        if(end < start)
-            ids <- c()
-        else
-            ids <- seq_len(end - start + 1) + start - 1
+    if(is.null(start))
+        start <- 0
+    if(is.null(end))
+        end <- getLastIndex()
+    if(end < start)
+        ids <- c()
+    else
+        ids <- seq_len(end - start + 1) + start - 1
         usedId <- ids[vapply(ids, hasSharedMemory, logical(1))]
     }
     memorySize <- vapply(usedId, getSharedMemorySize, double(1))
@@ -189,21 +189,6 @@ getSharedFiles <- function(showInternal = FALSE){
     }
     res
 }
-## Get the mount info for the POSIX shared folder
-getSharableMemoryInfo <- function(){
-    if(.Platform$OS.type=="unix" & Sys.which("df")!=""){
-        res <- system2(command = "df",args = " -P -l --block-size=1 /dev/shm", stdout=TRUE)
-        res <- strsplit(res[2]," +")[[1]]
-        used <- as.numeric(res[3])
-        available <- as.numeric(res[4])
-    }else{
-        available <- Inf
-        used <- 0
-    }
-    list(used = used, available = available)
-}
-
-
 
 ## Alternative to stopifnot
 assert <- function(expr, error){
