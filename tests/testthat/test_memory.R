@@ -36,10 +36,14 @@ test_that("Testing big memory alloc/free", {
             so[1:10]
         })
         expect_equal(mydata[1:10], res[[1]][1:10])
+        rm(list="so")
+        res = clusterEvalQ(cl, {
+            rm(list="so")
+            gc()
+        })
         gc()
     }
 })
-
 
 stopCluster(cl)
 gc()
