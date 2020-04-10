@@ -22,10 +22,10 @@ test_that("Testing small memory alloc/free", {
     }
 })
 
-## use 1GB + 1GB each time
-## If not shared, use 4GB in total each time
+## use 0.5GB + 0.5GB each time
+## If not shared, use 1.5GB in total each time
 N <- 10
-n<- round(10^9/8)
+n<- round(512*1024*1024/8)
 test_that("Testing big memory alloc/free", {
     mydata <- runif(n)
     for(i in seq_len(N)){
@@ -36,11 +36,11 @@ test_that("Testing big memory alloc/free", {
             so[1:10]
         })
         expect_equal(mydata[1:10], res[[1]][1:10])
-        rm(list="so")
         res = clusterEvalQ(cl, {
             rm(list="so")
             gc()
         })
+        rm(list="so")
         gc()
     }
 })
