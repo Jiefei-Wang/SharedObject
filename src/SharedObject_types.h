@@ -1,9 +1,8 @@
 #include <string>
 using std::string;
-
+/*
 #include <RcppCommon.h>
-struct Bar;
-// third party library that declares class Bar
+
 // declaring the specialization
 namespace Rcpp {
 	template <> const char* as(SEXP x) {
@@ -19,3 +18,5 @@ namespace Rcpp {
 }
 // this must appear after the specialization,
 // otherwise the specialization will not be seen by Rcpp types
+#include <Rcpp.h>
+*/

@@ -174,67 +174,67 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_allocateNamedSharedMemory
-void C_allocateNamedSharedMemory(const char* name, size_t size_in_byte);
+void C_allocateNamedSharedMemory(const string name, size_t size_in_byte);
 RcppExport SEXP _SharedObject_C_allocateNamedSharedMemory(SEXP nameSEXP, SEXP size_in_byteSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const char* >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< const string >::type name(nameSEXP);
     Rcpp::traits::input_parameter< size_t >::type size_in_byte(size_in_byteSEXP);
     C_allocateNamedSharedMemory(name, size_in_byte);
     return R_NilValue;
 END_RCPP
 }
 // C_mapNamedSharedMemory
-SEXP C_mapNamedSharedMemory(const char* name);
+SEXP C_mapNamedSharedMemory(const string name);
 RcppExport SEXP _SharedObject_C_mapNamedSharedMemory(SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const char* >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< const string >::type name(nameSEXP);
     rcpp_result_gen = Rcpp::wrap(C_mapNamedSharedMemory(name));
     return rcpp_result_gen;
 END_RCPP
 }
 // C_unmapNamedSharedMemory
-bool C_unmapNamedSharedMemory(const char* name);
+bool C_unmapNamedSharedMemory(const string name);
 RcppExport SEXP _SharedObject_C_unmapNamedSharedMemory(SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const char* >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< const string >::type name(nameSEXP);
     rcpp_result_gen = Rcpp::wrap(C_unmapNamedSharedMemory(name));
     return rcpp_result_gen;
 END_RCPP
 }
 // C_freeNamedSharedMemory
-bool C_freeNamedSharedMemory(const char* name);
+bool C_freeNamedSharedMemory(const string name);
 RcppExport SEXP _SharedObject_C_freeNamedSharedMemory(SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const char* >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< const string >::type name(nameSEXP);
     rcpp_result_gen = Rcpp::wrap(C_freeNamedSharedMemory(name));
     return rcpp_result_gen;
 END_RCPP
 }
 // C_hasNamedSharedMemory
-bool C_hasNamedSharedMemory(const char* name);
+bool C_hasNamedSharedMemory(const string name);
 RcppExport SEXP _SharedObject_C_hasNamedSharedMemory(SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const char* >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< const string >::type name(nameSEXP);
     rcpp_result_gen = Rcpp::wrap(C_hasNamedSharedMemory(name));
     return rcpp_result_gen;
 END_RCPP
 }
 // C_getNamedSharedMemorySize
-double C_getNamedSharedMemorySize(const char* name);
+double C_getNamedSharedMemorySize(const string name);
 RcppExport SEXP _SharedObject_C_getNamedSharedMemorySize(SEXP nameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const char* >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< const string >::type name(nameSEXP);
     rcpp_result_gen = Rcpp::wrap(C_getNamedSharedMemorySize(name));
     return rcpp_result_gen;
 END_RCPP
