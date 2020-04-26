@@ -22,10 +22,10 @@ test_that("Testing small memory alloc/free", {
     }
 })
 
-## use 0.5GB + 0.5GB each time
-## If not shared, use 1.5GB in total each time
+## use 128MB + 128MB each time
+## If not shared, use 4*128MB in total each time
 N <- 10
-n<- round(512*1024*1024/8)
+n<- round(128*1024*1024/8)
 test_that("Testing big memory alloc/free", {
     mydata <- runif(n)
     for(i in seq_len(N)){
