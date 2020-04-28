@@ -28,6 +28,9 @@ static std::map<uint32_t, OS_shared_memory_object *> sharedMemoryList;
 static std::map<string, OS_shared_memory_object *> sharedNamedMemoryList;
 static std::map<uint32_t, mapped_region *> segmentList;
 static std::map<string, mapped_region *> namedSegmentList;
+static std::map<uint32_t, uint32_t> segmentObjectCount;
+static std::map<string, uint32_t> namedSegmentObjectCount;
+
 static uint32_t *last_id = nullptr;
 
 template <class T1, class T2>
@@ -123,8 +126,8 @@ bool hasSharedMemory(uint32_t id)
 #include <signal.h>
 #include <setjmp.h>
 static jmp_buf reset;
-void (*old_handle)(int);
-void termination_handler(int signum)
+static void (*old_handle)(int);
+static void termination_handler(int signum)
 {
 	longjmp(reset, 1);
 }
@@ -136,12 +139,17 @@ void allocateSharedMemoryInternal(const T1 &id, size_t size_in_byte, T2 &sharedM
 	boost::interprocess::permissions perm;
 	perm.set_unrestricted();
 	string key = getDataMemoryKey(id);
+
+	bool allocSharedObject = false;
+	OS_shared_memory_object *shm;
 	try
 	{
 #ifdef WINDOWS_OS
-		windows_shared_memory *shm = new windows_shared_memory(create_only, key.c_str(), read_write, size_in_byte, perm);
+		shm = new windows_shared_memory(create_only, key.c_str(), read_write, size_in_byte, perm);
+		allocSharedObject = true;
 #else
-		shared_memory_object *shm = new shared_memory_object(create_only, key.c_str(), read_write, perm);
+		shm = new shared_memory_object(create_only, key.c_str(), read_write, perm);
+		allocSharedObject = true;
 		shm->truncate(size_in_byte);
 		/*Checking the memory status on Linux
 		If the shared memory is not allocated successfully,
@@ -167,12 +175,19 @@ void allocateSharedMemoryInternal(const T1 &id, size_t size_in_byte, T2 &sharedM
 			}
 		}
 #endif
-		sharedMemoryList.insert(pair<T1, OS_shared_memory_object *>(id, shm));
 	}
 	catch (const std::exception &ex)
 	{
+		if (allocSharedObject)
+		{
+#ifndef WINDOWS_OS
+			shared_memory_object::remove(key.c_str());
+#endif
+			delete shm;
+		}
 		Rf_error("An error has occured in allocating shared memory: %s", ex.what());
 	}
+	sharedMemoryList.insert(pair<T1, OS_shared_memory_object *>(id, shm));
 }
 
 uint32_t allocateSharedMemory(size_t size_in_byte)
@@ -188,6 +203,78 @@ void allocateSharedMemory(const char *name, size_t size_in_byte)
 	allocateSharedMemoryInternal(string(name), size_in_byte, sharedNamedMemoryList);
 }
 
+template <class T1, class T2>
+static uint32_t getObjectCountInternal(const T1 &id, T2 &objectCountList)
+{
+	if (!keyInMap(objectCountList, id))
+	{
+		return 0;
+	}
+	else
+	{
+		return objectCountList[id];
+	}
+}
+static uint32_t getObjectCount(const string &id)
+{
+	return getObjectCountInternal(id, namedSegmentObjectCount);
+}
+static uint32_t getObjectCount(const uint32_t &id)
+{
+	return getObjectCountInternal(id, segmentObjectCount);
+}
+template <class T1, class T2>
+static void changeObjectCount(const T1 &id, T2 &objectCountList, int offset)
+{
+	if (!keyInMap(objectCountList, id))
+	{
+		if (offset < 0)
+		{
+			Rf_error("The object count is less than 0");
+		}
+		objectCountList.insert(pair<T1, uint32_t>(id, offset));
+	}
+	else
+	{
+		objectCountList[id] = objectCountList[id] + offset;
+		if (objectCountList[id] == 0)
+		{
+			objectCountList.erase(id);
+		}
+	}
+}
+static void increaseObjectCount(const string &id)
+{
+	changeObjectCount(id, namedSegmentObjectCount, 1);
+}
+static void increaseObjectCount(const uint32_t &id)
+{
+	changeObjectCount(id, segmentObjectCount, 1);
+}
+static void decreaseObjectCount(const string &id)
+{
+	changeObjectCount(id, namedSegmentObjectCount, -1);
+}
+static void decreaseObjectCount(const uint32_t &id)
+{
+	changeObjectCount(id, segmentObjectCount, -1);
+}
+template <class T1, class T2>
+static void zeroOutObjectCountInternal(const T1 &id, T2 &objectCountList)
+{
+	if (keyInMap(objectCountList, id))
+	{
+		objectCountList.erase(id);
+	}
+}
+static void zeroOutObjectCount(const string &id)
+{
+	zeroOutObjectCountInternal(id, namedSegmentObjectCount);
+}
+static void zeroOutObjectCount(const uint32_t &id)
+{
+	zeroOutObjectCountInternal(id, segmentObjectCount);
+}
 // Open the shared memory and return the data pointer
 // The memory must have been allocated!!
 template <class T1, class T2, class T3>
@@ -199,15 +286,17 @@ static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &seg
      */
 	if (!isInitial)
 		initialSharedmemory();
+	bool allocSharedObject = false;
+	bool allocSegmentObject = false;
+	bool ObjectCount = false;
+	OS_shared_memory_object *shm = nullptr;
+	mapped_region *region = nullptr;
 	try
 	{
 		if (keyInMap(segmentList, id))
 		{
 			return segmentList[id]->get_address();
 		}
-
-		OS_shared_memory_object *shm;
-		mapped_region *region;
 
 		// Check if the segment has been opened
 		if (keyInMap(sharedMemoryList, id))
@@ -218,16 +307,34 @@ static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &seg
 		{
 			string key = getDataMemoryKey(id);
 			shm = new OS_shared_memory_object(open_only, key.c_str(), read_write);
+			allocSharedObject = true;
 			sharedMemoryList.insert(pair<T1, OS_shared_memory_object *>(id, shm));
 		}
 
 		region = new mapped_region(*shm, read_write);
+		allocSegmentObject = true;
 		void *ptr = region->get_address();
 		segmentList.insert(pair<T1, mapped_region *>(id, region));
+		increaseObjectCount(id);
+		ObjectCount = true;
 		return ptr;
 	}
 	catch (const std::exception &ex)
 	{
+		if (allocSharedObject)
+		{
+			sharedMemoryList.erase(id);
+			delete shm;
+		}
+		if (allocSegmentObject)
+		{
+			segmentList.erase(id);
+			delete region;
+		}
+		if (ObjectCount)
+		{
+			decreaseObjectCount(id);
+		}
 		Rf_warning("An error has occured in mapping shared memory: %s", ex.what());
 		return nullptr;
 	}
@@ -287,6 +394,12 @@ bool removeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
 
 bool unmapSharedMemory(uint32_t id)
 {
+	DEBUG(Rprintf("Unmap shared memory, id:%d, count:%d\n", id, getObjectCount(id)));
+	if (getObjectCount(id) > 1)
+	{
+		decreaseObjectCount(id);
+		return (true);
+	}
 	bool result1 = removeSegmentInternal(id, segmentList);
 	bool result2 = removeSharedMemoryInternal(id, sharedMemoryList);
 	return result1 && result2;
@@ -294,6 +407,12 @@ bool unmapSharedMemory(uint32_t id)
 
 bool unmapSharedMemory(const string &name)
 {
+	DEBUG(Rprintf("Unmap shared memory, id:%s, count:%d\n", name.c_str(), getObjectCount(name)));
+	if (getObjectCount(name) > 1)
+	{
+		decreaseObjectCount(name);
+		return (true);
+	}
 	bool result1 = removeSegmentInternal(name, namedSegmentList);
 	bool result2 = removeSharedMemoryInternal(name, sharedNamedMemoryList);
 	return result1 && result2;
@@ -304,15 +423,19 @@ bool unmapSharedMemory(const char *name)
 }
 
 // Close and destroy the shared memory
+// It is user's responsibility to make sure the memory will not be used
+// After the free
 template <class T1, class T2>
 bool freeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
 {
+	DEBUG(Rprintf("free shared memory, reference count:%d\n", getObjectCount(id)));
 	initialSharedmemory();
 	bool success = unmapSharedMemory(id);
 	if (!success)
 	{
-		return success;
+		return false;
 	}
+	zeroOutObjectCount(id);
 #ifdef WINDOWS_OS
 	return true;
 #else
