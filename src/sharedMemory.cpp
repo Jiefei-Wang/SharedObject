@@ -295,6 +295,7 @@ static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &seg
 	{
 		if (keyInMap(segmentList, id))
 		{
+			increaseObjectCount(id);
 			return segmentList[id]->get_address();
 		}
 
@@ -395,7 +396,7 @@ bool removeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
 bool unmapSharedMemory(uint32_t id)
 {
 	DEBUG(Rprintf("Unmap shared memory, id:%d, count:%d\n", id, getObjectCount(id)));
-	if (getObjectCount(id) > 1)
+	if (getObjectCount(id) >= 1)
 	{
 		decreaseObjectCount(id);
 		return (true);
