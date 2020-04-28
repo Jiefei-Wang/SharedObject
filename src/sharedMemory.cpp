@@ -392,31 +392,30 @@ bool removeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
 	}
 	return true;
 }
-
-bool unmapSharedMemory(uint32_t id)
+template <class T1, class T2, class T3>
+static bool unmapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &segmentList)
 {
-	DEBUG(Rprintf("Unmap shared memory, id:%d, count:%d\n", id, getObjectCount(id)));
-	if (getObjectCount(id) >= 1)
+	if (getObjectCount(id) > 1)
 	{
 		decreaseObjectCount(id);
 		return (true);
 	}
+	if (getObjectCount(id) == 1)
+		decreaseObjectCount(id);
 	bool result1 = removeSegmentInternal(id, segmentList);
 	bool result2 = removeSharedMemoryInternal(id, sharedMemoryList);
 	return result1 && result2;
+}
+bool unmapSharedMemory(uint32_t id)
+{
+	DEBUG(Rprintf("Unmap shared memory, id:%d, count:%d\n", id, getObjectCount(id)));
+	return unmapSharedMemoryInternal(id, sharedMemoryList, segmentList);
 }
 
 bool unmapSharedMemory(const string &name)
 {
 	DEBUG(Rprintf("Unmap shared memory, id:%s, count:%d\n", name.c_str(), getObjectCount(name)));
-	if (getObjectCount(name) > 1)
-	{
-		decreaseObjectCount(name);
-		return (true);
-	}
-	bool result1 = removeSegmentInternal(name, namedSegmentList);
-	bool result2 = removeSharedMemoryInternal(name, sharedNamedMemoryList);
-	return result1 && result2;
+	return unmapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList);
 }
 bool unmapSharedMemory(const char *name)
 {

@@ -167,7 +167,7 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 	using namespace Rcpp;
 	try {
 		bool sharedSubset = as<bool>(GET_ALT_SLOT(x, INFO_SHAREDSUBSET));
-		DEBUG(printf("Accessing subset, sharedSubset: %d\n", sharedSubset));
+		DEBUG(Rprintf("Accessing subset, sharedSubset: %d\n", sharedSubset));
 			
 		//Allocate the subset vector and assign values
 		R_xlen_t len = Rf_xlength(indx);
