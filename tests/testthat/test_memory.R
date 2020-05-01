@@ -14,14 +14,21 @@ test_that("Testing small memory alloc/free", {
         so = share(mydata)
         clusterExport(cl, "so", envir = environment())
         res = clusterEvalQ(cl, {
-            gc()
             so[1:10]
         })
         expect_equal(mydata[1:10], res[[1]][1:10])
+        res = clusterEvalQ(cl, {
+            rm(list="so")
+            gc()
+        })
+        rm(list="so")
         gc()
     }
 })
+stopCluster(cl)
+gc()
 
+cl = makeCluster(2)
 ## use 128MB + 128MB each time
 ## If not shared, use 4*128MB in total each time
 N <- 10
@@ -32,7 +39,6 @@ test_that("Testing big memory alloc/free", {
         so = share(mydata)
         clusterExport(cl, "so", envir = environment())
         res = clusterEvalQ(cl, {
-            gc()
             so[1:10]
         })
         expect_equal(mydata[1:10], res[[1]][1:10])
