@@ -44,9 +44,9 @@ promptError <- function(x, ...) {
             return(x)
     }
     stop(
-        "The object of type `",
-        class(x),
-        "' cannot be shared.\n",
+        "The object of the class <",
+        paste0(class(x),collapse = ", "),
+        "> cannot be shared.\n",
         "To suppress this error and return the same object, \n",
         "provide `mustWork = FALSE` as a function argument\n",
         "or change its default value in the package settings\n"
