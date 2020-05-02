@@ -39,15 +39,15 @@ A shared object
 This function will create an object in the shared memory for the function argument \code{x}
 and return a shared object if the object can be shared. There is no duplication
 of the shared object when a shared object is exported to the other processes.
-\code{tryShare} is equivalent to \code{share} with argument \code{noError = TRUE}.
+\code{tryShare} is equivalent to \code{share} with argument \code{mustWork = FALSE}.
 }
 \details{
 The function returns a shared object corresponding to the argument \code{x} if it
 is sharable. An error will be given if the argument \code{x} is not sharable. specifying
-\code{noError = TRUE} will suppress the error. This feature is useful when sharing a list
+\code{mustWork = FALSE} will suppress the error. This feature is useful when sharing a list
 object that consists of both sharable and non-sharable objects. Alternatively,
 the \code{tryShare} function can be used and it is equivalent to the function
-\code{share} with the argument \code{noError = TRUE}.
+\code{share} with the argument \code{mustWork = FALSE}.
 
 \strong{Supported types}
 

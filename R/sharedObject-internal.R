@@ -36,11 +36,11 @@ shareAtomic <- function(x, ...) {
 
 promptError <- function(x, ...) {
     options <- list(...)
-    if (!is.null(options$noError)) {
-        if (options$noError)
+    if (!is.null(options$mustWork)) {
+        if (!options$mustWork)
             return(x)
     } else{
-        if (globalSettings$noError)
+        if (!globalSettings$mustWork)
             return(x)
     }
     stop(
@@ -48,7 +48,7 @@ promptError <- function(x, ...) {
         class(x),
         "' cannot be shared.\n",
         "To suppress this error and return the same object, \n",
-        "provide `noError = TRUE` as a function argument\n",
+        "provide `mustWork = FALSE` as a function argument\n",
         "or change its default value in the package settings\n"
     )
 }

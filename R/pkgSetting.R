@@ -10,7 +10,7 @@ globalSettings = new.env()
 globalSettings$copyOnWrite = TRUE
 globalSettings$sharedSubset = FALSE
 globalSettings$sharedCopy = FALSE
-globalSettings$noError = FALSE
+globalSettings$mustWork = TRUE
 
 #' Get or set the global options for the SharedObject package
 #'

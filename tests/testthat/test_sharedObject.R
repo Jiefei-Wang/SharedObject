@@ -133,6 +133,30 @@ test_that("Shared Object Global options", {
 })
 gc()
 
+test_that("Option: mustWork", {
+    ## Use the default setting, expect error
+    setSharedObjectOptions(mustWork = TRUE)
+    data <- list(a= 1:10,b="a")
+    expect_error(so <- share(data))
+    expect_error(so <- tryShare(data), NA)
+
+
+    ## Temporary overwrite the setting, expect no error
+    expect_error(so <- share(data, mustWork = FALSE), NA)
+    expect_error(so <- tryShare(data), NA)
+
+    ## Overwrite global setting, expect no error
+    setSharedObjectOptions(mustWork = FALSE)
+    expect_error(so <- share(data), NA)
+    expect_error(so <- tryShare(data), NA)
+
+
+    ## Temporary overwrite the setting, expect error
+    expect_error(so <- share(data, mustWork = TRUE))
+    expect_error(so <- tryShare(data), NA)
+})
+
+
 
 
 stopCluster(cl)

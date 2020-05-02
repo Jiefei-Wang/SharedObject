@@ -15,7 +15,7 @@ names(dataInfoTemplate) = dataInfoNames
 #' This function will create an object in the shared memory for the function argument `x`
 #' and return a shared object if the object can be shared. There is no duplication
 #' of the shared object when a shared object is exported to the other processes.
-#' `tryShare` is equivalent to `share` with argument `noError = TRUE`.
+#' `tryShare` is equivalent to `share` with argument `mustWork = FALSE`.
 #'
 #' @param x An R object that you want to shared. The supported data types are
 #' `raw`, `logical`, `integer` and `real`. The data structure can be `vector`,
@@ -29,10 +29,10 @@ names(dataInfoTemplate) = dataInfoNames
 #'
 #' The function returns a shared object corresponding to the argument `x` if it
 #' is sharable. An error will be given if the argument `x` is not sharable. specifying
-#' `noError = TRUE` will suppress the error. This feature is useful when sharing a list
+#' `mustWork = FALSE` will suppress the error. This feature is useful when sharing a list
 #' object that consists of both sharable and non-sharable objects. Alternatively,
 #' the `tryShare` function can be used and it is equivalent to the function
-#' `share` with the argument `noError = TRUE`.
+#' `share` with the argument `mustWork = FALSE`.
 #'
 #' **Supported types**
 #'
@@ -163,7 +163,7 @@ setMethod("share", signature(x = "list"), function(x, ...) {
 #' @export
 tryShare <- function(x, ...) {
     options <- list(x = x, ...)
-    options["noError"] <- TRUE
+    options["mustWork"] <- FALSE
     do.call(share, options)
 }
 
