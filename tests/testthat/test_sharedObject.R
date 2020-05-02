@@ -22,7 +22,7 @@ for (i in seq_along(typeName)) {
         so = share(curData)
         expect_equal(curData, so)
         expect_equal(is.shared(so),TRUE)
-        expect_equal(is.shared(so[1:2]),as.logical(getSharedObjectOptions("sharedSubset")))
+        expect_equal(is.shared(so[1:2]),getSharedObjectOptions("sharedSubset"))
     })
     gc()
     test_that(paste0("Testing duplicate for type ", typeName[i]), {

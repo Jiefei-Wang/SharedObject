@@ -17,7 +17,7 @@ sharedSubset and sharedCopy.
 }
 \value{
 \code{setSharedObjectOptions}: No return value
-\code{getSharedObjectOptions}: A list of the package options
+\code{getSharedObjectOptions}: A list of the package options or a single value
 }
 \description{
 Get or set the global options for the SharedObject package

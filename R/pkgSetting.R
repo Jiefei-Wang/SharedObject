@@ -21,7 +21,7 @@ globalSettings$mustWork = TRUE
 #' `getSharedObjectOptions`: A character vector. If empty, all options will be returned.
 #' @return
 #' `setSharedObjectOptions`: No return value
-#' `getSharedObjectOptions`: A list of the package options
+#' `getSharedObjectOptions`: A list of the package options or a single value
 #' @examples
 #' getSharedObjectOptions()
 #' setSharedObjectOptions(copyOnWrite = FALSE)
@@ -46,7 +46,11 @@ getSharedObjectOptions <- function(...) {
     if (length(options) == 0) {
         return(as.list(globalSettings))
     } else{
-        return(as.list(globalSettings)[options])
+        if(length(options)==1){
+            return(globalSettings[[options]])
+        }else{
+            return(as.list(globalSettings)[options])
+        }
     }
 }
 
