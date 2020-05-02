@@ -4,20 +4,22 @@ NULL
 #' Test whether the object is a shared object
 #'
 #' @param x An R object
+#' @param ... For generalization purpose only
 #' @return TRUE/FALSE indicating whether the object is a shared object.
 #' If the object is a list, the return value is a vector of TRUE/FALSE corresponding
 #' to each element of the list.
-#' @rdname is.shared
 #' @examples
 #' x <- share(1:10)
 #' is.shared(x)
-#' @export
-is.shared <- function(x) {
-    UseMethod("is.shared", x)
-}
 #' @rdname is.shared
 #' @export
-is.shared.default <- function(x) {
+setGeneric("is.shared", function(x, ...) {
+    standardGeneric("is.shared")
+})
+
+#' @rdname is.shared
+#' @export
+setMethod("is.shared", "ANY", function(x,...){
     if (is.altrep(x)) {
         info <- C_getAltData2(x)
         if (is.list(info) &&
@@ -27,17 +29,12 @@ is.shared.default <- function(x) {
         }
     }
     return(FALSE)
-}
+})
 #' @rdname is.shared
 #' @export
-is.shared.list <- function(x) {
+setMethod("is.shared", "list", function(x,...){
     lapply(x, is.shared)
-}
-#' @rdname is.shared
-#' @export
-is.shared.data.frame <- function(x) {
-    lapply(x, is.shared)
-}
+})
 
 
 

@@ -2,21 +2,20 @@
 % Please edit documentation in R/sharedObject-method.R
 \name{is.shared}
 \alias{is.shared}
-\alias{is.shared.default}
-\alias{is.shared.list}
-\alias{is.shared.data.frame}
+\alias{is.shared,ANY-method}
+\alias{is.shared,list-method}
 \title{Test whether the object is a shared object}
 \usage{
-is.shared(x)
+is.shared(x, ...)
 
-\method{is.shared}{default}(x)
+\S4method{is.shared}{ANY}(x, ...)
 
-\method{is.shared}{list}(x)
-
-\method{is.shared}{data.frame}(x)
+\S4method{is.shared}{list}(x, ...)
 }
 \arguments{
 \item{x}{An R object}
+
+\item{...}{For generalization purpose only}
 }
 \value{
 TRUE/FALSE indicating whether the object is a shared object.
