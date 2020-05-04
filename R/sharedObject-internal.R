@@ -4,19 +4,22 @@
 
 ## Fill the options with their default argument
 ## if not specified
-completeOptions <- function(options) {
-    for (i in seq_along(sharedOptions)) {
-        name = sharedOptions[i]
-        if (is.null(options[[name]])) {
-            options[[name]] = globalSettings[[name]]
-        }
-    }
-    options
-}
+# completeOptions <- function(options) {
+#     for (i in seq_along(sharedOptions)) {
+#         name = sharedOptions[i]
+#         if (is.null(options[[name]])) {
+#             options[[name]] = globalSettings[[name]]
+#         }
+#     }
+#     options
+# }
 
-shareAtomic <- function(x, ...) {
-    options <- list(...)
-    options <- completeOptions(options)
+shareAtomic <- function(x, copyOnWrite,sharedSubset,sharedCopy,mustWork,...) {
+    options <- list(copyOnWrite=copyOnWrite,
+                    sharedSubset=sharedSubset,
+                    sharedCopy=sharedCopy,
+                    mustWork=mustWork)
+    #options <- completeOptions(options)
     #Construct dataInfo vector
     dataInfo = dataInfoTemplate
     dataInfo[["dataId"]] <- 1.0
@@ -34,15 +37,9 @@ shareAtomic <- function(x, ...) {
     result
 }
 
-promptError <- function(x, ...) {
-    options <- list(...)
-    if (!is.null(options$mustWork)) {
-        if (!options$mustWork)
-            return(x)
-    } else{
-        if (!globalSettings$mustWork)
-            return(x)
-    }
+promptError <- function(x, copyOnWrite,sharedSubset,sharedCopy,mustWork,...) {
+    if (!mustWork)
+        return(x)
     stop(
         "The object of the class <",
         paste0(class(x),collapse = ", "),

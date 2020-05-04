@@ -11,17 +11,59 @@
 \alias{tryShare}
 \title{Create an R object in the shared memory}
 \usage{
-share(x, ...)
+share(
+  x,
+  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
+  sharedSubset = getSharedObjectOptions("sharedSubset"),
+  sharedCopy = getSharedObjectOptions("sharedCopy"),
+  mustWork = getSharedObjectOptions("mustWork"),
+  ...
+)
 
-\S4method{share}{ANY}(x, ...)
+\S4method{share}{ANY}(
+  x,
+  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
+  sharedSubset = getSharedObjectOptions("sharedSubset"),
+  sharedCopy = getSharedObjectOptions("sharedCopy"),
+  mustWork = getSharedObjectOptions("mustWork"),
+  ...
+)
 
-\S4method{share}{character}(x, ...)
+\S4method{share}{character}(
+  x,
+  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
+  sharedSubset = getSharedObjectOptions("sharedSubset"),
+  sharedCopy = getSharedObjectOptions("sharedCopy"),
+  mustWork = getSharedObjectOptions("mustWork"),
+  ...
+)
 
-\S4method{share}{vector}(x, ...)
+\S4method{share}{vector}(
+  x,
+  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
+  sharedSubset = getSharedObjectOptions("sharedSubset"),
+  sharedCopy = getSharedObjectOptions("sharedCopy"),
+  mustWork = getSharedObjectOptions("mustWork"),
+  ...
+)
 
-\S4method{share}{matrix}(x, ...)
+\S4method{share}{matrix}(
+  x,
+  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
+  sharedSubset = getSharedObjectOptions("sharedSubset"),
+  sharedCopy = getSharedObjectOptions("sharedCopy"),
+  mustWork = getSharedObjectOptions("mustWork"),
+  ...
+)
 
-\S4method{share}{list}(x, ...)
+\S4method{share}{list}(
+  x,
+  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
+  sharedSubset = getSharedObjectOptions("sharedSubset"),
+  sharedCopy = getSharedObjectOptions("sharedCopy"),
+  mustWork = getSharedObjectOptions("mustWork"),
+  ...
+)
 
 tryShare(x, ...)
 }
@@ -30,7 +72,12 @@ tryShare(x, ...)
 \code{raw}, \code{logical}, \code{integer} and \code{real}. The data structure can be \code{vector},
 \code{matrix} and \code{data.frame}. List is not supported but can be created manually.}
 
-\item{...}{Additional parameters that will be passed to the shared object, see details.}
+\item{copyOnWrite, sharedSubset, sharedCopy}{The parameters controlling the behavior of the shared object,
+see details.}
+
+\item{mustWork}{Whether to throw an error if \code{x} is not a sharable object.}
+
+\item{...}{Additional parameters that will be passed to the shared object.}
 }
 \value{
 A shared object

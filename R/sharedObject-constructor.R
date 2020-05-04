@@ -20,7 +20,10 @@ names(dataInfoTemplate) = dataInfoNames
 #' @param x An R object that you want to shared. The supported data types are
 #' `raw`, `logical`, `integer` and `real`. The data structure can be `vector`,
 #' `matrix` and `data.frame`. List is not supported but can be created manually.
-#' @param ... Additional parameters that will be passed to the shared object, see details.
+#' @param copyOnWrite,sharedSubset,sharedCopy The parameters controlling the behavior of the shared object,
+#' see details.
+#' @param mustWork Whether to throw an error if `x` is not a sharable object.
+#' @param ... Additional parameters that will be passed to the shared object.
 #'
 #' @aliases share,vector-method share,matrix-method share,data.frame-method share,list-method
 #'
@@ -133,7 +136,10 @@ names(dataInfoTemplate) = dataInfoNames
 #'
 #' @rdname share
 #' @export
-setGeneric("share", function(x, ...) {
+setGeneric("share", function(x, copyOnWrite=getSharedObjectOptions("copyOnWrite"),
+                             sharedSubset=getSharedObjectOptions("sharedSubset"),
+                             sharedCopy=getSharedObjectOptions("sharedCopy"),
+                             mustWork=getSharedObjectOptions("mustWork"), ...) {
     standardGeneric("share")
 })
 #' @rdname share
@@ -150,10 +156,13 @@ setMethod("share", signature(x = "vector"), shareAtomic)
 setMethod("share", signature(x = "matrix"), shareAtomic)
 #' @rdname share
 #' @export
-setMethod("share", signature(x = "list"), function(x, ...) {
+setMethod("share", signature(x = "list"), function(x, copyOnWrite,sharedSubset,sharedCopy,mustWork,...) {
     result <- vector("list", length = length(x))
     for (i in seq_along(result)) {
-        result[[i]] <- share(x[[i]], ...)
+        result[[i]] <- share(x[[i]], copyOnWrite=copyOnWrite,
+                             sharedSubset=sharedSubset,
+                             sharedCopy=sharedCopy,
+                             mustWork=mustWork,...)
     }
     copyAttribute(result, x)
     result
