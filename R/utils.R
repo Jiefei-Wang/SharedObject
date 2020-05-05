@@ -19,7 +19,7 @@ calculateSharedMemorySize <- function(x) {
 ## Copy all attributes from source to target without
 ## duplicate source
 copyAttribute <- function(target, source) {
-    oldSettings <- getSharedCopy(target)
+    #oldSettings <- getSharedCopy(target)
     att = attributes(source)
     for (i in names(att)) {
         C_attachAttr(target, i, att[[i]])

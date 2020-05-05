@@ -15,6 +15,13 @@
 # }
 
 shareAtomic <- function(x, copyOnWrite,sharedSubset,sharedCopy,mustWork,...) {
+    if(is.shared(x)){
+        props <- getSharedObjectProperty(x)
+        if(props[["copyOnWrite"]]==copyOnWrite&&
+           props[["sharedSubset"]]==sharedSubset&&
+           props[["sharedCopy"]]==sharedCopy)
+            return(x)
+    }
     options <- list(copyOnWrite=copyOnWrite,
                     sharedSubset=sharedSubset,
                     sharedCopy=sharedCopy,
