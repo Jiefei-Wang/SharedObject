@@ -45,6 +45,8 @@ shareAtomic <- function(x, copyOnWrite,sharedSubset,sharedCopy,mustWork,...) {
 }
 
 promptError <- function(x, copyOnWrite,sharedSubset,sharedCopy,mustWork,...) {
+    if(is.null(x))
+        return(x)
     if (!mustWork)
         return(x)
     stop(
