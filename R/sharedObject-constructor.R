@@ -22,8 +22,10 @@ names(dataInfoTemplate) = dataInfoNames
 #' `matrix` and `data.frame`. List is not supported but can be created manually.
 #' @param copyOnWrite,sharedSubset,sharedCopy The parameters controlling the behavior of the shared object,
 #' see details.
-#' @param mustWork Whether to throw an error if `x` is not a sharable object.
-#' @param ... Additional parameters that will be passed to the shared object.
+#' @param mustWork Whether to throw an error if `x` is not a sharable object(e.g. Character).
+#' @param autoS4Conversion Whether to use the automatic conversion method when
+#' there is no `share` method defined for the signiture `class(x)`, see details.
+#' @param ... Additional parameters that can be passed to the shared object, see below.
 #'
 #' @aliases share,vector-method share,matrix-method share,data.frame-method share,list-method
 #'
@@ -58,14 +60,14 @@ names(dataInfoTemplate) = dataInfoNames
 #'
 #' `copyOnWrite` determines Whether a new R object need to be allocated when the
 #' shared object is changed. The default value is `TRUE`, but can be altered by passing
-#' an argument `copyOnWrite=FALSE` to the function.
+#' an argument `copyOnWrite = FALSE` to the function.
 #'
 #' Please note that the no-copy-on-write feature is not fully supported by R. When
 #' `copyOnWrite` is `FALSE`, a shared object might not behaves as user expects.
 #' Please refer to the example code to see the exceptions.
 #'
 #' `sharedSubset` determines whether the subset of a shared object is still a shared object.
-#'  The default value is `TRUE`, and can be changed by passing `sharedSubset=FALSE`
+#'  The default value is `TRUE`, and can be changed by passing `sharedSubset = FALSE`
 #'  to the function
 #'
 #'  At the time this documentation is being written, The shared subset feature will
@@ -76,9 +78,22 @@ names(dataInfoTemplate) = dataInfoNames
 #' duplication. If `copyOnWrite` is `FALSE`, this feature is off since the duplication
 #' cannot be triggered. In current version (R 3.6), an object will be duplicated four times
 #' for creating a shared object and lead to a serious performance problem. Therefore,
-#' the default value is `FALSE`, user can alter it by passing `sharedCopy=FALSE`
+#' the default value is `FALSE`, user can alter it by passing `sharedCopy = FALSE`
 #' to the function.
 #'
+#'
+#' **Default S4 share function**
+#' If the argument `x` is an S4 object and its class is not supported
+#' by the `share` function. A default `share` function can be used by specifying
+#' `autoS4Conversion = TRUE`. The default method will loop over and share
+#' all slots for the object `x`. No error will be given if a slot
+#' of `x` is not sharable. Please be aware that this method may have an
+#' unexpected consequence(e.g. a C pointer is linked with a slot data of `x`).
+#' It only serves as a backup method. Most bioconductor fundamental classes are supported in
+#' `SharedObjectUltility`, if you find the class of `x` is not supported by
+#' `SharedObjectUltility` and is important for Bioconductor users, please feel free to ask
+#' for the new feature at
+#' \href{https://github.com/Jiefei-Wang/SharedObjectUtility/issues}{GitHub}.
 #'
 #' @examples
 #' ## For vector
@@ -136,18 +151,26 @@ names(dataInfoTemplate) = dataInfoNames
 #'
 #' @rdname share
 #' @export
-setGeneric("share", function(x, copyOnWrite=getSharedObjectOptions("copyOnWrite"),
-                             sharedSubset=getSharedObjectOptions("sharedSubset"),
-                             sharedCopy=getSharedObjectOptions("sharedCopy"),
-                             mustWork=getSharedObjectOptions("mustWork"), ...) {
-    standardGeneric("share")
+setGeneric("share", signature="x", function(x,
+                             ...) {
+    args <- list(x=x, ...)
+    ind <- which(!names(globalSettings) %in% names(args))
+    if(length(ind)>0){
+        defaultArgs <- lapply(names(globalSettings)[ind],
+                              function(x)getSharedObjectOptions(x))
+        names(defaultArgs) <- names(globalSettings)[ind]
+        args <- c(args,defaultArgs)
+        do.call("share",args)
+    }else{
+        standardGeneric("share")
+    }
 })
 #' @rdname share
 #' @export
-setMethod("share", signature(x = "ANY"), promptError)
+setMethod("share", signature(x = "ANY"), promptErrorANY)
 #' @rdname share
 #' @export
-setMethod("share", signature(x = "character"), promptError)
+setMethod("share", signature(x = "character"), promptErrorChar)
 #' @rdname share
 #' @export
 setMethod("share", signature(x = "vector"), shareAtomic)
@@ -156,13 +179,10 @@ setMethod("share", signature(x = "vector"), shareAtomic)
 setMethod("share", signature(x = "matrix"), shareAtomic)
 #' @rdname share
 #' @export
-setMethod("share", signature(x = "list"), function(x, copyOnWrite,sharedSubset,sharedCopy,mustWork,...) {
+setMethod("share", signature(x = "list"), function(x,...) {
     result <- vector("list", length = length(x))
     for (i in seq_along(result)) {
-        result[[i]] <- share(x[[i]], copyOnWrite=copyOnWrite,
-                             sharedSubset=sharedSubset,
-                             sharedCopy=sharedCopy,
-                             mustWork=mustWork,...)
+        result[[i]] <- share(x[[i]], ...)
     }
     copyAttribute(result, x)
     result

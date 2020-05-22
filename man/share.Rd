@@ -11,59 +11,17 @@
 \alias{tryShare}
 \title{Create an R object in the shared memory}
 \usage{
-share(
-  x,
-  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
-  sharedSubset = getSharedObjectOptions("sharedSubset"),
-  sharedCopy = getSharedObjectOptions("sharedCopy"),
-  mustWork = getSharedObjectOptions("mustWork"),
-  ...
-)
+share(x, ...)
 
-\S4method{share}{ANY}(
-  x,
-  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
-  sharedSubset = getSharedObjectOptions("sharedSubset"),
-  sharedCopy = getSharedObjectOptions("sharedCopy"),
-  mustWork = getSharedObjectOptions("mustWork"),
-  ...
-)
+\S4method{share}{ANY}(x, autoS4Conversion, ...)
 
-\S4method{share}{character}(
-  x,
-  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
-  sharedSubset = getSharedObjectOptions("sharedSubset"),
-  sharedCopy = getSharedObjectOptions("sharedCopy"),
-  mustWork = getSharedObjectOptions("mustWork"),
-  ...
-)
+\S4method{share}{character}(x, mustWork, ...)
 
-\S4method{share}{vector}(
-  x,
-  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
-  sharedSubset = getSharedObjectOptions("sharedSubset"),
-  sharedCopy = getSharedObjectOptions("sharedCopy"),
-  mustWork = getSharedObjectOptions("mustWork"),
-  ...
-)
+\S4method{share}{vector}(x, copyOnWrite, sharedSubset, sharedCopy, ...)
 
-\S4method{share}{matrix}(
-  x,
-  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
-  sharedSubset = getSharedObjectOptions("sharedSubset"),
-  sharedCopy = getSharedObjectOptions("sharedCopy"),
-  mustWork = getSharedObjectOptions("mustWork"),
-  ...
-)
+\S4method{share}{matrix}(x, copyOnWrite, sharedSubset, sharedCopy, ...)
 
-\S4method{share}{list}(
-  x,
-  copyOnWrite = getSharedObjectOptions("copyOnWrite"),
-  sharedSubset = getSharedObjectOptions("sharedSubset"),
-  sharedCopy = getSharedObjectOptions("sharedCopy"),
-  mustWork = getSharedObjectOptions("mustWork"),
-  ...
-)
+\S4method{share}{list}(x, ...)
 
 tryShare(x, ...)
 }
@@ -72,12 +30,15 @@ tryShare(x, ...)
 \code{raw}, \code{logical}, \code{integer} and \code{real}. The data structure can be \code{vector},
 \code{matrix} and \code{data.frame}. List is not supported but can be created manually.}
 
+\item{...}{Additional parameters that can be passed to the shared object, see below.}
+
+\item{autoS4Conversion}{Whether to use the automatic conversion method when
+there is no \code{share} method defined for the signiture \code{class(x)}, see details.}
+
+\item{mustWork}{Whether to throw an error if \code{x} is not a sharable object(e.g. Character).}
+
 \item{copyOnWrite, sharedSubset, sharedCopy}{The parameters controlling the behavior of the shared object,
 see details.}
-
-\item{mustWork}{Whether to throw an error if \code{x} is not a sharable object.}
-
-\item{...}{Additional parameters that will be passed to the shared object.}
 }
 \value{
 A shared object
@@ -117,14 +78,14 @@ The behavior of a shared object can be controlled through three parameters:
 
 \code{copyOnWrite} determines Whether a new R object need to be allocated when the
 shared object is changed. The default value is \code{TRUE}, but can be altered by passing
-an argument \code{copyOnWrite=FALSE} to the function.
+an argument \code{copyOnWrite = FALSE} to the function.
 
 Please note that the no-copy-on-write feature is not fully supported by R. When
 \code{copyOnWrite} is \code{FALSE}, a shared object might not behaves as user expects.
 Please refer to the example code to see the exceptions.
 
 \code{sharedSubset} determines whether the subset of a shared object is still a shared object.
-The default value is \code{TRUE}, and can be changed by passing \code{sharedSubset=FALSE}
+The default value is \code{TRUE}, and can be changed by passing \code{sharedSubset = FALSE}
 to the function
 
 At the time this documentation is being written, The shared subset feature will
@@ -135,8 +96,21 @@ consideration, it is better to turn the feature off when using R studio.
 duplication. If \code{copyOnWrite} is \code{FALSE}, this feature is off since the duplication
 cannot be triggered. In current version (R 3.6), an object will be duplicated four times
 for creating a shared object and lead to a serious performance problem. Therefore,
-the default value is \code{FALSE}, user can alter it by passing \code{sharedCopy=FALSE}
+the default value is \code{FALSE}, user can alter it by passing \code{sharedCopy = FALSE}
 to the function.
+
+\strong{Default S4 share function}
+If the argument \code{x} is an S4 object and its class is not supported
+by the \code{share} function. A default \code{share} function can be used by specifying
+\code{autoS4Conversion = TRUE}. The default method will loop over and share
+all slots for the object \code{x}. No error will be given if a slot
+of \code{x} is not sharable. Please be aware that this method may have an
+unexpected consequence(e.g. a C pointer is linked with a slot data of \code{x}).
+It only serves as a backup method. Most bioconductor fundamental classes are supported in
+\code{SharedObjectUltility}, if you find the class of \code{x} is not supported by
+\code{SharedObjectUltility} and is important for Bioconductor users, please feel free to ask
+for the new feature at
+\href{https://github.com/Jiefei-Wang/SharedObjectUtility/issues}{GitHub}.
 }
 \examples{
 ## For vector

@@ -4,7 +4,16 @@ NULL
 #' Test whether the object is a shared object
 #'
 #' @param x An R object
+#' @param recursive Whether to recursively check the element of `x` if `x` has
+#' mutiple components(e.g. `list` and S4 object), see details
 #' @param ... For generalization purpose only
+#' @details
+#' When `x` consists of multiple elements and the elements are not a simple object
+#' (e.g. a list of lists), the `is.shared` function by default will recursively look
+#' into each element and return whether the element's components are
+#' shared in a list format. If `recursive = FALSE`, a singe logical value is returned
+#' for each element of `x` indicating whether the element contains any shared data.
+#'
 #' @return TRUE/FALSE indicating whether the object is a shared object.
 #' If the object is a list, the return value is a vector of TRUE/FALSE corresponding
 #' to each element of the list.
@@ -13,13 +22,16 @@ NULL
 #' is.shared(x)
 #' @rdname is.shared
 #' @export
-setGeneric("is.shared", function(x, ...) {
+setGeneric("is.shared", function(x, recursive = TRUE, ...) {
     standardGeneric("is.shared")
 })
 
 #' @rdname is.shared
 #' @export
-setMethod("is.shared", "ANY", function(x,...){
+setMethod("is.shared", "ANY", function(x,recursive,...){
+    if(isS4(x)){
+        return(isS4Shared(x,recursive=recursive,...))
+    }
     if (is.altrep(x)) {
         info <- C_getAltData2(x)
         if (is.list(info) &&
@@ -30,10 +42,30 @@ setMethod("is.shared", "ANY", function(x,...){
     }
     return(FALSE)
 })
+isS4Shared <- function(x,recursive,...){
+    slots <- slotNames(x)
+    res <- vector("list",length(slots))
+    for(i in seq_along(slots)){
+        res[[i]] <- is.shared(slot(x, slots[i]),recursive=recursive,...)
+    }
+    names(res) <- slots
+    res <- res[unlist(lapply(res, function(x) length(x) != 0))]
+    if(!recursive){
+        res <- lapply(res, function(x)any(unlist(x)))
+    }
+    res
+}
+
+
 #' @rdname is.shared
 #' @export
-setMethod("is.shared", "list", function(x,...){
-    lapply(x, is.shared)
+setMethod("is.shared", "list", function(x,recursive, ...){
+    res <- lapply(x, function(x,...)is.shared(x,...),
+                  recursive=recursive,...)
+    if(!recursive){
+        res <- lapply(res, function(x)any(unlist(x)))
+    }
+    res
 })
 
 

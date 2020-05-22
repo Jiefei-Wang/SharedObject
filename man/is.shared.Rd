@@ -6,14 +6,17 @@
 \alias{is.shared,list-method}
 \title{Test whether the object is a shared object}
 \usage{
-is.shared(x, ...)
+is.shared(x, recursive = TRUE, ...)
 
-\S4method{is.shared}{ANY}(x, ...)
+\S4method{is.shared}{ANY}(x, recursive = TRUE, ...)
 
-\S4method{is.shared}{list}(x, ...)
+\S4method{is.shared}{list}(x, recursive = TRUE, ...)
 }
 \arguments{
 \item{x}{An R object}
+
+\item{recursive}{Whether to recursively check the element of \code{x} if \code{x} has
+mutiple components(e.g. \code{list} and S4 object), see details}
 
 \item{...}{For generalization purpose only}
 }
@@ -24,6 +27,13 @@ to each element of the list.
 }
 \description{
 Test whether the object is a shared object
+}
+\details{
+When \code{x} consists of multiple elements and the elements are not a simple object
+(e.g. a list of lists), the \code{is.shared} function by default will recursively look
+into each element and return whether the element's components are
+shared in a list format. If \code{recursive = FALSE}, a singe logical value is returned
+for each element of \code{x} indicating whether the element contains any shared data.
 }
 \examples{
 x <- share(1:10)

@@ -154,8 +154,19 @@ test_that("Option: mustWork", {
     ## Temporary overwrite the setting, expect error
     expect_error(so <- share(data, mustWork = TRUE))
     expect_error(so <- tryShare(data), NA)
+    setSharedObjectOptions(mustWork = TRUE)
 })
 
+test_that("Option: defaultS4Method", {
+    setClass("testClass",representation = list(a="vector",b="character"))
+    x <- new("testClass",a=runif(10),b=sample(letters,5))
+
+    expect_error(share(x,autoS4Conversion=FALSE, mustWork = TRUE))
+    expect_error(x_shr <- share(x,autoS4Conversion=TRUE, mustWork = TRUE),NA)
+
+    expect_equal(is.shared(x_shr),list(a=TRUE,b=FALSE))
+    removeClass("testClass")
+})
 
 
 

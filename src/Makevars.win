@@ -1,4 +1,5 @@
-package_lib= SharedObject.dll
-
+MKDIR?=mkdir
+RM?=rm -f
+CP?=cp
 
 include Makevars.common
