@@ -9,7 +9,7 @@
 \alias{share,ANY-method}
 \alias{share,character-method}
 \alias{tryShare}
-\title{Create an R object in the shared memory}
+\title{Create a shared object}
 \usage{
 share(x, ...)
 
@@ -27,13 +27,13 @@ tryShare(x, ...)
 }
 \arguments{
 \item{x}{An R object that you want to shared. The supported data types are
-\code{raw}, \code{logical}, \code{integer} and \code{real}. The data structure can be \code{vector},
-\code{matrix} and \code{data.frame}. List is not supported but can be created manually.}
+\code{raw}, \code{logical}, \code{integer} and \code{real}. \code{character} cannot be shared.}
 
 \item{...}{Additional parameters that can be passed to the shared object, see below.}
 
-\item{autoS4Conversion}{Whether to use the automatic conversion method when
-there is no \code{share} method defined for the signiture \code{class(x)}, see details.}
+\item{autoS4Conversion}{Whether to use the automatic conversion method for
+an S4 object when there is no \code{share} method defined
+for the signiture \code{class(x)}, see details.}
 
 \item{mustWork}{Whether to throw an error if \code{x} is not a sharable object(e.g. Character).}
 
@@ -44,10 +44,11 @@ see details.}
 A shared object
 }
 \description{
-This function will create an object in the shared memory for the function argument \code{x}
-and return a shared object if the object can be shared. There is no duplication
-of the shared object when a shared object is exported to the other processes.
-\code{tryShare} is equivalent to \code{share} with argument \code{mustWork = FALSE}.
+This function will create a shared object in the shared memory for the function
+argument \code{x} and return a shared object if the object can be shared.
+There is no duplication of the shared object when a shared object is
+exported to the other processes.
+\code{tryShare} is equivalent to \code{share} with the argument \code{mustWork = FALSE}.
 }
 \details{
 The function returns a shared object corresponding to the argument \code{x} if it

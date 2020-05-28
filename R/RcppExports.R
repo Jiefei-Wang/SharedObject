@@ -9,6 +9,14 @@ C_readSharedMemory <- function(dataInfo) {
     .Call(`_SharedObject_C_readSharedMemory`, dataInfo)
 }
 
+C_memcpy <- function(source, target, byteSize) {
+    invisible(.Call(`_SharedObject_C_memcpy`, source, target, byteSize))
+}
+
+C_isSameObject <- function(x, y) {
+    .Call(`_SharedObject_C_isSameObject`, x, y)
+}
+
 C_ALTREP <- function(x) {
     .Call(`_SharedObject_C_ALTREP`, x)
 }

@@ -125,6 +125,20 @@ void copyData(SEXP source, void *target)
 		return;
 	}
 }
+
+/*Copy data from source to target*/
+// [[Rcpp::export]]
+void C_memcpy(SEXP source,SEXP target, R_xlen_t byteSize){
+	void* sourcePtr = DATAPTR(source);
+	void* targetPtr = DATAPTR(target);
+	memcpy(targetPtr,sourcePtr,byteSize);
+}
+
+// [[Rcpp::export]]
+bool C_isSameObject(SEXP x, SEXP y){
+	return ((void*) x) == ((void*) y);
+}
+
 /*
 ##########################################
 ## ALTREP related C API
@@ -167,6 +181,10 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr)
 	UNPROTECT(1);
 	return R_NilValue;
 }
+
+
+
+
 
 /*
 ##########################################

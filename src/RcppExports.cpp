@@ -29,6 +29,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_memcpy
+void C_memcpy(SEXP source, SEXP target, R_xlen_t byteSize);
+RcppExport SEXP _SharedObject_C_memcpy(SEXP sourceSEXP, SEXP targetSEXP, SEXP byteSizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type source(sourceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type byteSize(byteSizeSEXP);
+    C_memcpy(source, target, byteSize);
+    return R_NilValue;
+END_RCPP
+}
+// C_isSameObject
+bool C_isSameObject(SEXP x, SEXP y);
+RcppExport SEXP _SharedObject_C_isSameObject(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(C_isSameObject(x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_ALTREP
 bool C_ALTREP(SEXP x);
 RcppExport SEXP _SharedObject_C_ALTREP(SEXP xSEXP) {
@@ -243,6 +267,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_createSharedMemory", (DL_FUNC) &_SharedObject_C_createSharedMemory, 2},
     {"_SharedObject_C_readSharedMemory", (DL_FUNC) &_SharedObject_C_readSharedMemory, 1},
+    {"_SharedObject_C_memcpy", (DL_FUNC) &_SharedObject_C_memcpy, 3},
+    {"_SharedObject_C_isSameObject", (DL_FUNC) &_SharedObject_C_isSameObject, 2},
     {"_SharedObject_C_ALTREP", (DL_FUNC) &_SharedObject_C_ALTREP, 1},
     {"_SharedObject_C_getAltData1", (DL_FUNC) &_SharedObject_C_getAltData1, 1},
     {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},

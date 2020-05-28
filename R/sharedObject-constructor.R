@@ -10,24 +10,26 @@ names(dataInfoTemplate) = dataInfoNames
 #############################
 ## constructor for a shared object
 #############################
-#' Create an R object in the shared memory
+#' Create a shared object
 #'
-#' This function will create an object in the shared memory for the function argument `x`
-#' and return a shared object if the object can be shared. There is no duplication
-#' of the shared object when a shared object is exported to the other processes.
-#' `tryShare` is equivalent to `share` with argument `mustWork = FALSE`.
+#' This function will create a shared object in the shared memory for the function
+#' argument `x` and return a shared object if the object can be shared.
+#' There is no duplication of the shared object when a shared object is
+#' exported to the other processes.
+#' `tryShare` is equivalent to `share` with the argument `mustWork = FALSE`.
 #'
 #' @param x An R object that you want to shared. The supported data types are
-#' `raw`, `logical`, `integer` and `real`. The data structure can be `vector`,
-#' `matrix` and `data.frame`. List is not supported but can be created manually.
+#' `raw`, `logical`, `integer` and `real`. `character` cannot be shared.
 #' @param copyOnWrite,sharedSubset,sharedCopy The parameters controlling the behavior of the shared object,
 #' see details.
 #' @param mustWork Whether to throw an error if `x` is not a sharable object(e.g. Character).
-#' @param autoS4Conversion Whether to use the automatic conversion method when
-#' there is no `share` method defined for the signiture `class(x)`, see details.
+#' @param autoS4Conversion Whether to use the automatic conversion method for
+#' an S4 object when there is no `share` method defined
+#' for the signiture `class(x)`, see details.
 #' @param ... Additional parameters that can be passed to the shared object, see below.
 #'
-#' @aliases share,vector-method share,matrix-method share,data.frame-method share,list-method
+#' @aliases share,vector-method share,matrix-method
+#' share,data.frame-method share,list-method
 #'
 #' @return A shared object
 #' @details
@@ -195,6 +197,86 @@ tryShare <- function(x, ...) {
     options["mustWork"] <- FALSE
     do.call(share, options)
 }
+
+#' Unshare a shared object
+#'
+#' Unshare a shared object. There will be no effect if the
+#' object is not shared.
+#'
+#' @param x a shared object, or an object that contains a shared object.
+#' @return An unshared object
+#' @aliases unshare,ANY-method unshare,vector-method unshare,list-method
+#' @examples
+#' x1 <- share(1:10)
+#' x2 <- unshare(x1)
+#' is.shared(x1)
+#' is.shared(x2)
+#' @export
+setGeneric("unshare", signature="x", function(x){
+    standardGeneric("unshare")
+})
+unshareAttributes<-function(x){
+    attrs <- attributes(x)
+    if(!is.null(attrs)&&any(unlist(is.shared(attrs)))){
+        unSharedAttrs <- unshare(attrs)
+        if(!C_isSameObject(attrs,unSharedAttrs)){
+            attributes(x) <- unSharedAttrs
+        }
+    }
+    x
+}
+#' @export
+setMethod("unshare", signature(x = "ANY"), function(x){
+    x <- unshareAttributes(x)
+    if(isS4(x)){
+        slots <- slotNames(x)
+        for(i in slots){
+            curSlot <- slot(x,i)
+            unSharedSlot <- unshare(curSlot)
+            if(!C_isSameObject(curSlot,unSharedSlot)){
+                slot(x,i,check =FALSE) <- unSharedSlot
+            }
+        }
+        return(x)
+    }
+
+    if(is.environment(x)){
+        for(i in names(x)){
+            x[[i]] <- unshare(x)
+        }
+    }
+    return(x)
+})
+#' @export
+setMethod("unshare", signature(x = "vector"), function(x){
+    if(!is.shared(x)){
+        return(x)
+    }
+    if(!typeof(x)%in%c("logical", "integer", "double", "character", "raw")){
+        return(x)
+    }
+    y <- vector(mode = typeof(x),length = length(x))
+    attributes(y) <- unshare(attributes(x))
+    ## This function directly operates on the memory
+    C_memcpy(x, y,length(x) * getTypeSize(typeof(x)))
+    y
+})
+#' @export
+setMethod("unshare", signature(x = "list"), function(x){
+    x <- unshareAttributes(x)
+
+    for(i in seq_along(x)){
+        curElt <- x[[i]]
+        unSharedElt <- unshare(curElt)
+        if(!C_isSameObject(curElt,unSharedElt)){
+            x[[i]] <- unSharedElt
+        }
+    }
+    x
+})
+
+
+
 
 
 

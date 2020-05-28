@@ -1,8 +1,8 @@
 setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 
-typeSize <- c(4, 4, 8, 1, 1)
+typeSize <- c(4, 4, 8, 1)
 names(typeSize) <-
-    c("logical", "integer", "double", "raw", "character")
+    c("logical", "integer", "double", "raw")
 
 ## the size of the type
 getTypeSize <- function(x) {

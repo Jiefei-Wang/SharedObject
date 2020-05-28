@@ -3,6 +3,7 @@
 #' @importFrom stats runif
 #' @importFrom methods is new as
 #' @import BiocGenerics
+#' @import methods
 NULL
 
 
