@@ -1,5 +1,0 @@
-MKDIR?=mkdir
-RM?=rm -f
-CP?=cp
-
-include Makevars.common
