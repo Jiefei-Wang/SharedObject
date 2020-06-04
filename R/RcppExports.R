@@ -37,8 +37,20 @@ C_setAltData2 <- function(x, data) {
     invisible(.Call(`_SharedObject_C_setAltData2`, x, data))
 }
 
-C_attachAttr <- function(R_source, R_tag, R_attr) {
-    .Call(`_SharedObject_C_attachAttr`, R_source, R_tag, R_attr)
+C_attachAttr <- function(to, from) {
+    invisible(.Call(`_SharedObject_C_attachAttr`, to, from))
+}
+
+C_getType <- function(x) {
+    .Call(`_SharedObject_C_getType`, x)
+}
+
+C_SETS4 <- function(x) {
+    invisible(.Call(`_SharedObject_C_SETS4`, x))
+}
+
+C_UNSETS4 <- function(x) {
+    invisible(.Call(`_SharedObject_C_UNSETS4`, x))
 }
 
 C_getLastIndex <- function() {

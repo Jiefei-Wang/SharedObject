@@ -1,18 +1,10 @@
-#' @useDynLib SharedObject, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
-#' @importFrom stats runif
-#' @importFrom methods is new as
-#' @import BiocGenerics
-#' @import methods
-NULL
-
+sharedAtomicOptions = c("copyOnWrite", "sharedSubset", "sharedCopy")
 
 globalSettings = new.env()
 globalSettings$copyOnWrite = TRUE
 globalSettings$sharedSubset = FALSE
 globalSettings$sharedCopy = FALSE
 globalSettings$mustWork = TRUE
-globalSettings$autoS4Conversion = FALSE
 
 #' Get or set the global options for the SharedObject package
 #'
@@ -67,3 +59,16 @@ checkOptionExistance <- function(options) {
     options = options[!noneExistOptions]
     options
 }
+
+## Fill the options with their default argument
+## if not specified
+completeOptions <- function(...) {
+    options <- list(...)
+    defaultOptions <- getSharedObjectOptions()[sharedAtomicOptions]
+    ind <- which(!sharedAtomicOptions %in% names(options))
+    options <- c(options,defaultOptions[ind])
+    options
+}
+
+
+

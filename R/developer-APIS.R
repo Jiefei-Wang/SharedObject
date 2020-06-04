@@ -12,6 +12,77 @@ checkNamedID <- function(name){
     assert(length(name)==1, "The named id must be a length 1 vector")
 }
 
+#' Get the shared object usage report
+#'
+#' Get the shared object usage report. The size is the real memory size
+#' that a system allocates for the shared object, so it might be larger
+#' than the object size. The size unit is byte.
+#'
+#' @param start the start value of the ID. The default is `NULL`. See details.
+#' @param end the end value of the ID. The default is `NULL`. See details.
+#' @param includeCharId Whether including the shared objects named by a character ID, it only works
+#' on Unix-like systems. See `?allocateNamedSharedMemory` for more information. The default is `FALSE`.
+#'
+#' @details
+#' The parameter `start` and `end` specify the range of the ID. If not specified, all
+#' IDs will be listed.
+#'
+#' On Ubuntu or many other Unix-like operating systems, the shared objects
+#' can be found in the folder `/dev/shm`. The function can find all shared objects
+#' if the folder exists.
+#'
+#' On Windows, since there is no easy way to find all shared objects.
+#' the function will guess the range of the shared object IDs and search all IDs
+#' within the range. Therefore, if there are too many shared objects(over 4 billions)
+#' ,the object id can be out of the searching range and the result may not be complete.
+#' Furthermore, there will be no named shared object in the returned list.
+#'
+#' @examples
+#' ## Automatically determine the search range
+#' listSharedObject()
+#'
+#' ## specify the search range
+#' listSharedObject(start = 10, end = 20)
+#'
+#' ## Search from 0 to 20
+#' listSharedObject(20)
+#' @seealso \code{\link{getLastIndex}}, \code{\link{allocateSharedMemory}},
+#' \code{\link{allocateNamedSharedMemory}}, \code{\link{mapSharedMemory}}, \code{\link{unmapSharedMemory}},
+#' \code{\link{freeSharedMemory}}, \code{\link{hasSharedMemory}}, \code{\link{getSharedMemorySize}}
+#' @return A data.frame object with shared object id and size
+#' @export
+listSharedObject <- function(end = NULL,start = NULL, includeCharId = FALSE) {
+    if(file.exists("/dev/shm")){
+        num_name <- paste0(getOSBit(),"_num")
+        char_name <- paste0(getOSBit(),"_char")
+        all_ids <- getSharedFiles(showInternal = FALSE)
+        usedId <- all_ids[[num_name]]
+        if(!is.null(start))
+            usedId <- usedId[usedId>=start]
+        if(!is.null(end))
+            usedId <- usedId[usedId<=end]
+        if(includeCharId)
+            usedId <- c(usedId, all_ids[[char_name]])
+    }else{
+        if(is.null(start))
+            start <- 0
+        if(is.null(end))
+            end <- getLastIndex()
+        if(end < start)
+            ids <- c()
+        else
+            ids <- seq_len(end - start + 1) + start - 1
+        usedId <- ids[vapply(ids, hasSharedMemory, logical(1))]
+    }
+    memorySize <- vapply(usedId, getSharedMemorySize, double(1))
+    data.frame(Id = usedId, size = memorySize, row.names = NULL)
+}
+
+
+
+##########################################
+## Functions to create shared memory
+##########################################
 #' Functions to manipulate shared memory
 #'
 #' These functions are for package developers only, they can

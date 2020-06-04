@@ -171,7 +171,7 @@ void C_setAltData2(SEXP x, SEXP data)
 {
 	R_set_altrep_data2(x, data);
 }
-
+/*
 // [[Rcpp::export]]
 SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr)
 {
@@ -180,10 +180,41 @@ SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr)
 	Rf_setAttrib(R_source, Rf_install(tag), R_attr);
 	UNPROTECT(1);
 	return R_NilValue;
+}*/
+// [[Rcpp::export]]
+void C_attachAttr(SEXP to, SEXP from){
+	DUPLICATE_ATTRIB(to,from);
 }
 
-
-
+// [[Rcpp::export]]
+String C_getType(SEXP x){
+	switch(TYPEOF(x)){
+		case RAWSXP:
+			return String("raw");
+		case LGLSXP:
+			return String("logical");
+		case INTSXP:
+			return String("integer");
+		case REALSXP:
+			return String("double");
+		case STRSXP:
+			return String("string");
+		case VECSXP:
+			return String("list");
+		case S4SXP:
+			return String("S4");
+		default:
+			return String("other");
+	}
+}
+// [[Rcpp::export]]
+void C_SETS4(SEXP x){
+	SET_S4_OBJECT(x);
+}
+// [[Rcpp::export]]
+void C_UNSETS4(SEXP x){
+	UNSET_S4_OBJECT(x);
+}
 
 
 /*

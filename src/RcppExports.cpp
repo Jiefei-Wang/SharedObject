@@ -109,16 +109,45 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_attachAttr
-SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr);
-RcppExport SEXP _SharedObject_C_attachAttr(SEXP R_sourceSEXP, SEXP R_tagSEXP, SEXP R_attrSEXP) {
+void C_attachAttr(SEXP to, SEXP from);
+RcppExport SEXP _SharedObject_C_attachAttr(SEXP toSEXP, SEXP fromSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type to(toSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type from(fromSEXP);
+    C_attachAttr(to, from);
+    return R_NilValue;
+END_RCPP
+}
+// C_getType
+String C_getType(SEXP x);
+RcppExport SEXP _SharedObject_C_getType(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type R_source(R_sourceSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type R_tag(R_tagSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type R_attr(R_attrSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_attachAttr(R_source, R_tag, R_attr));
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_getType(x));
     return rcpp_result_gen;
+END_RCPP
+}
+// C_SETS4
+void C_SETS4(SEXP x);
+RcppExport SEXP _SharedObject_C_SETS4(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    C_SETS4(x);
+    return R_NilValue;
+END_RCPP
+}
+// C_UNSETS4
+void C_UNSETS4(SEXP x);
+RcppExport SEXP _SharedObject_C_UNSETS4(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    C_UNSETS4(x);
+    return R_NilValue;
 END_RCPP
 }
 // C_getLastIndex
@@ -274,7 +303,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},
     {"_SharedObject_C_setAltData1", (DL_FUNC) &_SharedObject_C_setAltData1, 2},
     {"_SharedObject_C_setAltData2", (DL_FUNC) &_SharedObject_C_setAltData2, 2},
-    {"_SharedObject_C_attachAttr", (DL_FUNC) &_SharedObject_C_attachAttr, 3},
+    {"_SharedObject_C_attachAttr", (DL_FUNC) &_SharedObject_C_attachAttr, 2},
+    {"_SharedObject_C_getType", (DL_FUNC) &_SharedObject_C_getType, 1},
+    {"_SharedObject_C_SETS4", (DL_FUNC) &_SharedObject_C_SETS4, 1},
+    {"_SharedObject_C_UNSETS4", (DL_FUNC) &_SharedObject_C_UNSETS4, 1},
     {"_SharedObject_C_getLastIndex", (DL_FUNC) &_SharedObject_C_getLastIndex, 0},
     {"_SharedObject_C_allocateSharedMemory", (DL_FUNC) &_SharedObject_C_allocateSharedMemory, 1},
     {"_SharedObject_C_mapSharedMemory", (DL_FUNC) &_SharedObject_C_mapSharedMemory, 1},

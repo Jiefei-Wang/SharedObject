@@ -1,11 +1,4 @@
-#' @include sharedObject-internal.R
-NULL
-
-dataInfoPropNames = c("dataId", "length", "totalSize", "dataType", "ownData")
-sharedOptions = c("copyOnWrite", "sharedSubset", "sharedCopy")
-dataInfoNames = c(dataInfoPropNames, sharedOptions)
-dataInfoTemplate = as.list(rep(0, length(dataInfoNames)))
-names(dataInfoTemplate) = dataInfoNames
+setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 
 #############################
 ## constructor for a shared object
@@ -154,7 +147,7 @@ names(dataInfoTemplate) = dataInfoNames
 #' @rdname share
 #' @export
 setGeneric("share", signature="x", function(x,
-                             ...) {
+                                            ...) {
     args <- list(x=x, ...)
     ind <- which(!names(globalSettings) %in% names(args))
     if(length(ind)>0){
@@ -167,118 +160,66 @@ setGeneric("share", signature="x", function(x,
         standardGeneric("share")
     }
 })
-#' @rdname share
-#' @export
-setMethod("share", signature(x = "ANY"), promptErrorANY)
-#' @rdname share
-#' @export
-setMethod("share", signature(x = "character"), promptErrorChar)
-#' @rdname share
-#' @export
-setMethod("share", signature(x = "vector"), shareAtomic)
-#' @rdname share
-#' @export
-setMethod("share", signature(x = "matrix"), shareAtomic)
-#' @rdname share
-#' @export
-setMethod("share", signature(x = "list"), function(x,...) {
-    result <- vector("list", length = length(x))
-    for (i in seq_along(result)) {
-        result[[i]] <- share(x[[i]], ...)
-    }
-    copyAttribute(result, x)
-    result
-})
 
-#' @rdname share
-#' @export
-tryShare <- function(x, ...) {
-    options <- list(x = x, ...)
-    options["mustWork"] <- FALSE
-    do.call(share, options)
-}
 
-#' Unshare a shared object
+
+
+#' Test whether the object is a shared object
 #'
-#' Unshare a shared object. There will be no effect if the
-#' object is not shared.
+#' @param x An R object
+#' @param recursive Whether to recursively check the element of `x` if `x` has
+#' mutiple components(e.g. `list` and S4 object), see details
+#' @param ... For generalization purpose only
+#' @details
+#' When `x` consists of multiple elements and the elements are not a simple object
+#' (e.g. a list of lists), the `is.shared` function by default will recursively look
+#' into each element and return whether the element's components are
+#' shared in a list format. If `recursive = FALSE`, a singe logical value is returned
+#' for each element of `x` indicating whether the element contains any shared data.
 #'
-#' @param x a shared object, or an object that contains a shared object.
-#' @return An unshared object
-#' @aliases unshare,ANY-method unshare,vector-method unshare,list-method
+#' @return TRUE/FALSE indicating whether the object is a shared object.
+#' If the object is a list, the return value is a vector of TRUE/FALSE corresponding
+#' to each element of the list.
 #' @examples
-#' x1 <- share(1:10)
-#' x2 <- unshare(x1)
-#' is.shared(x1)
-#' is.shared(x2)
+#' x <- share(1:10)
+#' is.shared(x)
+#' @rdname is.shared
 #' @export
-setGeneric("unshare", signature="x", function(x){
-    standardGeneric("unshare")
-})
-unshareAttributes<-function(x){
-    attrs <- attributes(x)
-    if(!is.null(attrs)&&any(unlist(is.shared(attrs)))){
-        unSharedAttrs <- unshare(attrs)
-        if(!C_isSameObject(attrs,unSharedAttrs)){
-            attributes(x) <- unSharedAttrs
-        }
-    }
-    x
-}
-#' @export
-setMethod("unshare", signature(x = "ANY"), function(x){
-    x <- unshareAttributes(x)
-    if(isS4(x)){
-        slots <- slotNames(x)
-        for(i in slots){
-            curSlot <- slot(x,i)
-            unSharedSlot <- unshare(curSlot)
-            if(!C_isSameObject(curSlot,unSharedSlot)){
-                slot(x,i,check =FALSE) <- unSharedSlot
-            }
-        }
-        return(x)
-    }
-
-    if(is.environment(x)){
-        for(i in names(x)){
-            x[[i]] <- unshare(x)
-        }
-    }
-    return(x)
-})
-#' @export
-setMethod("unshare", signature(x = "vector"), function(x){
-    if(!is.shared(x)){
-        return(x)
-    }
-    if(!typeof(x)%in%c("logical", "integer", "double", "character", "raw")){
-        return(x)
-    }
-    y <- vector(mode = typeof(x),length = length(x))
-    attributes(y) <- unshare(attributes(x))
-    ## This function directly operates on the memory
-    C_memcpy(x, y,length(x) * getTypeSize(typeof(x)))
-    y
-})
-#' @export
-setMethod("unshare", signature(x = "list"), function(x){
-    x <- unshareAttributes(x)
-
-    for(i in seq_along(x)){
-        curElt <- x[[i]]
-        unSharedElt <- unshare(curElt)
-        if(!C_isSameObject(curElt,unSharedElt)){
-            x[[i]] <- unSharedElt
-        }
-    }
-    x
+setGeneric("is.shared", function(x, ..., recursive = FALSE,verbose  = FALSE) {
+    standardGeneric("is.shared")
 })
 
 
 
 
+#' Get/Set the properties of the shared object.
+#'
+#' Get/Set the properties of the shared object.
+#' The available properties are `dataId`, `length`, `totalSize`,
+#' `dataType`, `ownData`, `copyOnWrite`, `sharedSubset`, `sharedCopy`.
+#'
+#' @param x A shared object
+#' @param property A character vector, the name of the property(s),
+#' if the argument is missing or the value is `NULL`, it represents all properties.
+#' @param ... Not used
+#' @return
+#' get: The property(s) of a shared object
+#' @rdname sharedObjectProperty
+#' @export
+setGeneric("getSharedObjectProperty", function(x, property = NULL, ...) {
+    standardGeneric("getSharedObjectProperty")
+})
 
 
 
-
+#' @param value The new value of the property, if the length of value
+#' does not match the length of the property, the argument `value` will
+#' be repeated to match the length.
+#' @rdname sharedObjectProperty
+#' @return
+#' set: No return value
+#' @export
+setGeneric("setSharedObjectProperty",
+           function(x, property, value, ...) {
+               standardGeneric("setSharedObjectProperty")
+           })

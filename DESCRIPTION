@@ -32,11 +32,4 @@ Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 SystemRequirements: GNU make, C++11
 Encoding: UTF-8
-Collate: 
-    'RcppExports.R'
-    'developer-APIS.R'
-    'pkgSetting.R'
-    'sharedObject-internal.R'
-    'sharedObject-constructor.R'
-    'utils.R'
-    'sharedObject-method.R'
+

@@ -1,97 +1,8 @@
-#' @include utils.R
-NULL
-
-#' Test whether the object is a shared object
-#'
-#' @param x An R object
-#' @param recursive Whether to recursively check the element of `x` if `x` has
-#' mutiple components(e.g. `list` and S4 object), see details
-#' @param ... For generalization purpose only
-#' @details
-#' When `x` consists of multiple elements and the elements are not a simple object
-#' (e.g. a list of lists), the `is.shared` function by default will recursively look
-#' into each element and return whether the element's components are
-#' shared in a list format. If `recursive = FALSE`, a singe logical value is returned
-#' for each element of `x` indicating whether the element contains any shared data.
-#'
-#' @return TRUE/FALSE indicating whether the object is a shared object.
-#' If the object is a list, the return value is a vector of TRUE/FALSE corresponding
-#' to each element of the list.
-#' @examples
-#' x <- share(1:10)
-#' is.shared(x)
-#' @rdname is.shared
-#' @export
-setGeneric("is.shared", function(x, recursive = TRUE, ...) {
-    standardGeneric("is.shared")
-})
-
-#' @rdname is.shared
-#' @export
-setMethod("is.shared", "ANY", function(x,recursive,...){
-    if(isS4(x)){
-        return(isS4Shared(x,recursive=recursive,...))
-    }
-    if (is.altrep(x)) {
-        info <- C_getAltData2(x)
-        if (is.list(info) &&
-            length(info) == length(dataInfoTemplate) &&
-            identical(names(dataInfoTemplate), names(dataInfoTemplate))) {
-            return(TRUE)
-        }
-    }
-    return(FALSE)
-})
-isS4Shared <- function(x,recursive,...){
-    slots <- slotNames(x)
-    res <- vector("list",length(slots))
-    for(i in seq_along(slots)){
-        res[[i]] <- is.shared(slot(x, slots[i]),recursive=recursive,...)
-    }
-    names(res) <- slots
-    res <- res[unlist(lapply(res, function(x) length(x) != 0))]
-    if(!recursive){
-        res <- lapply(res, function(x)any(unlist(x)))
-    }
-    res
-}
-
-
-#' @rdname is.shared
-#' @export
-setMethod("is.shared", "list", function(x,recursive, ...){
-    res <- lapply(x, function(x,...)is.shared(x,...),
-                  recursive=recursive,...)
-    if(!recursive){
-        res <- lapply(res, function(x)any(unlist(x)))
-    }
-    res
-})
-
-
-
-#' Get/Set the properties of the shared object.
-#'
-#' Get/Set the properties of the shared object.
-#' The available properties are `dataId`, `length`, `totalSize`,
-#' `dataType`, `ownData`, `copyOnWrite`, `sharedSubset`, `sharedCopy`.
-#'
-#' @param x A shared object
-#' @param property A character vector, the name of the property(s),
-#' if the argument is missing or the value is `NULL`, it represents all properties.
-#' @param ... Not used
-#' @return
-#' get: The property(s) of a shared object
-#' @rdname sharedObjectProperty
-#' @export
-setGeneric("getSharedObjectProperty", function(x, property, ...) {
-    standardGeneric("getSharedObjectProperty")
-})
-
 #' @rdname sharedObjectProperty
 #' @export
 setMethod("getSharedObjectProperty", signature(x = "ANY", property = "characterOrNULLOrMissing"),
           function(x, property, ...) {
+              dataInfoTemplate <- getDataInfoTemplate()
               if (is.shared(x)) {
                   if (missing(property) || is.null(property)) {
                       property <- names(dataInfoTemplate)
@@ -115,18 +26,6 @@ setMethod("getSharedObjectProperty", signature(x = "list", property = "character
               lapply(x, getSharedObjectProperty, property = property, ...)
           })
 
-#' @param value The new value of the property, if the length of value
-#' does not match the length of the property, the argument `value` will
-#' be repeated to match the length.
-#' @rdname sharedObjectProperty
-#' @return
-#' set: No return value
-#' @export
-setGeneric("setSharedObjectProperty",
-           function(x, property, value, ...) {
-               standardGeneric("setSharedObjectProperty")
-           })
-
 #' @rdname sharedObjectProperty
 #' @export
 setMethod("setSharedObjectProperty", signature(
@@ -136,6 +35,7 @@ setMethod("setSharedObjectProperty", signature(
 )
 , function(x, property, value, ...) {
     if (is.shared(x)) {
+        dataInfoTemplate <- getDataInfoTemplate()
         if (missing(property) || is.null(property)) {
             property <- names(dataInfoTemplate)
         }
@@ -152,11 +52,12 @@ setMethod("setSharedObjectProperty", signature(
             info[[property[i]]] <- as(value[i], class(info[[property[i]]]))
         }
         setAltData2(x, info)
-    }
-    if(length(property)==1){
-        invisible(old_info[[1]])
-    }else{
-        invisible(old_info)
+
+        if(length(property)==1){
+            invisible(old_info[[1]])
+        }else{
+            invisible(old_info)
+        }
     }
 })
 #' @rdname sharedObjectProperty
