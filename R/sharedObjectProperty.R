@@ -3,7 +3,7 @@
 setMethod("getSharedObjectProperty", signature(x = "ANY", property = "characterOrNULLOrMissing"),
           function(x, property, ...) {
               dataInfoTemplate <- getDataInfoTemplate()
-              if (is.shared(x)) {
+              if (isSharedSEXP(x)) {
                   if (missing(property) || is.null(property)) {
                       property <- names(dataInfoTemplate)
                   }
@@ -34,7 +34,7 @@ setMethod("setSharedObjectProperty", signature(
     value = "ANY"
 )
 , function(x, property, value, ...) {
-    if (is.shared(x)) {
+    if (isSharedSEXP(x)) {
         dataInfoTemplate <- getDataInfoTemplate()
         if (missing(property) || is.null(property)) {
             property <- names(dataInfoTemplate)

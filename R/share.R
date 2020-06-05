@@ -1,3 +1,13 @@
+## we share the object based on the data structure, not the
+## `class` attribute, so the S4 dispatch system does not work
+## as we expected, we create our own dispatch rule:
+## 1. If the object is an S4 object, dispatch to shareS4 method
+## 2. If the internal structure of the object is an atomic object,
+## dispatch to shareAtomic function
+## 3. If the internal is a list, dispatch to shareList
+## 4. Otherwise, for any unknow object, throw an error
+
+
 shareANY <- function(x,...){
     if(isS4(x)){
         return(shareS4(x,...))
@@ -11,41 +21,34 @@ shareANY <- function(x,...){
     }
     promptError(x,...)
 }
-shareAtomic <- function(x,...) {
-    ## if the object is an S4 object
-    ## dispatch it to the S4 method
-    # if(isS4(x)){
-    #     return(shareS4(x,...))
-    # }
-    ## check the internal data type
-    # if(!C_getType(x)%in%c("raw","logical","integer","double")){
-    #     return(shareANY(x,...))
-    # }
 
+## x must be an atomic object
+shareAtomic <- function(x,...) {
     options <- completeOptions(...)
+
     ## if the object x has been shared and
     ## all the atomic options are the same,
     ## we will return the same object.
-    if(isSharedSEXP(x)){
-        props <- getSharedObjectProperty(x)
-        if(all.equal(options[sharedAtomicOptions],props[sharedAtomicOptions]))
-            return(x)
+    props <- getSharedObjectProperty(x)
+    if(isSharedSEXP(x)&&
+       all.equal(options[sharedAtomicOptions],props[sharedAtomicOptions])){
+        result <- x
+    }else{
+        ## Construct dataInfo
+        ## The dataId and dataType will be filled out at C level
+        dataInfo = getDataInfoTemplate(
+            dataId = 1.0,
+            length = length(x),
+            totalSize = calculateSharedMemorySize(x),
+            dataType = 0,
+            ownData = TRUE
+        )
+        dataInfo[sharedAtomicOptions] <- options[sharedAtomicOptions]
+        if(dataInfo[["totalSize"]] == 0){
+            dataInfo[["totalSize"]] <- 1
+        }
+        result <- C_createSharedMemory(x, dataInfo)
     }
-    ## Construct dataInfo
-    ## The dataId and dataType will be filled out at C level
-    dataInfo = getDataInfoTemplate(
-        dataId = 1.0,
-        length = length(x),
-        totalSize = calculateSharedMemorySize(x),
-        dataType = 0,
-        ownData = TRUE
-    )
-    dataInfo[sharedAtomicOptions] <- options[sharedAtomicOptions]
-
-    if(dataInfo[["totalSize"]]==0){
-        dataInfo[["totalSize"]] <- 1
-    }
-    result <- C_createSharedMemory(x, dataInfo)
     ## copy the attributes if necessary
     attris <- attributes(x)
     if(!is.null(attris)){
@@ -56,23 +59,21 @@ shareAtomic <- function(x,...) {
         setSharedObjectProperty(result, "ownData", oldOwnData)
         setCopyOnWrite(result, oldCopyOnWrite)
     }
-
     result
 }
+
 shareList <- function(x,...) {
-    # if(isS4(x)){
-    #     return(shareS4(x,...))
-    # }
-    # if(C_getType(x) !="list"){
-    #     return(shareANY(x,...))
-    # }
     result <- lapply(x,share,...)
     if(!is.null(attributes(x))){
         if(!all(names(attributes(x)) %in% c("class","names")))
             attributes(result) <- tryShare(attributes(x),...)
+        else{
+            attributes(result) <- attributes(x)
+        }
     }
     result
 }
+
 shareS4 <- function(x,...){
     dataType <- C_getType(x)
     ## If the object is an S4SXP,
@@ -118,19 +119,6 @@ promptError <- function(x, ...) {
     )
 }
 
-## This function would not follow the R syntex and
-## change the value of x outside the function.
-## It is for internal usage only
-# shareAttributes <- function(x, options=NULL){
-#     if(!is.null(attributes(x))){
-#         args <- c(list(x = attributes(x)), options)
-#         attrs <- do.call("tryShare", args=args)
-#         for (i in names(attrs)) {
-#             C_attachAttr(x, i, attrs[[i]])
-#         }
-#     }
-#     x
-# }
 
 
 #' @rdname share

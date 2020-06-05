@@ -169,6 +169,7 @@ setGeneric("share", signature="x", function(x,
 #' @param x An R object
 #' @param recursive Whether to recursively check the element of `x` if `x` has
 #' mutiple components(e.g. `list` and S4 object), see details
+#' @param showAttributes Whether to check the attributes of `x`.
 #' @param ... For generalization purpose only
 #' @details
 #' When `x` consists of multiple elements and the elements are not a simple object
@@ -185,7 +186,7 @@ setGeneric("share", signature="x", function(x,
 #' is.shared(x)
 #' @rdname is.shared
 #' @export
-setGeneric("is.shared", function(x, ..., recursive = FALSE,verbose  = FALSE) {
+setGeneric("is.shared", function(x, ..., recursive = FALSE, showAttributes  = FALSE) {
     standardGeneric("is.shared")
 })
 
