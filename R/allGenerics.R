@@ -16,9 +16,7 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' @param copyOnWrite,sharedSubset,sharedCopy The parameters controlling the behavior of the shared object,
 #' see details.
 #' @param mustWork Whether to throw an error if `x` is not a sharable object(e.g. Character).
-#' @param autoS4Conversion Whether to use the automatic conversion method for
-#' an S4 object when there is no `share` method defined
-#' for the signiture `class(x)`, see details.
+#' This parameter has no effect on the S4 object.
 #' @param ... Additional parameters that can be passed to the shared object, see below.
 #'
 #' @aliases share,vector-method share,matrix-method
@@ -36,12 +34,19 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #'
 #' **Supported types**
 #'
-#' The function supports sharing `raw`,`logical` ,`integer`, `double` data types.
-#' When the argument `x` is an atomic object(e.g vector, matrix),
-#' the function will create an ALTREP object to replace it.
-#' When `x` is a list, each column of `x` will be replaced by an ALTREP object.
-#' The function `share` is an S4 generic, Package developers can provide their own
-#' shared object by defining an S4 `share` function.
+#' For the basic R types, the function supports `raw`,`logical` ,`integer`, `double`.
+#' `character` cannot be shared for it has a complicated data structure and closely
+#' related to R's cache. For the list object, the elements in the list will be shared.
+#' `environment` is not supported for changing an `environment` object may have an
+#' unexpected consequence.
+#'
+#' The function `share` is an S4 generic. The default share method works for
+#' most S4 objects. Therefore, there is no need to define a S4 share method
+#' for each S4 class unless the S4 class has a special implementation(e.g. on-disk data).
+#' The default method will share the object itself and
+#' all slots it contains. No error will be given if any of these objects are not
+#' sharable and they will be kept unchanged.
+#'
 #'
 #' **Behavior control**
 #'
@@ -77,18 +82,6 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' to the function.
 #'
 #'
-#' **Default S4 share function**
-#' If the argument `x` is an S4 object and its class is not supported
-#' by the `share` function. A default `share` function can be used by specifying
-#' `autoS4Conversion = TRUE`. The default method will loop over and share
-#' all slots for the object `x`. No error will be given if a slot
-#' of `x` is not sharable. Please be aware that this method may have an
-#' unexpected consequence(e.g. a C pointer is linked with a slot data of `x`).
-#' It only serves as a backup method. Most bioconductor fundamental classes are supported in
-#' `SharedObjectUltility`, if you find the class of `x` is not supported by
-#' `SharedObjectUltility` and is important for Bioconductor users, please feel free to ask
-#' for the new feature at
-#' \href{https://github.com/Jiefei-Wang/SharedObjectUtility/issues}{GitHub}.
 #'
 #' @examples
 #' ## For vector
@@ -160,7 +153,23 @@ setGeneric("share", signature="x", function(x,
         standardGeneric("share")
     }
 })
-
+#' Unshare a shared object
+#'
+#' Unshare a shared object. There will be no effect if the
+#' object is not shared.
+#'
+#' @param x a shared object, or an object that contains a shared object.
+#' @return An unshared object
+#' @aliases unshare,ANY-method unshare,vector-method unshare,list-method
+#' @examples
+#' x1 <- share(1:10)
+#' x2 <- unshare(x1)
+#' is.shared(x1)
+#' is.shared(x2)
+#' @export
+setGeneric("unshare", signature="x", function(x){
+    standardGeneric("unshare")
+})
 
 
 
@@ -173,10 +182,17 @@ setGeneric("share", signature="x", function(x,
 #' @param ... For generalization purpose only
 #' @details
 #' When `x` consists of multiple elements and the elements are not a simple object
-#' (e.g. a list of lists), the `is.shared` function by default will recursively look
-#' into each element and return whether the element's components are
-#' shared in a list format. If `recursive = FALSE`, a singe logical value is returned
-#' for each element of `x` indicating whether the element contains any shared data.
+#' (e.g. a list of lists), the `is.shared` function by default will return
+#' a singe logical value for each element of `x` indicating whether the element
+#' contains any shared data. If `recursive = TRUE`, the function will recursively look
+#' into each element and check whether the element's components are
+#' shared in a list format.
+#'
+#' if `showAttributes = TRUE`, the attributes of the object will also be examined. The
+#' result is returned in an attribute format. It can be find in the `sharedAttributes`
+#' attributes. Note that `showAttributes` has no effect on an S4 object for the attributes
+#' of an S4 object are used to store the slots and should not be treated as the attributes
+#' of an object.
 #'
 #' @return TRUE/FALSE indicating whether the object is a shared object.
 #' If the object is a list, the return value is a vector of TRUE/FALSE corresponding

@@ -1,37 +1,33 @@
 context("Unshare function")
 
-#
-#
-# n <- 100
-#
-#
-# test_that("unshare Atomic", {
-#     a <- share(runif(n))
-#     b <- unshare(a)
-#     expect_equal(a,b)
-#     expect_true(all(as.logical(is.shared(a))))
-#     expect_false(any(as.logical(is.shared(b))))
-# })
-#
-#
-#
-# test_that("unshare list", {
-#     a <- share(list(runif(n),runif(n)))
-#     b <- unshare(a)
-#     expect_equal(a,b)
-#     expect_true(all(as.logical(is.shared(a))))
-#     expect_false(any(as.logical(is.shared(b))))
-# })
-#
-# test_that("unshare class", {
-#     setClass("testClass",representation = list(a="vector",b="character"))
-#     x <- new("testClass",a=runif(10),b=sample(letters,5))
-#
-#     x_shr <- share(x,autoS4Conversion=TRUE, mustWork = TRUE)
-#
-#     y <-unshare(x_shr)
-#     expect_equal(x_shr,y)
-#     expect_false(any(unlist(is.shared(y))))
-#     removeClass("testClass")
-# })
+
+test_that("unshare Atomic", {
+    x <- structure(runif(10), a= 1:10,b=list(a1= 1:2,b1= letters[1:3]))
+    x1 <- share(x)
+    x2 <- unshare(x1)
+    expect_equal(x,x2)
+    expect_equal(is.shared(x, recursive = TRUE, showAttributes = TRUE),
+                 is.shared(x2, recursive = TRUE,showAttributes = TRUE))
+})
+
+test_that("unshare list", {
+    x <- structure(list(x=runif(10)), a= 1:10,b=list(a1= 1:2,b1= letters[1:3]))
+    x1 <- share(x)
+    x2 <- unshare(x1)
+    expect_equal(x,x2)
+    expect_equal(is.shared(x, recursive = TRUE, showAttributes = TRUE),
+                 is.shared(x2, recursive = TRUE,showAttributes = TRUE))
+})
+
+test_that("unshare class", {
+    .myClass <- setClass("myClass", slots = c(a= "numeric",b="character", d= "list"),
+                         contains = "numeric")
+    x <- .myClass(runif(10), a = 1:10, b = letters[1:5], d = list(a1= 1,b1=letters[1:5]))
+    x1 <- share(x)
+    x2 <- unshare(x1)
+    expect_equal(x,x2)
+    expect_equal(is.shared(x, recursive = TRUE, showAttributes = TRUE),
+                 is.shared(x2, recursive = TRUE,showAttributes = TRUE))
+    removeClass("myClass")
+})
 

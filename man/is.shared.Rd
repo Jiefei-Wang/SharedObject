@@ -3,22 +3,21 @@
 \name{is.shared}
 \alias{is.shared}
 \alias{is.shared,ANY-method}
-\alias{is.shared,list-method}
 \title{Test whether the object is a shared object}
 \usage{
-is.shared(x, recursive = TRUE, ...)
+is.shared(x, ..., recursive = FALSE, showAttributes = FALSE)
 
-\S4method{is.shared}{ANY}(x, recursive = TRUE, ...)
-
-\S4method{is.shared}{list}(x, recursive = TRUE, ...)
+\S4method{is.shared}{ANY}(x, ..., recursive = FALSE, showAttributes = FALSE)
 }
 \arguments{
 \item{x}{An R object}
 
+\item{...}{For generalization purpose only}
+
 \item{recursive}{Whether to recursively check the element of \code{x} if \code{x} has
 mutiple components(e.g. \code{list} and S4 object), see details}
 
-\item{...}{For generalization purpose only}
+\item{showAttributes}{Whether to check the attributes of \code{x}.}
 }
 \value{
 TRUE/FALSE indicating whether the object is a shared object.
@@ -30,10 +29,17 @@ Test whether the object is a shared object
 }
 \details{
 When \code{x} consists of multiple elements and the elements are not a simple object
-(e.g. a list of lists), the \code{is.shared} function by default will recursively look
-into each element and return whether the element's components are
-shared in a list format. If \code{recursive = FALSE}, a singe logical value is returned
-for each element of \code{x} indicating whether the element contains any shared data.
+(e.g. a list of lists), the \code{is.shared} function by default will return
+a singe logical value for each element of \code{x} indicating whether the element
+contains any shared data. If \code{recursive = TRUE}, the function will recursively look
+into each element and check whether the element's components are
+shared in a list format.
+
+if \code{showAttributes = TRUE}, the attributes of the object will also be examined. The
+result is returned in an attribute format. It can be find in the \code{sharedAttributes}
+attributes. Note that \code{showAttributes} has no effect on an S4 object for the attributes
+of an S4 object are used to store the slots and should not be treated as the attributes
+of an object.
 }
 \examples{
 x <- share(1:10)

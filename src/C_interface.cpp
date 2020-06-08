@@ -171,20 +171,6 @@ void C_setAltData2(SEXP x, SEXP data)
 {
 	R_set_altrep_data2(x, data);
 }
-/*
-// [[Rcpp::export]]
-SEXP C_attachAttr(SEXP R_source, SEXP R_tag, SEXP R_attr)
-{
-	R_attr = PROTECT(Rf_duplicate(R_attr));
-	const char *tag = R_CHAR(Rf_asChar(R_tag));
-	Rf_setAttrib(R_source, Rf_install(tag), R_attr);
-	UNPROTECT(1);
-	return R_NilValue;
-}*/
-// [[Rcpp::export]]
-void C_attachAttr(SEXP to, SEXP from){
-	DUPLICATE_ATTRIB(to,from);
-}
 
 // [[Rcpp::export]]
 String C_getType(SEXP x){

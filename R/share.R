@@ -96,10 +96,6 @@ shareS4 <- function(x,...){
         C_SETS4(x)
         C_SETS4(x1)
     }
-    # slots <- slotNames(x)
-    # for(i in slots){
-    #     slot(x, i, check = FALSE) <- tryShare(slot(x, i), ...)
-    # }
     x1
 }
 
@@ -152,82 +148,6 @@ tryShare <- function(x, ...) {
     do.call(share, options)
 }
 
-#' Unshare a shared object
-#'
-#' Unshare a shared object. There will be no effect if the
-#' object is not shared.
-#'
-#' @param x a shared object, or an object that contains a shared object.
-#' @return An unshared object
-#' @aliases unshare,ANY-method unshare,vector-method unshare,list-method
-#' @examples
-#' x1 <- share(1:10)
-#' x2 <- unshare(x1)
-#' is.shared(x1)
-#' is.shared(x2)
-#' @export
-setGeneric("unshare", signature="x", function(x){
-    standardGeneric("unshare")
-})
-unshareAttributes<-function(x){
-    attrs <- attributes(x)
-    if(!is.null(attrs)&&any(unlist(is.shared(attrs)))){
-        unSharedAttrs <- unshare(attrs)
-        if(!C_isSameObject(attrs,unSharedAttrs)){
-            attributes(x) <- unSharedAttrs
-        }
-    }
-    x
-}
-#' @export
-setMethod("unshare", signature(x = "ANY"), function(x){
-    x <- unshareAttributes(x)
-    if(isS4(x)){
-        slots <- slotNames(x)
-        for(i in slots){
-            curSlot <- slot(x,i)
-            unSharedSlot <- unshare(curSlot)
-            if(!C_isSameObject(curSlot,unSharedSlot)){
-                slot(x,i,check =FALSE) <- unSharedSlot
-            }
-        }
-        return(x)
-    }
-
-    # if(is.environment(x)){
-    #     for(i in names(x)){
-    #         x[[i]] <- unshare(x)
-    #     }
-    # }
-    return(x)
-})
-#' @export
-setMethod("unshare", signature(x = "vector"), function(x){
-    if(!is.shared(x)){
-        return(x)
-    }
-    if(!typeof(x)%in%c("logical", "integer", "double", "character", "raw")){
-        return(x)
-    }
-    y <- vector(mode = typeof(x),length = length(x))
-    attributes(y) <- unshare(attributes(x))
-    ## This function directly operates on the memory
-    C_memcpy(x, y,length(x) * getTypeSize(typeof(x)))
-    y
-})
-#' @export
-setMethod("unshare", signature(x = "list"), function(x){
-    # x <- unshareAttributes(x)
-
-    for(i in seq_along(x)){
-        curElt <- x[[i]]
-        unSharedElt <- unshare(curElt)
-        if(!C_isSameObject(curElt,unSharedElt)){
-            x[[i]] <- unSharedElt
-        }
-    }
-    x
-})
 
 
 

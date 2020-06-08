@@ -108,17 +108,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// C_attachAttr
-void C_attachAttr(SEXP to, SEXP from);
-RcppExport SEXP _SharedObject_C_attachAttr(SEXP toSEXP, SEXP fromSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type to(toSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type from(fromSEXP);
-    C_attachAttr(to, from);
-    return R_NilValue;
-END_RCPP
-}
 // C_getType
 String C_getType(SEXP x);
 RcppExport SEXP _SharedObject_C_getType(SEXP xSEXP) {
@@ -303,7 +292,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},
     {"_SharedObject_C_setAltData1", (DL_FUNC) &_SharedObject_C_setAltData1, 2},
     {"_SharedObject_C_setAltData2", (DL_FUNC) &_SharedObject_C_setAltData2, 2},
-    {"_SharedObject_C_attachAttr", (DL_FUNC) &_SharedObject_C_attachAttr, 2},
     {"_SharedObject_C_getType", (DL_FUNC) &_SharedObject_C_getType, 1},
     {"_SharedObject_C_SETS4", (DL_FUNC) &_SharedObject_C_SETS4, 1},
     {"_SharedObject_C_UNSETS4", (DL_FUNC) &_SharedObject_C_UNSETS4, 1},

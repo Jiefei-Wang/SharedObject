@@ -15,13 +15,13 @@
 \alias{setSharedCopy}
 \title{Get/Set the properties of the shared object.}
 \usage{
-getSharedObjectProperty(x, property, ...)
+getSharedObjectProperty(x, property = NULL, ...)
 
 setSharedObjectProperty(x, property, value, ...)
 
-\S4method{getSharedObjectProperty}{ANY,characterOrNULLOrMissing}(x, property, ...)
+\S4method{getSharedObjectProperty}{ANY,characterOrNULLOrMissing}(x, property = NULL, ...)
 
-\S4method{getSharedObjectProperty}{list,characterOrNULLOrMissing}(x, property, ...)
+\S4method{getSharedObjectProperty}{list,characterOrNULLOrMissing}(x, property = NULL, ...)
 
 \S4method{setSharedObjectProperty}{ANY,characterOrNULLOrMissing}(x, property, value, ...)
 

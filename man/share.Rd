@@ -7,21 +7,12 @@
 \alias{share,data.frame-method}
 \alias{share,list-method}
 \alias{share,ANY-method}
-\alias{share,character-method}
 \alias{tryShare}
 \title{Create a shared object}
 \usage{
 share(x, ...)
 
-\S4method{share}{ANY}(x, autoS4Conversion, ...)
-
-\S4method{share}{character}(x, mustWork, ...)
-
-\S4method{share}{vector}(x, ...)
-
-\S4method{share}{matrix}(x, ...)
-
-\S4method{share}{list}(x, ...)
+\S4method{share}{ANY}(x, ...)
 
 tryShare(x, ...)
 }
@@ -31,14 +22,11 @@ tryShare(x, ...)
 
 \item{...}{Additional parameters that can be passed to the shared object, see below.}
 
-\item{autoS4Conversion}{Whether to use the automatic conversion method for
-an S4 object when there is no \code{share} method defined
-for the signiture \code{class(x)}, see details.}
-
-\item{mustWork}{Whether to throw an error if \code{x} is not a sharable object(e.g. Character).}
-
 \item{copyOnWrite, sharedSubset, sharedCopy}{The parameters controlling the behavior of the shared object,
 see details.}
+
+\item{mustWork}{Whether to throw an error if \code{x} is not a sharable object(e.g. Character).
+This parameter has no effect on the S4 object.}
 }
 \value{
 A shared object
@@ -60,12 +48,18 @@ the \code{tryShare} function can be used and it is equivalent to the function
 
 \strong{Supported types}
 
-The function supports sharing \code{raw},\code{logical} ,\code{integer}, \code{double} data types.
-When the argument \code{x} is an atomic object(e.g vector, matrix),
-the function will create an ALTREP object to replace it.
-When \code{x} is a list, each column of \code{x} will be replaced by an ALTREP object.
-The function \code{share} is an S4 generic, Package developers can provide their own
-shared object by defining an S4 \code{share} function.
+For the basic R types, the function supports \code{raw},\code{logical} ,\code{integer}, \code{double}.
+\code{character} cannot be shared for it has a complicated data structure and closely
+related to R's cache. For the list object, the elements in the list will be shared.
+\code{environment} is not supported for changing an \code{environment} object may have an
+unexpected consequence.
+
+The function \code{share} is an S4 generic. The default share method works for
+most S4 objects. Therefore, there is no need to define a S4 share method
+for each S4 class unless the S4 class has a special implementation(e.g. on-disk data).
+The default method will share the object itself and
+all slots it contains. No error will be given if any of these objects are not
+sharable and they will be kept unchanged.
 
 \strong{Behavior control}
 
@@ -99,19 +93,6 @@ cannot be triggered. In current version (R 3.6), an object will be duplicated fo
 for creating a shared object and lead to a serious performance problem. Therefore,
 the default value is \code{FALSE}, user can alter it by passing \code{sharedCopy = FALSE}
 to the function.
-
-\strong{Default S4 share function}
-If the argument \code{x} is an S4 object and its class is not supported
-by the \code{share} function. A default \code{share} function can be used by specifying
-\code{autoS4Conversion = TRUE}. The default method will loop over and share
-all slots for the object \code{x}. No error will be given if a slot
-of \code{x} is not sharable. Please be aware that this method may have an
-unexpected consequence(e.g. a C pointer is linked with a slot data of \code{x}).
-It only serves as a backup method. Most bioconductor fundamental classes are supported in
-\code{SharedObjectUltility}, if you find the class of \code{x} is not supported by
-\code{SharedObjectUltility} and is important for Bioconductor users, please feel free to ask
-for the new feature at
-\href{https://github.com/Jiefei-Wang/SharedObjectUtility/issues}{GitHub}.
 }
 \examples{
 ## For vector

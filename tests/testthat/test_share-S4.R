@@ -1,8 +1,6 @@
 context("Share S4 objects")
 
-if(isClass("myClass")){
-    removeClass("myClass")
-}
+
 
 test_that("atomic type SEXP", {
     .myClass <- setClass("myClass", slots = c(a= "numeric",b="character"), contains = "numeric")

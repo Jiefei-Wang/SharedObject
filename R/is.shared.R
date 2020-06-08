@@ -36,16 +36,16 @@ isSharedList <- function(x,...,recursive,showAttributes){
     result
 }
 
-isSharedS4 <- function(x,...,recursive){
+isSharedS4 <- function(x,...,recursive,showAttributes){
     slots <- slotNames(x)
     result <- vector("list",length(slots))
     for(i in seq_along(slots)){
-        result[[i]] <- is.shared(slot(x, slots[i]),...,recursive=recursive)
+        result[[i]] <- is.shared(slot(x, slots[i]),...,recursive=recursive, showAttributes = FALSE)
     }
     names(result) <- slots
     if(".Data" %in% names(result)){
         if(isSEXPAtomic(x)){
-            result[[".Data"]] <- isSharedSEXP(x)
+            result[[".Data"]] <- isSharedSEXP(x,showAttributes = FALSE)
         }
         if(isSEXPList(x)){
             names(result[[".Data"]]) <- names(x)
