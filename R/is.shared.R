@@ -43,9 +43,13 @@ isSharedS4 <- function(x,...,recursive){
         result[[i]] <- is.shared(slot(x, slots[i]),...,recursive=recursive)
     }
     names(result) <- slots
-    if(isSEXPAtomic(x) &&
-       ".Data" %in% names(result)){
-        result[[".Data"]] <- isSharedSEXP(x)
+    if(".Data" %in% names(result)){
+        if(isSEXPAtomic(x)){
+            result[[".Data"]] <- isSharedSEXP(x)
+        }
+        if(isSEXPList(x)){
+            names(result[[".Data"]]) <- names(x)
+        }
     }
     ## remove the empty slot
     result <- result[unlist(lapply(result, function(x) length(x) != 0))]

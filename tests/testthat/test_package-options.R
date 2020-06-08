@@ -8,7 +8,7 @@ test_that("Shared Object Global options", {
         sharedCopy = FALSE
     )
 
-    x = share(data)
+    x = share(runif(10))
     getSharedObjectProperty(x, NULL)
     expect_equal(getCopyOnWrite(x), FALSE)
     expect_equal(getSharedCopy(x), FALSE)
@@ -48,13 +48,3 @@ test_that("Option: mustWork", {
     do.call(setSharedObjectOptions,old)
 })
 
-test_that("Option: defaultS4Method", {
-    setClass("testClass",representation = list(a="vector",b="character"))
-    x <- new("testClass",a=runif(10),b=sample(letters,5))
-
-    expect_error(share(x,autoS4Conversion=FALSE, mustWork = TRUE))
-    expect_error(x_shr <- share(x,autoS4Conversion=TRUE, mustWork = TRUE),NA)
-
-    expect_equal(is.shared(x_shr),list(a=TRUE,b=FALSE))
-    removeClass("testClass")
-})

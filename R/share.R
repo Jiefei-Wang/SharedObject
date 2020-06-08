@@ -81,9 +81,10 @@ shareS4 <- function(x,...){
     if(dataType=="S4"||
        dataType=="string"||
        dataType=="other"){
-        slots <- slotNames(x)
+        x1 <- x
+        slots <- slotNames(x1)
         for(i in slots){
-            slot(x, i, check = FALSE) <- tryShare(slot(x, i), ...)
+            slot(x1, i, check = FALSE) <- tryShare(slot(x, i), ...)
         }
     }else{
         ## If the object is not an S4SXP,
@@ -91,14 +92,15 @@ shareS4 <- function(x,...){
         C_UNSETS4(x)
         if(isS4(x))
             stop("Unexpected error, cannot convert an S4 object to a non-S4 object")
-        x <- shareANY(x,...)
+        x1 <- tryShare(x,...)
         C_SETS4(x)
+        C_SETS4(x1)
     }
     # slots <- slotNames(x)
     # for(i in slots){
     #     slot(x, i, check = FALSE) <- tryShare(slot(x, i), ...)
     # }
-    x
+    x1
 }
 
 

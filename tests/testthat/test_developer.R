@@ -1,4 +1,4 @@
-context("Shared vector validation")
+context("developers: shared memory management")
 gc()
 get_os <- function(){
     sysinf <- Sys.info()
