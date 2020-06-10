@@ -108,17 +108,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// C_getType
-String C_getType(SEXP x);
-RcppExport SEXP _SharedObject_C_getType(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(C_getType(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // C_SETS4
 void C_SETS4(SEXP x);
 RcppExport SEXP _SharedObject_C_SETS4(SEXP xSEXP) {
@@ -292,7 +281,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},
     {"_SharedObject_C_setAltData1", (DL_FUNC) &_SharedObject_C_setAltData1, 2},
     {"_SharedObject_C_setAltData2", (DL_FUNC) &_SharedObject_C_setAltData2, 2},
-    {"_SharedObject_C_getType", (DL_FUNC) &_SharedObject_C_getType, 1},
     {"_SharedObject_C_SETS4", (DL_FUNC) &_SharedObject_C_SETS4, 1},
     {"_SharedObject_C_UNSETS4", (DL_FUNC) &_SharedObject_C_UNSETS4, 1},
     {"_SharedObject_C_getLastIndex", (DL_FUNC) &_SharedObject_C_getLastIndex, 0},

@@ -15,7 +15,7 @@ getTypeSize <- function(x) {
 }
 
 calculateSharedMemorySize <- function(x) {
-    length(x) * getTypeSize(C_getType(x))
+    length(x) * getTypeSize(typeof(x))
 }
 
 
@@ -34,11 +34,11 @@ getDataInfoTemplate <- function(...){
 }
 
 
-isSEXPAtomic <- function(x){
-    C_getType(x) %in% c("raw","logical","integer","double")
+isSharableAtomic <- function(x){
+    typeof(x) %in% c("raw","logical","integer","double")
 }
 isSEXPList <- function(x){
-    C_getType(x) %in% "list"
+    is.list(x)&&!is.pairlist(x)
 }
 
 #' Whether an object is an ALTREP object

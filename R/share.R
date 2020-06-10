@@ -11,12 +11,9 @@
 shareANY <- function(x,...){
     if(isS4(x)){
         return(shareS4(x,...))
-    }
-    dataType <- C_getType(x)
-    if(isSEXPAtomic(x)){
+    }else if(isSharableAtomic(x)){
         return(shareAtomic(x,...))
-    }
-    if(isSEXPList(x)){
+    }else if(isSEXPList(x)){
         return(shareList(x,...))
     }
     promptError(x,...)
@@ -25,36 +22,29 @@ shareANY <- function(x,...){
 ## x must be an atomic object
 shareAtomic <- function(x,...) {
     options <- completeOptions(...)
-
-    ## if the object x has been shared and
-    ## all the atomic options are the same,
-    ## we will return the same object.
-    props <- getSharedObjectProperty(x)
-    if(isSharedSEXP(x)&&
-       all.equal(options[sharedAtomicOptions],props[sharedAtomicOptions])){
-        result <- x
-    }else{
-        ## Construct dataInfo
-        ## The dataId and dataType will be filled out at C level
-        dataInfo = getDataInfoTemplate(
-            dataId = 1.0,
-            length = length(x),
-            totalSize = calculateSharedMemorySize(x),
-            dataType = 0,
-            ownData = TRUE
-        )
-        dataInfo[sharedAtomicOptions] <- options[sharedAtomicOptions]
-        if(dataInfo[["totalSize"]] == 0){
-            dataInfo[["totalSize"]] <- 1
-        }
-        result <- C_createSharedMemory(x, dataInfo)
+    ## Construct dataInfo
+    ## The dataId and dataType will be filled out at C level
+    dataInfo = getDataInfoTemplate(
+        dataId = 1.0,
+        length = length(x),
+        totalSize = calculateSharedMemorySize(x),
+        dataType = 0,
+        ownData = TRUE
+    )
+    dataInfo[sharedAtomicOptions] <- options[sharedAtomicOptions]
+    if(dataInfo[["totalSize"]] == 0){
+        dataInfo[["totalSize"]] <- 1
     }
-    ## copy the attributes if necessary
-    attris <- attributes(x)
-    if(!is.null(attris)){
+    result <- C_createSharedMemory(x, dataInfo)
+
+    ## Share the attributes
+    oldAttrs <- attributes(x)
+    if(!is.null(oldAttrs)){
         oldCopyOnWrite <- setCopyOnWrite(result, FALSE)
         oldOwnData <- setSharedObjectProperty(result, "ownData", FALSE)
-        attrs <- tryShare(attris,...)
+        attrs <- tryShare(oldAttrs,...)
+        ## we must set the attributes no matter if attributes can be shared or not
+        ## for result does not have any attributes.
         attributes(result) <- attrs
         setSharedObjectProperty(result, "ownData", oldOwnData)
         setCopyOnWrite(result, oldCopyOnWrite)
@@ -63,40 +53,12 @@ shareAtomic <- function(x,...) {
 }
 
 shareList <- function(x,...) {
-    result <- lapply(x,share,...)
-    if(!is.null(attributes(x))){
-        if(!all(names(attributes(x)) %in% c("class","names")))
-            attributes(result) <- tryShare(attributes(x),...)
-        else{
-            attributes(result) <- attributes(x)
-        }
-    }
-    result
+    doList(share,tryShare,x,...)
 }
 
+
 shareS4 <- function(x,...){
-    dataType <- C_getType(x)
-    ## If the object is an S4SXP,
-    ## share its slots
-    if(dataType=="S4"||
-       dataType=="string"||
-       dataType=="other"){
-        x1 <- x
-        slots <- slotNames(x1)
-        for(i in slots){
-            slot(x1, i, check = FALSE) <- tryShare(slot(x, i), ...)
-        }
-    }else{
-        ## If the object is not an S4SXP,
-        ## Calling the right share method
-        C_UNSETS4(x)
-        if(isS4(x))
-            stop("Unexpected error, cannot convert an S4 object to a non-S4 object")
-        x1 <- tryShare(x,...)
-        C_SETS4(x)
-        C_SETS4(x1)
-    }
-    x1
+    doS4(tryShare,x,...)
 }
 
 

@@ -64,10 +64,9 @@ checkOptionExistance <- function(options) {
 ## if not specified
 completeOptions <- function(...) {
     options <- list(...)
-    defaultOptions <- getSharedObjectOptions()[sharedAtomicOptions]
-    ind <- which(!sharedAtomicOptions %in% names(options))
-    options <- c(options,defaultOptions[ind])
-    options
+    defaultOptions <- getSharedObjectOptions()
+    ind <- !names(defaultOptions) %in% names(options)
+    c(options,defaultOptions[ind])
 }
 
 

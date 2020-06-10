@@ -44,7 +44,7 @@ isSharedS4 <- function(x,...,recursive,showAttributes){
     }
     names(result) <- slots
     if(".Data" %in% names(result)){
-        if(isSEXPAtomic(x)){
+        if(isSharableAtomic(x)){
             result[[".Data"]] <- isSharedSEXP(x,showAttributes = FALSE)
         }
         if(isSEXPList(x)){

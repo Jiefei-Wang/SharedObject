@@ -37,10 +37,6 @@ C_setAltData2 <- function(x, data) {
     invisible(.Call(`_SharedObject_C_setAltData2`, x, data))
 }
 
-C_getType <- function(x) {
-    .Call(`_SharedObject_C_getType`, x)
-}
-
 C_SETS4 <- function(x) {
     invisible(.Call(`_SharedObject_C_SETS4`, x))
 }

@@ -141,17 +141,7 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' @export
 setGeneric("share", signature="x", function(x,
                                             ...) {
-    args <- list(x=x, ...)
-    ind <- which(!names(globalSettings) %in% names(args))
-    if(length(ind)>0){
-        defaultArgs <- lapply(names(globalSettings)[ind],
-                              function(x)getSharedObjectOptions(x))
-        names(defaultArgs) <- names(globalSettings)[ind]
-        args <- c(args,defaultArgs)
-        do.call("share",args)
-    }else{
-        standardGeneric("share")
-    }
+    standardGeneric("share")
 })
 #' Unshare a shared object
 #'

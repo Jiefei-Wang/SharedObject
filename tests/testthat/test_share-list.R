@@ -33,4 +33,19 @@ test_that("type check", {
     expect_equal(is.altrep(data), FALSE)
     expect_equal(as.logical(is.shared(data)), rep(FALSE,2))
 })
+
+test_that("nonsharable list-related objects", {
+    x <- list(a = "a")
+    x2 <- tryShare(x)
+    expect_true(C_isSameObject(x,x2))
+
+    attr(x, "test") = "a"
+    attr(x, "test1") = 1
+    x2 <- tryShare(x)
+    expect_true(C_isSameObject(attr(x, "test"),attr(x2, "test")))
+    expect_false(C_isSameObject(attr(x, "test1"),attr(x2, "test1")))
+    expect_true(is.shared(attr(x2, "test1")))
+})
+
+
 gc()
