@@ -5,16 +5,16 @@
 \alias{is.shared,ANY-method}
 \title{Test whether the object is a shared object}
 \usage{
-is.shared(x, ..., recursive = FALSE, showAttributes = FALSE)
+is.shared(x, ..., depth = 0, showAttributes = FALSE)
 
-\S4method{is.shared}{ANY}(x, ..., recursive = FALSE, showAttributes = FALSE)
+\S4method{is.shared}{ANY}(x, ..., depth = 0, showAttributes = FALSE)
 }
 \arguments{
 \item{x}{An R object}
 
 \item{...}{For generalization purpose only}
 
-\item{recursive}{Whether to recursively check the element of \code{x} if \code{x} has
+\item{depth}{Whether to recursively check the element of \code{x} if \code{x} has
 mutiple components(e.g. \code{list} and S4 object), see details}
 
 \item{showAttributes}{Whether to check the attributes of \code{x}.}

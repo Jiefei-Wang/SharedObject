@@ -5,6 +5,7 @@
 ## 2. If the internal structure of the object is an atomic object,
 ## dispatch to shareAtomic function
 ## 3. If the internal is a list, dispatch to shareList
+## 4. If the internal is an environment, dispatch to shareEnvironment
 ## 4. Otherwise, for any unknow object, throw an error
 
 
@@ -15,6 +16,8 @@ shareANY <- function(x,...){
         return(shareAtomic(x,...))
     }else if(isSEXPList(x)){
         return(shareList(x,...))
+    }else if(is.environment(x)){
+        return(shareEnvironment(x,...))
     }
     promptError(x,...)
 }
@@ -60,7 +63,9 @@ shareList <- function(x,...) {
 shareS4 <- function(x,...){
     doS4(tryShare,x,...)
 }
-
+shareEnvironment <- function(x,...){
+   doEnvironment(share,tryShare,x,...)
+}
 
 promptError <- function(x, ...) {
     args <- completeOptions(...)

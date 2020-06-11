@@ -48,3 +48,11 @@ doS4 <- function(func, x, ...){
     validObject(x1)
     x1
 }
+
+doEnvironment <- function(func,tryFunc, x, ...){
+    for(i in names(x)){
+        x[[i]] <- func(x[[i]],...)
+    }
+    attributes(x) <- tryFunc(attributes(x),...)
+    x
+}

@@ -166,7 +166,7 @@ setGeneric("unshare", signature="x", function(x){
 #' Test whether the object is a shared object
 #'
 #' @param x An R object
-#' @param recursive Whether to recursively check the element of `x` if `x` has
+#' @param depth Whether to recursively check the element of `x` if `x` has
 #' mutiple components(e.g. `list` and S4 object), see details
 #' @param showAttributes Whether to check the attributes of `x`.
 #' @param ... For generalization purpose only
@@ -192,9 +192,10 @@ setGeneric("unshare", signature="x", function(x){
 #' is.shared(x)
 #' @rdname is.shared
 #' @export
-setGeneric("is.shared", function(x, ..., recursive = FALSE, showAttributes  = FALSE) {
-    standardGeneric("is.shared")
-})
+setGeneric("is.shared", signature="x",
+           function(x, ..., depth = 0, showAttributes  = FALSE) {
+               standardGeneric("is.shared")
+           })
 
 
 

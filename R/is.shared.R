@@ -13,62 +13,64 @@ isSharedSEXP <- function(x, showAttributes = FALSE){
         }
     }
     if(showAttributes&&!is.null(attributes(x))){
-        attr(result, "sharedAttributes") <- is.shared(attributes(x), showAttributes = FALSE)
+        attr(result, "sharedAttributes") <- is.shared(attributes(x), showAttributes = FALSE, depth = 1)
     }
     result
 }
 
-isSharedANY <- function(x,...,recursive,showAttributes){
+isSharedANY <- function(x,...,depth,showAttributes){
     ## If the object is neither an S4 object or a list
     ## Just check if the SEXP is a shared altrep object
     result <- isSharedSEXP(x,showAttributes=showAttributes)
     result
 }
-isSharedList <- function(x,...,recursive,showAttributes){
+isSharedList <- function(x,...,depth,showAttributes){
     result <- lapply(x, function(x,...)is.shared(x,...),
-                     ...,recursive=recursive,showAttributes=FALSE)
-    if(!recursive){
-        result <- lapply(result, function(x)any(unlist(x)))
+                     ...,depth=depth-1L,showAttributes=FALSE)
+    if(depth<=0){
+        result <- any(unlist(result))
     }
     if(showAttributes&&!is.null(attributes(x))){
-        attr(result, "sharedAttributes") <- is.shared(attributes(x), showAttributes = FALSE)
+        attr(result, "sharedAttributes") <- is.shared(attributes(x), showAttributes = FALSE, depth = 1)
     }
     result
 }
 
-isSharedS4 <- function(x,...,recursive,showAttributes){
+isSharedS4 <- function(x,...,depth,showAttributes){
     slots <- slotNames(x)
     result <- vector("list",length(slots))
     for(i in seq_along(slots)){
-        result[[i]] <- is.shared(slot(x, slots[i]),...,recursive=recursive, showAttributes = FALSE)
+        result[[i]] <- is.shared(slot(x, slots[i]),...,depth=depth-1L, showAttributes = FALSE)
     }
     names(result) <- slots
     if(".Data" %in% names(result)){
         if(isSharableAtomic(x)){
             result[[".Data"]] <- isSharedSEXP(x,showAttributes = FALSE)
         }
-        if(isSEXPList(x)){
+        if(isSEXPList(x)&&is.list(result[[".Data"]])){
             names(result[[".Data"]]) <- names(x)
         }
     }
     ## remove the empty slot
-    result <- result[unlist(lapply(result, function(x) length(x) != 0))]
-    if(!recursive){
-        result <- lapply(result, function(x)any(unlist(x)))
+    # result <- result[unlist(lapply(result, function(x) length(x) != 0))]
+    if(depth<=0){
+        result <- any(unlist(result))
     }
     result
 }
 
+
+
 #' @rdname is.shared
 #' @export
-setMethod("is.shared", "ANY", function(x,...,recursive,showAttributes){
+setMethod("is.shared", "ANY", function(x,...,depth,showAttributes){
     if(isS4(x)){
-        return(isSharedS4(x,...,recursive=recursive,showAttributes=showAttributes))
+        return(isSharedS4(x,...,depth=depth,showAttributes=showAttributes))
     }
-    if(isSEXPList(x)){
-        return(isSharedList(x,...,recursive=recursive,showAttributes=showAttributes))
+    if(isSEXPList(x)||is.environment(x)){
+        return(isSharedList(x,...,depth=depth,showAttributes=showAttributes))
     }
-    isSharedANY(x,...,recursive=recursive,showAttributes=showAttributes)
+    isSharedANY(x,...,depth=depth,showAttributes=showAttributes)
 })
 
 

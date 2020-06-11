@@ -1,12 +1,12 @@
 unshareANY <- function(x){
     if(isS4(x)){
         return(unshareS4(x))
-    }
-    if(isSharableAtomic(x)){
+    }else if(isSharableAtomic(x)){
         return(unshareAtomic(x))
-    }
-    if(isSEXPList(x)){
+    }else if(isSEXPList(x)){
         return(unshareList(x))
+    }else if(is.environment(x)){
+        return(unshareEnvironment(x))
     }
     x
 }
@@ -47,7 +47,9 @@ unshareList <- function(x) {
 unshareS4 <- function(x){
     doS4(unshare,x)
 }
-
+unshareEnvironment <- function(x){
+    doEnvironment(unshare,unshare,x)
+}
 
 #' @export
 setMethod("unshare", signature(x = "ANY"), unshareANY)

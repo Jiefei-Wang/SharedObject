@@ -11,7 +11,7 @@ MKDIR_P = ${MKDIR} -p
 .PHONY: all copy-files make-static
 
 all: remove-file ${SHLIB} make-static copy-files
-all: ${SHLIB}
+#all: ${SHLIB}
 
 remove-file:
 	 ${RM} "../inst/include/SharedObject/sharedMemory.h" &&\

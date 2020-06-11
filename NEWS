@@ -1,3 +1,11 @@
+Changes in version 1.3.7
++ change the default argument of is.shared function
++ `mustWork = FALSE` by default, no error will be given
+when sharing a nonsharable object
++ Support environment object
+Changes in version 1.3.6
++ Support S4 object
++ new dispatching method(signiture "ANY") for share, unshare and is.shared functions
 Changes in version 1.1.6
 + Add memory check on Linix system
 Changes in version 1.1.1

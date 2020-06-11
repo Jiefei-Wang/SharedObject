@@ -6,8 +6,8 @@ test_that("unshare Atomic", {
     x1 <- share(x)
     x2 <- unshare(x1)
     expect_equal(x,x2)
-    expect_equal(is.shared(x, recursive = TRUE, showAttributes = TRUE),
-                 is.shared(x2, recursive = TRUE,showAttributes = TRUE))
+    expect_equal(is.shared(x, depth = Inf, showAttributes = TRUE),
+                 is.shared(x2, depth = Inf,showAttributes = TRUE))
 })
 
 test_that("unshare list", {
@@ -15,8 +15,8 @@ test_that("unshare list", {
     x1 <- share(x)
     x2 <- unshare(x1)
     expect_equal(x,x2)
-    expect_equal(is.shared(x, recursive = TRUE, showAttributes = TRUE),
-                 is.shared(x2, recursive = TRUE,showAttributes = TRUE))
+    expect_equal(is.shared(x, depth = Inf, showAttributes = TRUE),
+                 is.shared(x2, depth = Inf,showAttributes = TRUE))
 })
 
 test_that("unshare class", {
@@ -26,8 +26,8 @@ test_that("unshare class", {
     x1 <- share(x)
     x2 <- unshare(x1)
     expect_equal(x,x2)
-    expect_equal(is.shared(x, recursive = TRUE, showAttributes = TRUE),
-                 is.shared(x2, recursive = TRUE,showAttributes = TRUE))
+    expect_equal(is.shared(x, depth = Inf, showAttributes = TRUE),
+                 is.shared(x2, depth = Inf,showAttributes = TRUE))
     removeClass("myClass")
 })
 
