@@ -17,7 +17,7 @@ using std::string;
 ##########################################
 */
 
-void copyData(SEXP source, void *target);
+void copyData(void *target, SEXP source);
 static void ptrFinalizer(SEXP extPtr);
 SEXP C_createEmptySharedMemory(List dataInfo)
 {
@@ -40,12 +40,20 @@ SEXP C_createEmptySharedMemory(List dataInfo)
 // [[Rcpp::export]]
 SEXP C_createSharedMemory(SEXP x, List dataInfo)
 {
-	//uint64_t dataSize = as<uint64_t>(dataInfo[INFO_TOTALSIZE]);
 	SEXP R_type = PROTECT(Rf_ScalarReal(TYPEOF(x)));
 	dataInfo[INFO_DATATYPE] = R_type;
 	SEXP result = C_createEmptySharedMemory(dataInfo);
-	copyData(x,ALT_EXTPTR(result));
-	//memcpy(ALT_EXTPTR(result), DATAPTR(x), dataSize);
+	// If x has data pointer, we just use memcpy function
+	// Otherwise, we use get_region function to get the data from x
+	if (DATAPTR_OR_NULL(x) != NULL)
+	{
+		uint64_t dataSize = as<uint64_t>(dataInfo[INFO_TOTALSIZE]);
+		memcpy(DATAPTR(result), DATAPTR_OR_NULL(x), dataSize);
+	}
+	else
+	{
+		copyData(DATAPTR(result), x);
+	}
 	UNPROTECT(1);
 	return result;
 }
@@ -83,8 +91,11 @@ static void ptrFinalizer(SEXP extPtr)
 	return;
 }
 
-/*Copy data from SEXP to target*/
-void copyData(SEXP source, void *target)
+/*
+Copy data from source to target without using the 
+data pointer of the source.
+*/
+void copyData(void *target, SEXP source)
 {
 	int data_type = TYPEOF(source);
 	if (data_type == RAWSXP)
@@ -124,19 +135,30 @@ void copyData(SEXP source, void *target)
 						  });
 		return;
 	}
+	if (data_type == CPLXSXP)
+	{
+		ITERATE_BY_REGION(source, buffer, ind, nbatch, Rcomplex, COMPLEX,
+						  {
+							  size_t size = sizeof(buffer[0]);
+							  memcpy((Rcomplex *)target + ind * nbatch, buffer, nbatch * size);
+						  });
+		return;
+	}
 }
 
 /*Copy data from source to target*/
 // [[Rcpp::export]]
-void C_memcpy(SEXP source,SEXP target, R_xlen_t byteSize){
-	void* sourcePtr = DATAPTR(source);
-	void* targetPtr = DATAPTR(target);
-	memcpy(targetPtr,sourcePtr,byteSize);
+void C_memcpy(SEXP source, SEXP target, R_xlen_t byteSize)
+{
+	void *sourcePtr = DATAPTR(source);
+	void *targetPtr = DATAPTR(target);
+	memcpy(targetPtr, sourcePtr, byteSize);
 }
 
 // [[Rcpp::export]]
-bool C_isSameObject(SEXP x, SEXP y){
-	return ((void*) x) == ((void*) y);
+bool C_isSameObject(SEXP x, SEXP y)
+{
+	return ((void *)x) == ((void *)y);
 }
 
 /*
@@ -172,13 +194,14 @@ void C_setAltData2(SEXP x, SEXP data)
 	R_set_altrep_data2(x, data);
 }
 
-
 // [[Rcpp::export]]
-void C_SETS4(SEXP x){
+void C_SETS4(SEXP x)
+{
 	SET_S4_OBJECT(x);
 }
 // [[Rcpp::export]]
-void C_UNSETS4(SEXP x){
+void C_UNSETS4(SEXP x)
+{
 	UNSET_S4_OBJECT(x);
 }
 /*

@@ -303,6 +303,7 @@ void init_real_class(DllInfo* dll);
 void init_integer_class(DllInfo* dll);
 void init_logical_class(DllInfo* dll);
 void init_raw_class(DllInfo* dll);
+void init_complex_class(DllInfo* dll);
 RcppExport void R_init_SharedObject(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
@@ -310,4 +311,5 @@ RcppExport void R_init_SharedObject(DllInfo *dll) {
     init_integer_class(dll);
     init_logical_class(dll);
     init_raw_class(dll);
+    init_complex_class(dll);
 }

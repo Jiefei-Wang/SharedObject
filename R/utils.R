@@ -1,11 +1,9 @@
-typeSize <- c(4, 4, 8, 1)
-names(typeSize) <-
-    c("logical", "integer", "double", "raw")
 typeSize <- list(
     logical = 4,
     integer = 4,
     double = 8,
-    raw = 1
+    raw = 1,
+    complex = 16
 )
 ## the size of the type
 getTypeSize <- function(x) {
@@ -35,7 +33,7 @@ getDataInfoTemplate <- function(...){
 
 
 isSharableAtomic <- function(x){
-    typeof(x) %in% c("raw","logical","integer","double")
+    typeof(x) %in% c("raw","logical","integer","double","complex")
 }
 isSEXPList <- function(x){
     is.list(x)&&!is.pairlist(x)

@@ -14,7 +14,7 @@ shareANY <- function(x,...){
         return(shareS4(x,...))
     }else if(isSharableAtomic(x)){
         return(shareAtomic(x,...))
-    }else if(isSEXPList(x)){
+    }else if(is.list(x)){
         return(shareList(x,...))
     }else if(is.environment(x)){
         return(shareEnvironment(x,...))
@@ -107,8 +107,6 @@ setMethod("share", signature(x = "ANY"), shareANY)
 
 
 
-#' @rdname share
-#' @export
 tryShare <- function(x, ...) {
     options <- list(x = x, ...)
     options["mustWork"] <- FALSE

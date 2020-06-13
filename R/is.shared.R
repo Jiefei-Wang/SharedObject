@@ -67,7 +67,7 @@ setMethod("is.shared", "ANY", function(x,...,depth,showAttributes){
     if(isS4(x)){
         return(isSharedS4(x,...,depth=depth,showAttributes=showAttributes))
     }
-    if(isSEXPList(x)||is.environment(x)){
+    if(is.list(x)||is.environment(x)){
         return(isSharedList(x,...,depth=depth,showAttributes=showAttributes))
     }
     isSharedANY(x,...,depth=depth,showAttributes=showAttributes)

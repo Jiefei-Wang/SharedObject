@@ -1,5 +1,9 @@
+Changes in version 1.3.8
++ Support complex
++ Support pairlist
++ Use memcpy to copy the data when possible
 Changes in version 1.3.7
-+ change the default argument of is.shared function
++ change the parameters of is.shared function
 + `mustWork = FALSE` by default, no error will be given
 when sharing a nonsharable object
 + Support environment object

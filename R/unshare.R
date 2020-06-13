@@ -3,7 +3,7 @@ unshareANY <- function(x){
         return(unshareS4(x))
     }else if(isSharableAtomic(x)){
         return(unshareAtomic(x))
-    }else if(isSEXPList(x)){
+    }else if(is.list(x)){
         return(unshareList(x))
     }else if(is.environment(x)){
         return(unshareEnvironment(x))

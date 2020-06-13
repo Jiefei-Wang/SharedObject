@@ -1,7 +1,7 @@
-context("Share atomic")
-
+context("cluster export")
 library(parallel)
 cl = makeCluster(1)
+
 
 n = 100
 data = floor(abs(runif(n) * 2))
@@ -34,6 +34,8 @@ for (i in seq_along(typeName)) {
             sv2 = sv
             sv2[1] = type[[i]](1 - sv2[1])
             expect_false(curData[1] == sv2[1])
+        }else{
+            expect_true(TRUE)
         }
     })
     gc()
@@ -76,6 +78,8 @@ for (i in seq_along(typeName)) {
                 sv
             })
             expect_equal(0 + sv[1], 1 - data[1])
+        }else{
+            expect_true(TRUE)
         }
     })
     gc()
