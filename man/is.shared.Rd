@@ -14,34 +14,35 @@ is.shared(x, ..., depth = 0, showAttributes = FALSE)
 
 \item{...}{For generalization purpose only}
 
-\item{depth}{Whether to recursively check the element of \code{x} if \code{x} has
-mutiple components(e.g. \code{list} and S4 object), see details}
+\item{depth}{Whether to recursively check the element of \code{x} if \code{x} is a container
+(e.g. \code{list} or \code{environment}), see details}
 
 \item{showAttributes}{Whether to check the attributes of \code{x}.}
 }
 \value{
-TRUE/FALSE indicating whether the object is a shared object.
-If the object is a list, the return value is a vector of TRUE/FALSE corresponding
-to each element of the list.
+a single logical value of a list.
 }
 \description{
 Test whether the object is a shared object
 }
 \details{
-When \code{x} consists of multiple elements and the elements are not a simple object
-(e.g. a list of lists), the \code{is.shared} function by default will return
-a singe logical value for each element of \code{x} indicating whether the element
-contains any shared data. If \code{recursive = TRUE}, the function will recursively look
-into each element and check whether the element's components are
-shared in a list format.
+When \code{depth=0}, the \code{is.shared} function return a single logical value indicating
+whether \code{x} contains any shared objects. When \code{depth>0} and \code{x} is a
+container(e.g. \code{list}), the function will recursively check each element of \code{x} and
+return a list with each elements corresponding to the elements in \code{x}.
+The depth of the checking procedure is determined by the \code{depth} parameter.
 
-if \code{showAttributes = TRUE}, the attributes of the object will also be examined. The
-result is returned in an attribute format. It can be find in the \code{sharedAttributes}
-attributes. Note that \code{showAttributes} has no effect on an S4 object for the attributes
-of an S4 object are used to store the slots and should not be treated as the attributes
-of an object.
+if \code{showAttributes = TRUE}, the attributes of the object will also be checked. The
+result can be find in \code{sharedAttributes} attribute. Note that \code{showAttributes} has
+no effect on an S4 object for the attributes of an S4 object are used to store the
+slots and should not be treated as the attributes of an object.
 }
 \examples{
-x <- share(1:10)
-is.shared(x)
+x1 <- share(1:10)
+is.shared(x1)
+
+x2 <- share(list(a=list(b=1, d=2)))
+is.shared(x2, depth=0)
+is.shared(x2, depth=1)
+is.shared(x2, depth=2)
 }

@@ -42,7 +42,7 @@ setSharedCopy(x, value)
 \arguments{
 \item{x}{A shared object}
 
-\item{property}{A character vector, the name of the property(s),
+\item{property}{A character vector. The name of the property(s),
 if the argument is missing or the value is \code{NULL}, it represents all properties.}
 
 \item{...}{Not used}

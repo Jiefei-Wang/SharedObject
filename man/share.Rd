@@ -7,18 +7,14 @@
 \alias{share,data.frame-method}
 \alias{share,list-method}
 \alias{share,ANY-method}
-\alias{tryShare}
 \title{Create a shared object}
 \usage{
 share(x, ...)
 
 \S4method{share}{ANY}(x, ...)
-
-tryShare(x, ...)
 }
 \arguments{
-\item{x}{An R object that you want to shared. The supported data types are
-\code{raw}, \code{logical}, \code{integer} and \code{real}. \code{character} cannot be shared.}
+\item{x}{An R object that you want to shared, see details.}
 
 \item{...}{Additional parameters that can be passed to the shared object, see below.}
 
@@ -32,27 +28,24 @@ This parameter has no effect on the S4 object.}
 A shared object
 }
 \description{
-This function will create a shared object in the shared memory for the function
-argument \code{x} and return a shared object if the object can be shared.
-There is no duplication of the shared object when a shared object is
+This function will create a shared object in the shared memory
+for the object \code{x}.
+There is no duplication of the shared object when it is
 exported to the other processes.
-\code{tryShare} is equivalent to \code{share} with the argument \code{mustWork = FALSE}.
 }
 \details{
 The function returns a shared object corresponding to the argument \code{x} if it
-is sharable. An error will be given if the argument \code{x} is not sharable. specifying
-\code{mustWork = FALSE} will suppress the error. This feature is useful when sharing a list
-object that consists of both sharable and non-sharable objects. Alternatively,
-the \code{tryShare} function can be used and it is equivalent to the function
-\code{share} with the argument \code{mustWork = FALSE}.
+is sharable. There should be no different between \code{x} and the return value except
+that the latter one is shared. The attribute(s) of \code{x} will also be shared.
 
 \strong{Supported types}
 
-For the basic R types, the function supports \code{raw},\code{logical} ,\code{integer}, \code{double}.
+For the basic R types, the function supports \code{raw},\code{logical} ,\code{integer}, \code{double},
+\code{complex}.
 \code{character} cannot be shared for it has a complicated data structure and closely
-related to R's cache. For the list object, the elements in the list will be shared.
-\code{environment} is not supported for changing an \code{environment} object may have an
-unexpected consequence.
+relates to R's cache. For the containers, the function supports \code{list}, \code{pairlist}
+and \code{environment}. Note that sharing a container is equivalent sharing all elements
+in the container, the container itself will not be shared.
 
 The function \code{share} is an S4 generic. The default share method works for
 most S4 objects. Therefore, there is no need to define a S4 share method
@@ -80,7 +73,7 @@ Please note that the no-copy-on-write feature is not fully supported by R. When
 Please refer to the example code to see the exceptions.
 
 \code{sharedSubset} determines whether the subset of a shared object is still a shared object.
-The default value is \code{TRUE}, and can be changed by passing \code{sharedSubset = FALSE}
+The default value is \code{FALSE}, and can be changed by passing \code{sharedSubset = TRUE}
 to the function
 
 At the time this documentation is being written, The shared subset feature will

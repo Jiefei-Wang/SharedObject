@@ -12,7 +12,7 @@ vignette: >
   %\VignetteIndexEntry{quickStart}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-package: SharedObject
+  package: SharedObject
 ---
 
 ```{r setup, include = FALSE}
@@ -64,29 +64,29 @@ is.shared(shared_A[1:2])
 This behavior, however, can be altered via the argument `sharedSubset`. Therefore, if a shared object `shared_A` is made by `share(A, sharedSubset = TRUE)`, then all the subsets of the object `shared_A` will be shared objects automatically. 
 
 # Supported data types and structures
-Currently, the package supports `raw`, `logical`, `integer` and `double` data types. `character` is not supported. Sharing the data structure `atomic`(aka `vector`), `matrix`, `data.frame` and `list` is available. The function `share` is an S4 generic, developers can define an S4 `share` function to support their own data structures.
+Currently, the package supports `raw`, `logical`, `integer`, `double` and `complex` data types. `character` is not supported. Sharing the data structure `atomic`(aka `vector`), `matrix`, `data.frame`, `list`, `environment`, `S3` and `S4` is available out of box. Therefore, there is no additional action required to share an S3/S4 object. However, if the S3/S4 class has a special design(e.g. on-disk data), the function `share` is an S4 generic, developers can define an S4 `share` method to support their own data structures.
 
-Please note that sharing a list object will not sharing the list itself, but sharing each element of the list object instead. Therefore, adding or replace an element on a shared list in the main process will not implicitly change the shared list on the other processes. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle as sharing a list. 
+Please note that sharing a container(e.g. `list`) will not share the container itself, but share each element in the container. Therefore, adding or replace an element in a shared list in one process will not implicitly change the shared list in the other processes. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle as sharing a list. 
 
-When a list consists of both sharable and non-sharable objects, `mustWork` argument can be used in the `share` function to share the sharable elements and keep the non-sharable elements same(Otherwise an error will be shown). Alternatively, the function `tryShare` is a shortcut for `share(..., mustWork = FALSE)`
+When an object is not sharable, no error will be given and the same object will be returned.
+The argument `mustWork = TRUE` can be used if you want to make sure the return value is a shared object.
 ```{r}
-## the element `a` is sharable and b is not
-mydata <- list(a = 1:3, b = letters[1:3])
+## the element `a` is sharable and `b` is not
+x <- list(a = 1:3, b = letters[1:3])
 
-## Will get an error if we directly share the object
-## share(mydata)
+## No error will be given, 
+## but the element `b` is not shared
+shared_x <- share(x)
+is.shared(shared_x, depth = 1)
 
-## Use the `mustWork` argument to suppress the error message
-sharedList1 <- share(mydata, mustWork = FALSE)
-
-## Use the function `tryShare`
-## this is equivalent to `share(mydata, mustWork = FALSE)`
-sharedList2 <- tryShare(mydata)
-
-## Only the element `a` is a shared object
-is.shared(sharedList1)
+## Use the `mustWork` argument
+## An error will be given for the non-sharable object `b`
+tryCatch({
+  shared_x <- share(x, mustWork = TRUE)
+},
+error=function(msg)print(msg)
+)
 ```
-
 
 # Check object information
 In order to distinguish a shared object, the package provide `is.shared` function to identify a shared object
@@ -97,14 +97,19 @@ In order to distinguish a shared object, the package provide `is.shared` functio
 is.shared(A)
 is.shared(shared_A)
 ```
-For an atomic object, `is.shared` returns a logical value indicating whether the object is a shared object. For a list object, it returns a list of logical values with each element representing the corresponding element in the list object.
+By default, `is.shared` function returns a single logical value indicating whether the object is a shared object or contains any shared objects. If the object is a container(e.g. list), you can see the details by increasing the value of the `depth` argument.
+```{r}
+## A single logical is returned
+is.shared(shared_x)
+## Check each element in x
+is.shared(shared_x, depth = 1)
+```
 
 There are several properties associated with the shared object, one can check them via
 ```{r}
 ## get a summary report
 getSharedObjectProperty(shared_A)
 
-## Internal function to check the properties
 ## get the individual properties
 getCopyOnWrite(shared_A)
 getSharedSubset(shared_A)
@@ -120,7 +125,7 @@ getSharedObjectOptions()
 As beforementioned, the option `sharedSubset` controls whether the subset of a shared object is still a shared object. The option `mustWork` suppress the error message when the function `share` encounter a non-sharable object and force the function to return the same object. We will talk about the options `copyOnWrite` and `sharedCopy` in the advanced section, but for most users these two options should not be changed. The global setting can be modified via `setSharedObjectOptions`
 ```{r}
 ## change the default setting
-setSharedObjectOptions(mustWork = FALSE)
+setSharedObjectOptions(mustWork = TRUE)
 ## Check if the change is made
 getSharedObjectOptions("mustWork")
 ```
@@ -218,9 +223,9 @@ In C++ code files, include the header of the shared object `#include "SharedObje
 To compile and link your package successfully against the `SharedObject` C++ library, you must include a src/Makevars file.
 ```
 SHARED_OBJECT_LIBS = $(shell echo 'SharedObject:::pkgconfig("PKG_LIBS")'|\
-                     "${R_HOME}/bin/R" --vanilla --slave)
+"${R_HOME}/bin/R" --vanilla --slave)
 SHARED_OBJECT_CPPFLAGS = $(shell echo 'SharedObject:::pkgconfig("PKG_CPPFLAGS")'|\
-                         "${R_HOME}/bin/R" --vanilla --slave)
+"${R_HOME}/bin/R" --vanilla --slave)
 
 PKG_LIBS := $(PKG_LIBS) $(SHARED_OBJECT_LIBS)
 PKG_CPPFLAGS := $(PKG_CPPFLAGS) $(SHARED_OBJECT_CPPFLAGS)

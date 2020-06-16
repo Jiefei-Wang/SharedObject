@@ -5,14 +5,12 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #############################
 #' Create a shared object
 #'
-#' This function will create a shared object in the shared memory for the function
-#' argument `x` and return a shared object if the object can be shared.
-#' There is no duplication of the shared object when a shared object is
+#' This function will create a shared object in the shared memory
+#' for the object `x`.
+#' There is no duplication of the shared object when it is
 #' exported to the other processes.
-#' `tryShare` is equivalent to `share` with the argument `mustWork = FALSE`.
 #'
-#' @param x An R object that you want to shared. The supported data types are
-#' `raw`, `logical`, `integer` and `real`. `character` cannot be shared.
+#' @param x An R object that you want to shared, see details.
 #' @param copyOnWrite,sharedSubset,sharedCopy The parameters controlling the behavior of the shared object,
 #' see details.
 #' @param mustWork Whether to throw an error if `x` is not a sharable object(e.g. Character).
@@ -26,19 +24,17 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' @details
 #'
 #' The function returns a shared object corresponding to the argument `x` if it
-#' is sharable. An error will be given if the argument `x` is not sharable. specifying
-#' `mustWork = FALSE` will suppress the error. This feature is useful when sharing a list
-#' object that consists of both sharable and non-sharable objects. Alternatively,
-#' the `tryShare` function can be used and it is equivalent to the function
-#' `share` with the argument `mustWork = FALSE`.
+#' is sharable. There should be no different between `x` and the return value except
+#' that the latter one is shared. The attribute(s) of `x` will also be shared.
 #'
 #' **Supported types**
 #'
-#' For the basic R types, the function supports `raw`,`logical` ,`integer`, `double`.
+#' For the basic R types, the function supports `raw`,`logical` ,`integer`, `double`,
+#' `complex`.
 #' `character` cannot be shared for it has a complicated data structure and closely
-#' related to R's cache. For the list object, the elements in the list will be shared.
-#' `environment` is not supported for changing an `environment` object may have an
-#' unexpected consequence.
+#' relates to R's cache. For the containers, the function supports `list`, `pairlist`
+#' and `environment`. Note that sharing a container is equivalent sharing all elements
+#' in the container, the container itself will not be shared.
 #'
 #' The function `share` is an S4 generic. The default share method works for
 #' most S4 objects. Therefore, there is no need to define a S4 share method
@@ -67,7 +63,7 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' Please refer to the example code to see the exceptions.
 #'
 #' `sharedSubset` determines whether the subset of a shared object is still a shared object.
-#'  The default value is `TRUE`, and can be changed by passing `sharedSubset = FALSE`
+#'  The default value is `FALSE`, and can be changed by passing `sharedSubset = TRUE`
 #'  to the function
 #'
 #'  At the time this documentation is being written, The shared subset feature will
@@ -166,30 +162,31 @@ setGeneric("unshare", signature="x", function(x){
 #' Test whether the object is a shared object
 #'
 #' @param x An R object
-#' @param depth Whether to recursively check the element of `x` if `x` has
-#' mutiple components(e.g. `list` and S4 object), see details
+#' @param depth Whether to recursively check the element of `x` if `x` is a container
+#' (e.g. `list` or `environment`), see details
 #' @param showAttributes Whether to check the attributes of `x`.
 #' @param ... For generalization purpose only
 #' @details
-#' When `x` consists of multiple elements and the elements are not a simple object
-#' (e.g. a list of lists), the `is.shared` function by default will return
-#' a singe logical value for each element of `x` indicating whether the element
-#' contains any shared data. If `recursive = TRUE`, the function will recursively look
-#' into each element and check whether the element's components are
-#' shared in a list format.
+#' When `depth=0`, the `is.shared` function return a single logical value indicating
+#' whether `x` contains any shared objects. When `depth>0` and `x` is a
+#' container(e.g. `list`), the function will recursively check each element of `x` and
+#' return a list with each elements corresponding to the elements in `x`.
+#' The depth of the checking procedure is determined by the `depth` parameter.
 #'
-#' if `showAttributes = TRUE`, the attributes of the object will also be examined. The
-#' result is returned in an attribute format. It can be find in the `sharedAttributes`
-#' attributes. Note that `showAttributes` has no effect on an S4 object for the attributes
-#' of an S4 object are used to store the slots and should not be treated as the attributes
-#' of an object.
+#' if `showAttributes = TRUE`, the attributes of the object will also be checked. The
+#' result can be find in `sharedAttributes` attribute. Note that `showAttributes` has
+#' no effect on an S4 object for the attributes of an S4 object are used to store the
+#' slots and should not be treated as the attributes of an object.
 #'
-#' @return TRUE/FALSE indicating whether the object is a shared object.
-#' If the object is a list, the return value is a vector of TRUE/FALSE corresponding
-#' to each element of the list.
+#' @return a single logical value of a list.
 #' @examples
-#' x <- share(1:10)
-#' is.shared(x)
+#' x1 <- share(1:10)
+#' is.shared(x1)
+#'
+#' x2 <- share(list(a=list(b=1, d=2)))
+#' is.shared(x2, depth=0)
+#' is.shared(x2, depth=1)
+#' is.shared(x2, depth=2)
 #' @rdname is.shared
 #' @export
 setGeneric("is.shared", signature="x",
@@ -207,7 +204,7 @@ setGeneric("is.shared", signature="x",
 #' `dataType`, `ownData`, `copyOnWrite`, `sharedSubset`, `sharedCopy`.
 #'
 #' @param x A shared object
-#' @param property A character vector, the name of the property(s),
+#' @param property A character vector. The name of the property(s),
 #' if the argument is missing or the value is `NULL`, it represents all properties.
 #' @param ... Not used
 #' @return
