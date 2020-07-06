@@ -15,7 +15,7 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' see details.
 #' @param mustWork Whether to throw an error if `x` is not a sharable object(e.g. Character).
 #' This parameter has no effect on the S4 object.
-#' @param ... Additional parameters that can be passed to the shared object, see below.
+#' @param ... For generalization purpose.
 #'
 #' @aliases share,vector-method share,matrix-method
 #' share,data.frame-method share,list-method

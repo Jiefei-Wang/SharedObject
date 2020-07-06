@@ -11,12 +11,12 @@
 \usage{
 share(x, ...)
 
-\S4method{share}{ANY}(x, ...)
+\S4method{share}{ANY}(x, ..., copyOnWrite, sharedSubset, sharedCopy, mustWork)
 }
 \arguments{
 \item{x}{An R object that you want to shared, see details.}
 
-\item{...}{Additional parameters that can be passed to the shared object, see below.}
+\item{...}{For generalization purpose.}
 
 \item{copyOnWrite, sharedSubset, sharedCopy}{The parameters controlling the behavior of the shared object,
 see details.}

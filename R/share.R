@@ -9,17 +9,27 @@
 ## 4. Otherwise, for any unknow object, throw an error
 
 
-shareANY <- function(x,...){
+shareANY <- function(x, ..., copyOnWrite, sharedSubset, sharedCopy, mustWork){
+    allArgs <- list(x = x, ...)
+    if(!missing(copyOnWrite))
+        allArgs[["copyOnWrite"]] <- copyOnWrite
+    if(!missing(sharedSubset))
+        allArgs[["sharedSubset"]] <- sharedSubset
+    if(!missing(sharedCopy))
+        allArgs[["sharedCopy"]] <- sharedCopy
+    if(!missing(mustWork))
+        allArgs[["mustWork"]] <- mustWork
+
     if(isS4(x)){
-        return(shareS4(x,...))
+        return(do.call(shareS4, allArgs, quote = TRUE))
     }else if(isSharableAtomic(x)){
-        return(shareAtomic(x,...))
+        return(do.call(shareAtomic, allArgs, quote = TRUE))
     }else if(is.list(x)){
-        return(shareList(x,...))
+        return(do.call(shareList, allArgs, quote = TRUE))
     }else if(is.environment(x)){
-        return(shareEnvironment(x,...))
+        return(do.call(shareEnvironment, allArgs, quote = TRUE))
     }
-    promptError(x,...)
+    do.call(promptError, allArgs, quote = TRUE)
 }
 
 ## x must be an atomic object
@@ -89,28 +99,13 @@ promptError <- function(x, ...) {
 #' @rdname share
 #' @export
 setMethod("share", signature(x = "ANY"), shareANY)
-#' #' @rdname share
-#' #' @export
-#' setMethod("share", signature(x = "character"), promptError)
-#' #' @rdname share
-#' #' @export
-#' setMethod("share", signature(x = "vector"), shareAtomic)
-#' #' @rdname share
-#' #' @export
-#' setMethod("share", signature(x = "matrix"), shareAtomic)
-#' #' @rdname share
-#' #' @export
-#' setMethod("share", signature(x = "list"), shareList)
-#' setMethod("share", signature(x = "environment"), promptError)
 
 
-
-
-
+## We use tryShare internally
 tryShare <- function(x, ...) {
     options <- list(x = x, ...)
     options["mustWork"] <- FALSE
-    do.call(share, options)
+    do.call(share, options, quote = TRUE)
 }
 
 
