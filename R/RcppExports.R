@@ -21,6 +21,10 @@ C_setSharedObjectOwership <- function(x, ownData) {
     invisible(.Call(`_SharedObject_C_setSharedObjectOwership`, x, ownData))
 }
 
+C_setAttributes <- function(x, attrs) {
+    invisible(.Call(`_SharedObject_C_setAttributes`, x, attrs))
+}
+
 C_ALTREP <- function(x) {
     .Call(`_SharedObject_C_ALTREP`, x)
 }
@@ -39,6 +43,18 @@ C_setAltData1 <- function(x, data) {
 
 C_setAltData2 <- function(x, data) {
     invisible(.Call(`_SharedObject_C_setAltData2`, x, data))
+}
+
+C_getObject <- function(x) {
+    .Call(`_SharedObject_C_getObject`, x)
+}
+
+C_setObject <- function(x, i) {
+    invisible(.Call(`_SharedObject_C_setObject`, x, i))
+}
+
+C_ISS4 <- function(x) {
+    .Call(`_SharedObject_C_ISS4`, x)
 }
 
 C_SETS4 <- function(x) {

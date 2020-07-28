@@ -17,7 +17,7 @@ test_that("S3 atomic object", {
     ## function
     myData1 <- structure(myData,class="list")
     x = share(myData1)
-    expect_equal(x, myData1)
+    expect_equal(unclass(x), unclass(myData1))
     expect_equal(is.shared(x), TRUE)
 })
 

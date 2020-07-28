@@ -164,9 +164,14 @@ bool C_isSameObject(SEXP x, SEXP y)
 //Function to set the ownership of a shared object
 // [[Rcpp::export]]
 void C_setSharedObjectOwership(SEXP x, bool ownData){
-  //Rprintf("set owndata :%d\n",ownData);
+  DEBUG_SHARED_MEMORY(Rprintf("set owndata :%d\n",ownData));
   SEXP sharedExtPtr = R_altrep_data1(x);
   R_SetExternalPtrProtected(sharedExtPtr, wrap(ownData));
+}
+
+// [[Rcpp::export]]
+void C_setAttributes(SEXP x, SEXP attrs){
+  SET_ATTRIB(x, attrs);
 }
 
 /*
@@ -202,6 +207,18 @@ void C_setAltData2(SEXP x, SEXP data)
 	R_set_altrep_data2(x, data);
 }
 
+// [[Rcpp::export]]
+int C_getObject(SEXP x){
+  return OBJECT(x);
+}
+// [[Rcpp::export]]
+void C_setObject(SEXP x, int i){
+  SET_OBJECT(x,i);
+}
+// [[Rcpp::export]]
+bool C_ISS4(SEXP x){
+  return IS_S4_OBJECT(x);
+}
 // [[Rcpp::export]]
 void C_SETS4(SEXP x)
 {

@@ -55,10 +55,19 @@ shareAtomic <- function(x,...) {
     if(!is.null(oldAttrs)){
         oldCopyOnWrite <- setCopyOnWrite(result, FALSE)
         oldOwnData <- setSharedObjectProperty(result, "ownData", FALSE)
-        attrs <- tryShare(oldAttrs,...)
+        oldObject <- C_getObject(x)
+        attrs <- tryShare(as.pairlist(oldAttrs),...)
         ## we must set the attributes no matter if attributes can be shared or not
         ## for result does not have any attributes.
-        attributes(result) <- attrs
+        ## We do not use `attributes(result) <- attrs` for it
+        ## sometimes would duplicate the object using the pointer
+        ## and results in an unshared object
+        C_setAttributes(result,attrs)
+        ## We need to manually set the object attribute when the class 
+        ## attribute is not NULL for we use the internal C_setAttributes 
+        ## function to set the clas attribute.
+        if(oldObject)
+            C_setObject(result, TRUE)
         setSharedObjectProperty(result, "ownData", oldOwnData)
         setCopyOnWrite(result, oldCopyOnWrite)
     }

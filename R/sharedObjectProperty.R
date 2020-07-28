@@ -1,39 +1,40 @@
+getSharedObjectPropertyAny <-  function(x, property, ...) {
+    dataInfoTemplate <- getDataInfoTemplate()
+    if (isSharedSEXP(x)) {
+        if (missing(property) || is.null(property)) {
+            property <- names(dataInfoTemplate)
+        }
+        info <- C_getAltData2(x)
+        property <-
+            property[property %in% names(dataInfoTemplate)]
+        if (length(property) == 1) {
+            return(info[[property]])
+        } else{
+            return(info[property])
+        }
+    }
+    NULL
+}
+
+
 #' @rdname sharedObjectProperty
 #' @export
 setMethod("getSharedObjectProperty", signature(x = "ANY", property = "characterOrNULLOrMissing"),
-          function(x, property, ...) {
-              dataInfoTemplate <- getDataInfoTemplate()
-              if (isSharedSEXP(x)) {
-                  if (missing(property) || is.null(property)) {
-                      property <- names(dataInfoTemplate)
-                  }
-                  info <- C_getAltData2(x)
-                  property <-
-                      property[property %in% names(dataInfoTemplate)]
-                  if (length(property) == 1) {
-                      return(info[[property]])
-                  } else{
-                      return(info[property])
-                  }
-              }
-              NULL
-          })
+          getSharedObjectPropertyAny)
 
 #' @rdname sharedObjectProperty
 #' @export
 setMethod("getSharedObjectProperty", signature(x = "list", property = "characterOrNULLOrMissing"),
           function(x, property, ...) {
-              lapply(x, getSharedObjectProperty, property = property, ...)
+              if(is.atomic(x)){
+                  getSharedObjectPropertyAny(x, property, ...)
+              }else{
+                  lapply(x, getSharedObjectProperty, property = property, ...)
+              }
           })
 
-#' @rdname sharedObjectProperty
-#' @export
-setMethod("setSharedObjectProperty", signature(
-    x = "ANY",
-    property = "characterOrNULLOrMissing",
-    value = "ANY"
-)
-, function(x, property, value, ...) {
+
+setSharedObjectPropertyAny <- function(x, property, value, ...) {
     if (isSharedSEXP(x)) {
         dataInfoTemplate <- getDataInfoTemplate()
         if (missing(property) || is.null(property)) {
@@ -58,14 +59,22 @@ setMethod("setSharedObjectProperty", signature(
         }else{
             stop("ownData slot is not found, please contact author for this bug.")
         }
-
+        
         if(length(property)==1){
             invisible(old_info[[1]])
         }else{
             invisible(old_info)
         }
     }
-})
+}
+
+#' @rdname sharedObjectProperty
+#' @export
+setMethod("setSharedObjectProperty", signature(
+    x = "ANY",
+    property = "characterOrNULLOrMissing",
+    value = "ANY"), setSharedObjectPropertyAny)
+
 #' @rdname sharedObjectProperty
 #' @export
 setMethod("setSharedObjectProperty", signature(
@@ -74,8 +83,12 @@ setMethod("setSharedObjectProperty", signature(
     value = "ANY"
 )
 , function(x, property, value, ...) {
-    for (i in seq_along(x)) {
-        setSharedObjectProperty(x[[i]], property, value)
+    if(is.atomic(x)){
+        setSharedObjectPropertyAny(x, property,value, ...)
+    }else{
+        for (i in seq_along(x)) {
+            setSharedObjectProperty(x[[i]], property, value, ...)
+        }
     }
 })
 
