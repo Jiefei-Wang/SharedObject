@@ -53,6 +53,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// C_setSharedObjectOwership
+void C_setSharedObjectOwership(SEXP x, bool ownData);
+RcppExport SEXP _SharedObject_C_setSharedObjectOwership(SEXP xSEXP, SEXP ownDataSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< bool >::type ownData(ownDataSEXP);
+    C_setSharedObjectOwership(x, ownData);
+    return R_NilValue;
+END_RCPP
+}
 // C_ALTREP
 bool C_ALTREP(SEXP x);
 RcppExport SEXP _SharedObject_C_ALTREP(SEXP xSEXP) {
@@ -276,6 +287,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_readSharedMemory", (DL_FUNC) &_SharedObject_C_readSharedMemory, 1},
     {"_SharedObject_C_memcpy", (DL_FUNC) &_SharedObject_C_memcpy, 3},
     {"_SharedObject_C_isSameObject", (DL_FUNC) &_SharedObject_C_isSameObject, 2},
+    {"_SharedObject_C_setSharedObjectOwership", (DL_FUNC) &_SharedObject_C_setSharedObjectOwership, 2},
     {"_SharedObject_C_ALTREP", (DL_FUNC) &_SharedObject_C_ALTREP, 1},
     {"_SharedObject_C_getAltData1", (DL_FUNC) &_SharedObject_C_getAltData1, 1},
     {"_SharedObject_C_getAltData2", (DL_FUNC) &_SharedObject_C_getAltData2, 1},

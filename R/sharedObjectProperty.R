@@ -43,7 +43,7 @@ setMethod("setSharedObjectProperty", signature(
             stop("The property '",
                  paste0(property[!property %in% names(dataInfoTemplate)], collapse =
                             ", "),
-                 "' is not supported")
+                 "' is not found")
         }
         value <- rep_len(value, length(property))
         info <- C_getAltData2(x)
@@ -52,6 +52,12 @@ setMethod("setSharedObjectProperty", signature(
             info[[property[i]]] <- as(value[i], class(info[[property[i]]]))
         }
         setAltData2(x, info)
+        if("ownData" %in% names(dataInfoTemplate)){
+            if("ownData" %in% property)
+                C_setSharedObjectOwership(x, info[["ownData"]])
+        }else{
+            stop("ownData slot is not found, please contact author for this bug.")
+        }
 
         if(length(property)==1){
             invisible(old_info[[1]])

@@ -17,6 +17,10 @@ C_isSameObject <- function(x, y) {
     .Call(`_SharedObject_C_isSameObject`, x, y)
 }
 
+C_setSharedObjectOwership <- function(x, ownData) {
+    invisible(.Call(`_SharedObject_C_setSharedObjectOwership`, x, ownData))
+}
+
 C_ALTREP <- function(x) {
     .Call(`_SharedObject_C_ALTREP`, x)
 }

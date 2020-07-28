@@ -77,8 +77,9 @@ SEXP C_readSharedMemory(SEXP dataInfo)
 static void ptrFinalizer(SEXP extPtr)
 {
 	uint32_t id = as<uint32_t>(R_ExternalPtrTag(extPtr));
-
 	bool own_data = as<bool>(R_ExternalPtrProtected(extPtr));
+	
+	DEBUG_SHARED_MEMORY(Rprintf("Finalizer, id:%d, own_data:%d\n", id,own_data));
 	if (own_data)
 	{
 		freeSharedMemory(id);
@@ -87,7 +88,6 @@ static void ptrFinalizer(SEXP extPtr)
 	{
 		unmapSharedMemory(id);
 	}
-	DEBUG_SHARED_MEMORY(Rprintf("Finalizer, id %d\n", id););
 	return;
 }
 
@@ -159,6 +159,14 @@ void C_memcpy(SEXP source, SEXP target, R_xlen_t byteSize)
 bool C_isSameObject(SEXP x, SEXP y)
 {
 	return ((void *)x) == ((void *)y);
+}
+
+//Function to set the ownership of a shared object
+// [[Rcpp::export]]
+void C_setSharedObjectOwership(SEXP x, bool ownData){
+  //Rprintf("set owndata :%d\n",ownData);
+  SEXP sharedExtPtr = R_altrep_data1(x);
+  R_SetExternalPtrProtected(sharedExtPtr, wrap(ownData));
 }
 
 /*
