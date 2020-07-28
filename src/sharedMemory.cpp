@@ -247,7 +247,7 @@ void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
 		if (allocSharedObject)
 		{
 #ifndef WINDOWS_OS
-			shared_memory_object::remove(key);
+			shared_memory_object::remove(key.c_str());
 #endif
 			delete shm;
 		}
