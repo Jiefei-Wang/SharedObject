@@ -1,5 +1,11 @@
 #ifndef SHAREDMEMORY_H
 #define SHAREDMEMORY_H
+
+#ifdef __cplusplus
+extern "C"{
+#else
+#include <stdbool.h>
+#endif
 int32_t getLastIndex();
 
 // Unamed shared memory
@@ -20,11 +26,15 @@ bool hasSharedMemory(uint32_t id);
 double getSharedMemorySize(uint32_t id);
 
 //Named shared memory
-void allocateSharedMemory(const char *name, size_t size_in_byte);
-void *mapSharedMemory(const char *name);
-bool unmapSharedMemory(const char *name);
-bool freeSharedMemory(const char *name);
-bool hasSharedMemory(const char *name);
-double getSharedMemorySize(const char *name);
+void allocateNamedSharedMemory(const char *name, size_t size_in_byte);
+void *mapNamedSharedMemory(const char *name);
+bool unmapNamedSharedMemory(const char *name);
+bool freeNamedSharedMemory(const char *name);
+bool hasNamedSharedMemory(const char *name);
+double getNamedSharedMemorySize(const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

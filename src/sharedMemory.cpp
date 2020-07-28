@@ -1,3 +1,10 @@
+#include <Rcpp.h>
+#include <boost/interprocess/mapped_region.hpp>
+#include <map>
+#include <string>
+#include "sharedMemory.h"
+#include "tools.h"
+
 #ifdef _WIN32
 #define WINDOWS_OS
 #endif
@@ -5,94 +12,57 @@
 #ifdef WINDOWS_OS
 #include <boost/interprocess/windows_shared_memory.hpp>
 #define OS_shared_memory_object windows_shared_memory
-#define OS_SHARED_OBJECT_PKG_SPACE ("Local\\shared_object_package_space" + OS_ADDRESS_SIZE).c_str()
+#define OS_SHARED_OBJECT_PKG_SPACE ("Local\\SO_" + OS_ADDRESS_SIZE).c_str()
 #else
 #include <boost/interprocess/shared_memory_object.hpp>
 #define OS_shared_memory_object shared_memory_object
-#define OS_SHARED_OBJECT_PKG_SPACE ("shared_object_package_space" + OS_ADDRESS_SIZE).c_str()
+#define OS_SHARED_OBJECT_PKG_SPACE ("SO_" + OS_ADDRESS_SIZE).c_str()
 #endif //  WINDOWS_OS
-
-#include <Rcpp.h>
-#include <boost/interprocess/mapped_region.hpp>
-#include <map>
-#include "sharedMemory.h"
-#include "tools.h"
 
 #define SHARED_OBJECT_COUNTER "sharedObjectCounter"
 using std::pair;
 using std::string;
-using std::to_string;
 using namespace boost::interprocess;
 
-static std::map<uint32_t, OS_shared_memory_object *> sharedMemoryList;
-static std::map<string, OS_shared_memory_object *> sharedNamedMemoryList;
-static std::map<uint32_t, mapped_region *> segmentList;
-static std::map<string, mapped_region *> namedSegmentList;
-static std::map<uint32_t, uint32_t> segmentObjectCount;
-static std::map<string, uint32_t> namedSegmentObjectCount;
+static std::map<string, OS_shared_memory_object *> sharedMemoryList;
+static std::map<string, mapped_region *> segmentList;
+static std::map<string, uint32_t> segmentObjectCount;
 
+// This last_id attributes is shared
 static uint32_t *last_id = nullptr;
 
-template <class T1, class T2>
-void allocateSharedMemoryInternal(const T1 &id, size_t size_in_byte, T2 &sharedMemoryList);
-template <class T1, class T2, class T3>
-static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &segmentList, bool isInitial = false);
+
+
 /*
- Initialize the variable last_id which is located in the shared memory
- the variable serves as a hint for what the next id should be
- */
-void initialSharedmemory()
-{
-
-	if (last_id == nullptr)
-	{
-		try
-		{
-			string name = SHARED_OBJECT_COUNTER;
-			if (!hasSharedMemory(name.c_str()))
-			{
-				allocateSharedMemoryInternal(name, sizeof(uint32_t), sharedNamedMemoryList);
-				last_id = (uint32_t *)mapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList, true);
-				*last_id = 0;
-			}
-			else
-			{
-				last_id = (uint32_t *)mapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList, true);
-			}
-		}
-		catch (std::exception &ex)
-		{
-			Rf_error("An error has occured in initializing shared memory object: %s\n", ex.what());
-		}
-	}
-}
-
-template <class T1, class T2>
-bool keyInMap(T1 map, T2 key)
+===================================================================
+Utilities
+===================================================================
+*/
+template <class T>
+bool keyInMap(T map, std::string key)
 {
 	return map.find(key) != map.end();
 }
-
 //Get the key to access a shared data that is used in R
-string getDataMemoryKey(uint32_t id)
+string getIdKey(uint32_t id)
 {
 	//common name + id
-	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_id_") + to_string(id);
+	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_id_") + std::to_string(id);
 }
-
-string getDataMemoryKey(const string &name)
+string getNamedKey(const string name)
 {
 	//common name + name
-	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_id_") + name;
+	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_nm_") + name;
 }
-
 /*
  Get the next id
  The id will be searched starting from *last_id + 1
  until find an unused one
  */
+void initialSharedmemory();
 uint32_t getNextId()
 {
+	initialSharedmemory();
 	uint32_t initial = *last_id;
 	do
 	{
@@ -103,30 +73,117 @@ uint32_t getNextId()
 	Rf_error("Unable to find an available key for creating a shared memory, all keys are in used.");
 }
 
-static bool hasSharedMemoryInternal(const char *name)
+int32_t getLastIndex()
+{
+	initialSharedmemory();
+	return *last_id;
+}
+/*
+===================================================================
+Code for manage the reference count of the shared memory object
+===================================================================
+*/
+static uint32_t getObjectCount(const string key)
+{
+	if (!keyInMap(segmentObjectCount, key))
+	{
+		return 0;
+	}
+	else
+	{
+		return segmentObjectCount[key];
+	}
+}
+
+static void setObjectCount(string key, int offset)
+{
+	if (!keyInMap(segmentObjectCount, key))
+	{
+		if (offset < 0)
+		{
+			Rf_error("The object count is less than 0");
+		}
+		segmentObjectCount.insert(pair<string, uint32_t>(key, offset));
+	}
+	else
+	{
+		segmentObjectCount[key] = segmentObjectCount[key] + offset;
+		if (segmentObjectCount[key] == 0)
+		{
+			segmentObjectCount.erase(key);
+		}
+	}
+}
+static void increaseObjectCount(const string key)
+{
+	setObjectCount(key, 1);
+}
+static void decreaseObjectCount(const string key)
+{
+	setObjectCount(key, -1);
+}
+
+static void zeroOutObjectCount(const string key)
+{
+	if (keyInMap(segmentObjectCount, key))
+	{
+		segmentObjectCount.erase(key);
+	}
+}
+
+
+/*
+===================================================================
+Code for the internal functions
+If a function is internal, it means the function will use the key as-is.
+===================================================================
+*/
+/*
+ Initialize the variable last_id which is located in the shared memory
+ the variable serves as a hint for what the next id should be
+ */
+void allocateSharedMemoryInternal(const string key, size_t size_in_byte);
+static void *mapSharedMemoryInternal(const string key);
+static bool hasSharedMemoryInternal(const string key);
+
+void initialSharedmemory()
+{
+	if (last_id == nullptr)
+	{
+		try
+		{
+			string name = SHARED_OBJECT_COUNTER;
+			if (!hasSharedMemoryInternal(name))
+			{
+				allocateSharedMemoryInternal(name, sizeof(uint32_t));
+				last_id = (uint32_t *)mapSharedMemoryInternal(name);
+				*last_id = 0;
+			}
+			else
+			{
+				last_id = (uint32_t *)mapSharedMemoryInternal(name);
+			}
+		}
+		catch (std::exception &ex)
+		{
+			Rf_error("An error has occured in initializing shared memory object: %s\n", ex.what());
+		}
+	}
+}
+
+
+
+static bool hasSharedMemoryInternal(const string key)
 {
 	try
 	{
-		OS_shared_memory_object sharedData(open_only, name, read_write);
+		OS_shared_memory_object sharedData(open_only, key.c_str(), read_write);
 		return true;
 	}
 	catch (const std::exception &ex)
 	{
 		return false;
 	}
-}
-static bool hasSharedMemory(const string &name)
-{
-	return hasSharedMemoryInternal(getDataMemoryKey(name).c_str());
-}
-bool hasSharedMemory(const char *name)
-{
-	return hasSharedMemoryInternal(getDataMemoryKey(name).c_str());
-}
-/*  Check whether the shared memory exist*/
-bool hasSharedMemory(uint32_t id)
-{
-	return hasSharedMemoryInternal(getDataMemoryKey(id).c_str());
 }
 
 #ifndef WINDOWS_OS
@@ -141,12 +198,13 @@ static void termination_handler(int signum)
 }
 #endif
 
-template <class T1, class T2>
-void allocateSharedMemoryInternal(const T1 &id, size_t size_in_byte, T2 &sharedMemoryList)
+void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
 {
+	DEBUG_SHARED_MEMORY(
+		Rprintf("allocating shared memory, key:%s, size:%llu\n", key.c_str(), size_in_byte);
+	)
 	boost::interprocess::permissions perm;
 	perm.set_unrestricted();
-	string key = getDataMemoryKey(id);
 
 	bool allocSharedObject = false;
 	OS_shared_memory_object *shm;
@@ -161,8 +219,8 @@ void allocateSharedMemoryInternal(const T1 &id, size_t size_in_byte, T2 &sharedM
 		shm->truncate(size_in_byte);
 		/*Checking the memory status on Linux
 		If the shared memory is not allocated successfully,
-		boost will not throw an error, I need to manually check if
-		the memory exist or not. Sad
+		boost will not throw an error, we need to manually check if
+		the memory can be allocated or not.
 		*/
 		mapped_region region(*shm, read_write);
 		void *ptr = region.get_address();
@@ -189,111 +247,27 @@ void allocateSharedMemoryInternal(const T1 &id, size_t size_in_byte, T2 &sharedM
 		if (allocSharedObject)
 		{
 #ifndef WINDOWS_OS
-			shared_memory_object::remove(key.c_str());
+			shared_memory_object::remove(key);
 #endif
 			delete shm;
 		}
 		Rf_error("An error has occured in allocating shared memory: %s", ex.what());
 	}
-	sharedMemoryList.insert(pair<T1, OS_shared_memory_object *>(id, shm));
+	sharedMemoryList.insert(pair<string, OS_shared_memory_object *>(key, shm));
 }
 
-uint32_t allocateSharedMemory(size_t size_in_byte)
-{
-	initialSharedmemory();
-	uint32_t id = getNextId();
-	allocateSharedMemoryInternal(id, size_in_byte, sharedMemoryList);
-	return id;
-}
-void allocateSharedMemory(const char *name, size_t size_in_byte)
-{
-	initialSharedmemory();
-	allocateSharedMemoryInternal(string(name), size_in_byte, sharedNamedMemoryList);
-}
 
-template <class T1, class T2>
-static uint32_t getObjectCountInternal(const T1 &id, T2 &objectCountList)
-{
-	if (!keyInMap(objectCountList, id))
-	{
-		return 0;
-	}
-	else
-	{
-		return objectCountList[id];
-	}
-}
-static uint32_t getObjectCount(const string &id)
-{
-	return getObjectCountInternal(id, namedSegmentObjectCount);
-}
-static uint32_t getObjectCount(const uint32_t &id)
-{
-	return getObjectCountInternal(id, segmentObjectCount);
-}
-template <class T1, class T2>
-static void changeObjectCount(const T1 &id, T2 &objectCountList, int offset)
-{
-	if (!keyInMap(objectCountList, id))
-	{
-		if (offset < 0)
-		{
-			Rf_error("The object count is less than 0");
-		}
-		objectCountList.insert(pair<T1, uint32_t>(id, offset));
-	}
-	else
-	{
-		objectCountList[id] = objectCountList[id] + offset;
-		if (objectCountList[id] == 0)
-		{
-			objectCountList.erase(id);
-		}
-	}
-}
-static void increaseObjectCount(const string &id)
-{
-	changeObjectCount(id, namedSegmentObjectCount, 1);
-}
-static void increaseObjectCount(const uint32_t &id)
-{
-	changeObjectCount(id, segmentObjectCount, 1);
-}
-static void decreaseObjectCount(const string &id)
-{
-	changeObjectCount(id, namedSegmentObjectCount, -1);
-}
-static void decreaseObjectCount(const uint32_t &id)
-{
-	changeObjectCount(id, segmentObjectCount, -1);
-}
-template <class T1, class T2>
-static void zeroOutObjectCountInternal(const T1 &id, T2 &objectCountList)
-{
-	if (keyInMap(objectCountList, id))
-	{
-		objectCountList.erase(id);
-	}
-}
-static void zeroOutObjectCount(const string &id)
-{
-	zeroOutObjectCountInternal(id, namedSegmentObjectCount);
-}
-static void zeroOutObjectCount(const uint32_t &id)
-{
-	zeroOutObjectCountInternal(id, segmentObjectCount);
-}
 // Open the shared memory and return the data pointer
 // The memory must have been allocated!!
-template <class T1, class T2, class T3>
-static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &segmentList, bool isInitial)
+static void *mapSharedMemoryInternal(const string key)
 {
+	DEBUG_SHARED_MEMORY(
+		Rprintf("mapping shared memory, key:%s\n", key.c_str());
+	)
 	/*
      the function initialSharedmemory will call mapSharedMemoryInternal
      so the argument isInitial is for preventing the infinite loop.
      */
-	if (!isInitial)
-		initialSharedmemory();
 	bool allocSharedObject = false;
 	bool allocSegmentObject = false;
 	bool ObjectCount = false;
@@ -301,30 +275,29 @@ static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &seg
 	mapped_region *region = nullptr;
 	try
 	{
-		if (keyInMap(segmentList, id))
+		if (keyInMap(segmentList, key))
 		{
-			increaseObjectCount(id);
-			return segmentList[id]->get_address();
+			increaseObjectCount(key);
+			return segmentList[key]->get_address();
 		}
 
-		// Check if the segment has been opened
-		if (keyInMap(sharedMemoryList, id))
+		// Otherwise, check if the shared memory object has been created
+		if (keyInMap(sharedMemoryList, key))
 		{
-			shm = sharedMemoryList[id];
+			shm = sharedMemoryList[key];
 		}
 		else
 		{
-			string key = getDataMemoryKey(id);
 			shm = new OS_shared_memory_object(open_only, key.c_str(), read_write);
 			allocSharedObject = true;
-			sharedMemoryList.insert(pair<T1, OS_shared_memory_object *>(id, shm));
+			sharedMemoryList.insert(pair<string, OS_shared_memory_object *>(key, shm));
 		}
 
 		region = new mapped_region(*shm, read_write);
 		allocSegmentObject = true;
 		void *ptr = region->get_address();
-		segmentList.insert(pair<T1, mapped_region *>(id, region));
-		increaseObjectCount(id);
+		segmentList.insert(pair<string, mapped_region *>(key, region));
+		increaseObjectCount(key);
 		ObjectCount = true;
 		return ptr;
 	}
@@ -332,184 +305,213 @@ static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &seg
 	{
 		if (allocSharedObject)
 		{
-			sharedMemoryList.erase(id);
+			sharedMemoryList.erase(key);
 			delete shm;
 		}
 		if (allocSegmentObject)
 		{
-			segmentList.erase(id);
+			segmentList.erase(key);
 			delete region;
 		}
 		if (ObjectCount)
 		{
-			decreaseObjectCount(id);
+			decreaseObjectCount(key);
 		}
 		Rf_error("An error has occured in mapping shared memory: %s", ex.what());
 		return nullptr;
 	}
 }
 
-void *mapSharedMemory(uint32_t id)
-{
-	return mapSharedMemoryInternal(id, sharedMemoryList, segmentList);
-}
-void *mapSharedMemory(const char *name)
-{
-	return mapSharedMemoryInternal(string(name), sharedNamedMemoryList, namedSegmentList);
-}
-
-//Unmap the region, but not releasing the memory
-template <class T1, class T2>
-static bool removeSegmentInternal(const T1 &id, T2 &segmentList)
-{
-	initialSharedmemory();
-	try
-	{
-		if (keyInMap(segmentList, id))
-		{
-			delete segmentList[id];
-			segmentList.erase(id);
-		}
-	}
-	catch (const std::exception &ex)
-	{
-		Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
-		return false;
-	}
-	return true;
-}
-
 //remove the shared memory object from the record
 //but the data may be still in the shared memory
-template <class T1, class T2>
-bool removeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
+static bool unmapSharedMemoryInternal(const string key)
 {
-	initialSharedmemory();
-	try
+	DEBUG_SHARED_MEMORY(
+		Rprintf("ummapping shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));
+	)
+	bool success = true;
+	if (getObjectCount(key) > 1)
 	{
-		if (keyInMap(sharedMemoryList, id))
+		decreaseObjectCount(key);
+	}
+	else
+	{
+		zeroOutObjectCount(key);
+		// Try to release the segment
+		try
 		{
-			delete sharedMemoryList[id];
-			sharedMemoryList.erase(id);
+			if (keyInMap(segmentList, key))
+			{
+				delete segmentList[key];
+				segmentList.erase(key);
+			}
+		}
+		catch (const std::exception &ex)
+		{
+			Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
+			success = false;
+		}
+		// Try to release the shared memory object handle
+		try
+		{
+			if (keyInMap(sharedMemoryList, key))
+			{
+				delete sharedMemoryList[key];
+				sharedMemoryList.erase(key);
+			}
+		}
+		catch (const std::exception &ex)
+		{
+			Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
+			success = false;
 		}
 	}
-	catch (const std::exception &ex)
-	{
-		Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
-		return false;
-	}
-	return true;
-}
-template <class T1, class T2, class T3>
-static bool unmapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &segmentList)
-{
-	if (getObjectCount(id) > 1)
-	{
-		decreaseObjectCount(id);
-		return (true);
-	}
-	if (getObjectCount(id) == 1)
-		decreaseObjectCount(id);
-	bool result1 = removeSegmentInternal(id, segmentList);
-	bool result2 = removeSharedMemoryInternal(id, sharedMemoryList);
-	return result1 && result2;
-}
-bool unmapSharedMemory(uint32_t id)
-{
-	DEBUG(Rprintf("Unmap shared memory, id:%d, count:%d\n", id, getObjectCount(id)));
-	return unmapSharedMemoryInternal(id, sharedMemoryList, segmentList);
+	return success;
 }
 
-bool unmapSharedMemory(const string &name)
+/*
+Close and destroy the shared memory
+It is user's responsibility to make sure the memory will not be used
+After the free
+*/
+bool freeSharedMemoryInternal(const string key)
 {
-	DEBUG(Rprintf("Unmap shared memory, id:%s, count:%d\n", name.c_str(), getObjectCount(name)));
-	return unmapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList);
-}
-bool unmapSharedMemory(const char *name)
-{
-	return unmapSharedMemory(string(name));
-}
-
-// Close and destroy the shared memory
-// It is user's responsibility to make sure the memory will not be used
-// After the free
-template <class T1, class T2>
-bool freeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
-{
-	DEBUG(Rprintf("free shared memory, reference count:%d\n", getObjectCount(id)));
-	initialSharedmemory();
-	bool success = unmapSharedMemory(id);
-	if (!success)
-	{
-		return false;
-	}
-	zeroOutObjectCount(id);
+	DEBUG_SHARED_MEMORY(
+		Rprintf("freeing shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));
+	)
+	unmapSharedMemoryInternal(key);
+	zeroOutObjectCount(key);
 #ifdef WINDOWS_OS
 	return true;
 #else
 	try
 	{
-		string key = getDataMemoryKey(id);
 		return OS_shared_memory_object::remove(key.c_str());
 	}
 	catch (const std::exception &ex)
 	{
-		Rf_warning("An error has occured in removing the shared memory: %s\n", ex.what());
+		Rf_warning("Fail to remove the shared memory: %s\n", ex.what());
 		return false;
 	}
 #endif
 }
 
-bool freeSharedMemory(uint32_t id)
+double getSharedMemorySizeInternal(const string key)
 {
-	return freeSharedMemoryInternal(id, sharedMemoryList);
-}
-bool freeSharedMemory(const char *name)
-{
-	return freeSharedMemoryInternal(string(name), sharedNamedMemoryList);
-}
-
-int32_t getLastIndex()
-{
-	initialSharedmemory();
-	return *last_id;
-}
-
-template <class T1, class T2>
-double getSharedMemorySizeInternal(const T1 &id, T2 &sharedMemoryList)
-{
-	initialSharedmemory();
-	if (hasSharedMemory(id))
+	DEBUG_SHARED_MEMORY(Rprintf("get shared memory size, Key:%s, exist: %d", key.c_str(),hasSharedMemoryInternal(key)));
+	if (hasSharedMemoryInternal(key))
 	{
-		offset_t size;
-		if (keyInMap(sharedMemoryList, id))
+		try
 		{
+			offset_t size;
+			if (keyInMap(sharedMemoryList, key))
+			{
 #ifdef WINDOWS_OS
-			size = sharedMemoryList[id]->get_size();
+				size = sharedMemoryList[key]->get_size();
 #else
-			sharedMemoryList[id]->get_size(size);
+				sharedMemoryList[key]->get_size(size);
 #endif
+			}
+			else
+			{
+				OS_shared_memory_object sharedMemory(open_only, key.c_str(), read_write);
+#ifdef WINDOWS_OS
+				size = sharedMemory.get_size();
+#else
+				sharedMemory.get_size(size);
+#endif
+			}
+			return size;
 		}
-		else
+		catch (const std::exception &ex)
 		{
-			OS_shared_memory_object sharedMemory(open_only, getDataMemoryKey(id).c_str(), read_write);
-#ifdef WINDOWS_OS
-			size = sharedMemory.get_size();
-#else
-			sharedMemory.get_size(size);
-#endif
+			Rf_warning("Fail to get the  size of the shared memory: %s\n", ex.what());
+			return 0;
 		}
-		return size;
 	}
 	return 0;
 }
 
-double getSharedMemorySize(uint32_t id)
+
+
+/*
+===================================================================
+Code for the public functions
+===================================================================
+*/
+
+bool hasNamedSharedMemory(const char *name)
 {
-	return getSharedMemorySizeInternal(id, sharedMemoryList);
+	return hasSharedMemoryInternal(getNamedKey(name));
+}
+/*  Check whether the shared memory exist*/
+bool hasSharedMemory(uint32_t id)
+{
+	return hasSharedMemoryInternal(getIdKey(id));
 }
 
-double getSharedMemorySize(const char *name)
+
+uint32_t allocateSharedMemory(size_t size_in_byte)
 {
-	return getSharedMemorySizeInternal(string(name), sharedNamedMemoryList);
+	//initialSharedmemory();
+	uint32_t id = getNextId();
+	string key = getIdKey(id);
+	allocateSharedMemoryInternal(key, size_in_byte);
+	return id;
+}
+void allocateNamedSharedMemory(const char *name, size_t size_in_byte)
+{
+	//initialSharedmemory();
+	string key = getNamedKey(name);
+	allocateSharedMemoryInternal(key, size_in_byte);
+}
+
+
+void *mapSharedMemory(uint32_t id)
+{
+	string key = getIdKey(id);
+	return mapSharedMemoryInternal(key);
+}
+void *mapNamedSharedMemory(const char *name)
+{
+	string key = getNamedKey(name);
+	return mapSharedMemoryInternal(key);
+}
+
+
+bool unmapSharedMemory(uint32_t id)
+{
+	string key = getIdKey(id);
+	return unmapSharedMemoryInternal(key);
+}
+
+bool unmapNamedSharedMemory(const char *name)
+{
+	string key = getNamedKey(name);
+	return unmapSharedMemoryInternal(key);
+}
+
+
+bool freeSharedMemory(uint32_t id)
+{
+	string key = getIdKey(id);
+	return freeSharedMemoryInternal(key);
+}
+bool freeNamedSharedMemory(const char *name)
+{
+	string key = getNamedKey(name);
+	return freeSharedMemoryInternal(key);
+}
+
+
+double getSharedMemorySize(uint32_t id)
+{
+	string key = getIdKey(id);
+	return getSharedMemorySizeInternal(key);
+}
+
+double getNamedSharedMemorySize(const char *name)
+{
+	string key = getNamedKey(name);
+	return getSharedMemorySizeInternal(key);
 }

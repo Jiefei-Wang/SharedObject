@@ -87,7 +87,7 @@ static void ptrFinalizer(SEXP extPtr)
 	{
 		unmapSharedMemory(id);
 	}
-	DEBUG(Rprintf("Finalizer, id %d\n", id););
+	DEBUG_SHARED_MEMORY(Rprintf("Finalizer, id %d\n", id););
 	return;
 }
 
@@ -248,31 +248,31 @@ double C_getSharedMemorySize(uint32_t id)
 // [[Rcpp::export]]
 void C_allocateNamedSharedMemory(const string name, size_t size_in_byte)
 {
-	allocateSharedMemory(name.c_str(), size_in_byte);
+	allocateNamedSharedMemory(name.c_str(), size_in_byte);
 }
 // [[Rcpp::export]]
 SEXP C_mapNamedSharedMemory(const string name)
 {
-	return R_MakeExternalPtr(mapSharedMemory(name.c_str()), R_NilValue, R_NilValue);
+	return R_MakeExternalPtr(mapNamedSharedMemory(name.c_str()), R_NilValue, R_NilValue);
 }
 // [[Rcpp::export]]
 bool C_unmapNamedSharedMemory(const string name)
 {
-	return unmapSharedMemory(name.c_str());
+	return unmapNamedSharedMemory(name.c_str());
 }
 // [[Rcpp::export]]
 bool C_freeNamedSharedMemory(const string name)
 {
-	return freeSharedMemory(name.c_str());
+	return freeNamedSharedMemory(name.c_str());
 }
 // [[Rcpp::export]]
 bool C_hasNamedSharedMemory(const string name)
 {
-	return hasSharedMemory(name.c_str());
+	return hasNamedSharedMemory(name.c_str());
 }
 
 // [[Rcpp::export]]
 double C_getNamedSharedMemorySize(const string name)
 {
-	return getSharedMemorySize(name.c_str());
+	return getNamedSharedMemorySize(name.c_str());
 }
