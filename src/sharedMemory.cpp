@@ -178,7 +178,7 @@ void allocateSharedMemoryInternal(const T1 &id, size_t size_in_byte, T2 &sharedM
 			old_handle = signal(SIGBUS, termination_handler);
 			if (old_handle != SIG_ERR)
 			{
-				memset(ptr, 0, size_in_byte);
+				memset(ptr, 1, size_in_byte);
 				signal(SIGBUS, old_handle);
 			}
 		}
