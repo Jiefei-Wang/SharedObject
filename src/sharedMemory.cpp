@@ -43,18 +43,26 @@ static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &seg
  */
 void initialSharedmemory()
 {
+
 	if (last_id == nullptr)
 	{
-		string name = SHARED_OBJECT_COUNTER;
-		if (!hasSharedMemory(name.c_str()))
+		try
 		{
-			allocateSharedMemoryInternal(name, sizeof(uint32_t), sharedNamedMemoryList);
-			last_id = (uint32_t *)mapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList, true);
-			*last_id = 0;
+			string name = SHARED_OBJECT_COUNTER;
+			if (!hasSharedMemory(name.c_str()))
+			{
+				allocateSharedMemoryInternal(name, sizeof(uint32_t), sharedNamedMemoryList);
+				last_id = (uint32_t *)mapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList, true);
+				*last_id = 0;
+			}
+			else
+			{
+				last_id = (uint32_t *)mapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList, true);
+			}
 		}
-		else
+		catch (std::exception &ex)
 		{
-			last_id = (uint32_t *)mapSharedMemoryInternal(name, sharedNamedMemoryList, namedSegmentList, true);
+			Rf_error("An error has occured in initializing shared memory object: %s\n", ex.what());
 		}
 	}
 }
@@ -336,7 +344,7 @@ static void *mapSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList, T3 &seg
 		{
 			decreaseObjectCount(id);
 		}
-		Rf_warning("An error has occured in mapping shared memory: %s", ex.what());
+		Rf_error("An error has occured in mapping shared memory: %s", ex.what());
 		return nullptr;
 	}
 }
@@ -365,7 +373,7 @@ static bool removeSegmentInternal(const T1 &id, T2 &segmentList)
 	}
 	catch (const std::exception &ex)
 	{
-		Rf_warning("An error has occured in closing the shared memory object: %s", ex.what());
+		Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
 		return false;
 	}
 	return true;
@@ -387,7 +395,7 @@ bool removeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
 	}
 	catch (const std::exception &ex)
 	{
-		Rf_warning("An error has occured in closing the shared memory object: %s", ex.what());
+		Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
 		return false;
 	}
 	return true;
@@ -446,7 +454,7 @@ bool freeSharedMemoryInternal(const T1 &id, T2 &sharedMemoryList)
 	}
 	catch (const std::exception &ex)
 	{
-		Rf_warning("An error has occured in removing the shared memory: %s", ex.what());
+		Rf_warning("An error has occured in removing the shared memory: %s\n", ex.what());
 		return false;
 	}
 #endif
