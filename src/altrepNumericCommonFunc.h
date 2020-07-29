@@ -3,6 +3,7 @@
 #include "macro.h"
 #include "tools.h"
 #include "C_interface.h"
+#include "sharedMemory.h"
 
 
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
@@ -70,8 +71,14 @@ SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
 	return(NULL);
 }
 
+
 SEXP sharedVector_serialized_state(SEXP x) {
 	DEBUG_ALTREP(Rprintf("serialize state\n"));
+	//We check the memory before serialize the object
+	uint32_t id = Rcpp::as<uint32_t>(GET_ALT_SLOT(x, INFO_DATAID));
+	if(!hasSharedMemory(id)){
+		Rf_error("Fail to serialize the shared object: The shared memory does not exist(id: %lu)", id);
+	}
 	SEXP dataInfo = PROTECT(Rf_duplicate(ALT_DATAINFO(x)));
 	SET_SLOT(dataInfo, INFO_OWNDATA, Rf_ScalarLogical(0));
 	UNPROTECT(1);
