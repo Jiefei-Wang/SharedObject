@@ -21,13 +21,14 @@ checkNamedID <- function(name){
 #' @param start the start value of the ID. The default is `NULL`. See details.
 #' @param end the end value of the ID. The default is `NULL`. See details.
 #' @param includeCharId Whether including the shared objects named by a character ID, it only works
-#' on Unix-like systems. See `?allocateNamedSharedMemory` for more information. The default is `FALSE`.
+#' on some linux systems. See details and `?allocateNamedSharedMemory` for more information. 
+#' The default is `FALSE`.
 #'
 #' @details
 #' The parameter `start` and `end` specify the range of the ID. If not specified, all
 #' IDs will be listed.
 #'
-#' On Ubuntu or many other Unix-like operating systems, the shared objects
+#' On Ubuntu or some other linux systems, the shared objects
 #' can be found in the folder `/dev/shm`. The function can find all shared objects
 #' if the folder exists.
 #'
@@ -55,7 +56,7 @@ listSharedObject <- function(end = NULL,start = NULL, includeCharId = FALSE) {
     if(file.exists("/dev/shm")){
         num_name <- paste0(getOSBit(),"_num")
         char_name <- paste0(getOSBit(),"_char")
-        all_ids <- getSharedFiles(showInternal = FALSE)
+        all_ids <- getSharedFiles()
         usedId <- all_ids[[num_name]]
         if(!is.null(start))
             usedId <- usedId[usedId>=start]

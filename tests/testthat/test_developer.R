@@ -114,3 +114,31 @@ test_that("Create memory by name without unmap", {
     }
 })
 gc()
+
+if(get_os() == "linux"){
+    test_that("listSharedObject", {
+        expect_equal(nrow(listSharedObject()), 0)
+        x <- lm(mpg~cyl, mtcars)
+        x2 <- share(x)
+        expect_true(nrow(listSharedObject())>0)
+        rm(list = "x2")
+        gc()
+        expect_equal(nrow(listSharedObject()), 0)
+    })
+    test_that("list named shared object", {
+        name <- "SharedObjectPackageTest2"
+        size <- 10
+        noMemory <- TRUE
+        if(hasSharedMemory(name)){
+            noMemory <- freeSharedMemory(name)
+        }
+        expect_true(noMemory)
+        if(noMemory){
+            allocateNamedSharedMemory(name,size)
+            expect_equal(nrow(listSharedObject(includeCharId = TRUE)),1)
+            result <- freeSharedMemory(name)
+            expect_true(result)
+            expect_equal(nrow(listSharedObject(includeCharId = TRUE)),0)
+        }
+    })
+}

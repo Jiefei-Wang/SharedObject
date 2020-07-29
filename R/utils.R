@@ -110,22 +110,19 @@ pkgconfig <- function(x){
 }
 
 ## Get POSIX shared memory files
-getSharedFiles <- function(showInternal = FALSE){
+getSharedFiles <- function(){
     files <- list.files("/dev/shm")
     bits <- as.character(c(32,64))
     res <- list()
     for(i in bits){
-        header <- paste0("shared_object_package_spaceX",i,"_id_")
-        index <- startsWith(files, header)
-        id <- substring(files[index], nchar(header)+1)
-        if(!showInternal && !is.null(id)){
-            id <- id[id!= "sharedObjectCounter"]
-        }
-        index_num <- is.charInteger(id)
-        id_num <- as.numeric(id[index_num])
-        id_char <- id[!index_num]
-        res[[paste0(i,"_num")]] <- id_num
-        res[[paste0(i,"_char")]] <- id_char
+        headerId <- paste0("SO_X",i,"_id_")
+        headerName <- paste0("SO_X",i,"_nm_")
+        idIndex <- startsWith(files, headerId)
+        objectId <- substring(files[idIndex], nchar(headerId)+1)
+        nameIndex <- startsWith(files, headerName)
+        objectName <- substring(files[nameIndex], nchar(headerName)+1)
+        res[[paste0(i,"_num")]] <- as.numeric(objectId)
+        res[[paste0(i,"_char")]] <- objectName
     }
     res
 }

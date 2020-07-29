@@ -12,7 +12,8 @@ listSharedObject(end = NULL, start = NULL, includeCharId = FALSE)
 \item{start}{the start value of the ID. The default is \code{NULL}. See details.}
 
 \item{includeCharId}{Whether including the shared objects named by a character ID, it only works
-on Unix-like systems. See \code{?allocateNamedSharedMemory} for more information. The default is \code{FALSE}.}
+on some linux systems. See details and \code{?allocateNamedSharedMemory} for more information.
+The default is \code{FALSE}.}
 }
 \value{
 A data.frame object with shared object id and size
@@ -26,7 +27,7 @@ than the object size. The size unit is byte.
 The parameter \code{start} and \code{end} specify the range of the ID. If not specified, all
 IDs will be listed.
 
-On Ubuntu or many other Unix-like operating systems, the shared objects
+On Ubuntu or some other linux systems, the shared objects
 can be found in the folder \verb{/dev/shm}. The function can find all shared objects
 if the folder exists.
 
