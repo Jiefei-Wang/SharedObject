@@ -5,7 +5,7 @@ processes. Users can call `share` function to create a shared
 object. shared objects behave the same as R vectors(AKA atomic),
 users should not be able to see any notable changes after converting a
 vector into a shared object. Shared objects can be exported through
-the export function from a parallel package. There is no memory
+the export function from a parallel package(e.g. `parallel`). There is no memory
 dulplication during the variable export. Therefore, all R processes
 will share a common data. Changing values of a shared Object is
 supported but it should be used with caution for it will force R 
