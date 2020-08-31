@@ -403,7 +403,7 @@ double getSharedMemorySizeInternal(const string key)
 	{
 		try
 		{
-			offset_t size;
+			offset_t size = 0;
 			if (keyInMap(sharedMemoryList, key))
 			{
 #ifdef WINDOWS_OS
