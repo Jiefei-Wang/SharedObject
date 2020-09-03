@@ -6,7 +6,7 @@ CXX_STD=CXX11
 
 PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT
 MKDIR_P = ${MKDIR} -p
-
+PKG_LIBS = -lrt
 
 .PHONY: all copy-files make-static
 
