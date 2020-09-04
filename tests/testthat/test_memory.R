@@ -7,6 +7,10 @@ N <- 100
 n<- 1000
 
 
+if(Sys.info()['sysname']=="Linux"){
+    warning(paste0(system2("df", stdout = TRUE),collapse="\n"))
+}
+
 cl = makeCluster(2)
 for(i in seq_len(N)){
     test_that(paste0("Testing small memory alloc/free: ", i ),
