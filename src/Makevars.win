@@ -1,0 +1,31 @@
+MKDIR?=mkdir
+RM?=rm -f
+CP?=cp
+
+CXX_STD=CXX11
+
+PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT
+MKDIR_P = ${MKDIR} -p
+
+.PHONY: all copy-files make-static
+
+all: remove-file ${SHLIB} make-static copy-files
+#all: ${SHLIB}
+
+remove-file:
+	 ${RM} "../inst/include/SharedObject/sharedMemory.h" &&\
+	 ${RM} "../inst/usrlib${R_ARCH}/SharedObject.a" &&\
+	 ${MKDIR_P} ../inst/include&&\
+	 ${MKDIR_P} ../inst/include/SharedObject&&\
+	 ${MKDIR_P} ../inst/usrlib${R_ARCH}
+
+
+copy-files:
+	 ${CP} "sharedMemory.h" "../inst/include/SharedObject/"&&\
+	 ${CP} "SharedObject.a" "../inst/usrlib${R_ARCH}/"
+
+
+make-static:
+	 ${AR} -crv SharedObject.a *.o
+
+
