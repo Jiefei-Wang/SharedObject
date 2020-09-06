@@ -9,4 +9,6 @@ src-x64/
 .Ruserdata
 .Rproj
 SharedObject.Rproj
-
+autom4te.cache
+config.log
+config.status
