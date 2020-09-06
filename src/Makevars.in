@@ -10,7 +10,7 @@ PKG_LIBS = @LIBS@
 
 .PHONY: all copy-files make-static
 
-all: remove-file ${SHLIB} make-static copy-files
+all: remove-file ${SHLIB} make-static copy-files cleanup
 #all: ${SHLIB}
 
 remove-file:
@@ -30,3 +30,5 @@ make-static:
 	 ${AR} -crv SharedObject.a *.o
 
 
+cleanup:
+	 ${RM} ../config.*
