@@ -17,6 +17,9 @@ get_os <- function(){
 }
 
 test_that("Testing memory tools", {
+    if(Sys.info()['sysname']=="Linux"){
+        warning(paste0(system2("df", stdout = TRUE),collapse="\n"))
+    }
     x <- share(1:10)
     info <- getSharedObjectProperty(x)
     check1 <- hasSharedMemory(info$dataId)
