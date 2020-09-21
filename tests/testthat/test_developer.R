@@ -18,7 +18,7 @@ get_os <- function(){
 
 test_that("Testing memory tools", {
     if(Sys.info()['sysname']=="Linux"){
-        expect_error(warning(paste0(system2("df", stdout = TRUE),collapse="\n")),NA)
+        expect_true(warning(paste0(system2("df", stdout = TRUE),collapse="\n")))
     }
     x <- share(1:10)
     info <- getSharedObjectProperty(x)
