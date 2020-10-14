@@ -1,5 +1,7 @@
 #include <Rcpp.h>
 #include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/sync/named_semaphore.hpp>
+#include <boost/thread/thread_time.hpp>
 #include <map>
 #include <string>
 #include "sharedMemory.h"
@@ -20,6 +22,8 @@
 #endif //  WINDOWS_OS
 
 #define SHARED_OBJECT_COUNTER "sharedObjectCounter"
+#define SEMAPHORE_NAME "sharedObjectSemaphore"
+
 using std::pair;
 using std::string;
 using namespace boost::interprocess;
@@ -29,9 +33,76 @@ static std::map<string, mapped_region *> segmentList;
 static std::map<string, uint32_t> segmentObjectCount;
 
 // This last_id attributes is shared
-static uint32_t *last_id = nullptr;
+static volatile uint32_t *last_id = nullptr;
+static named_semaphore *semaphore = nullptr;
+//Wait time in ms
+static unsigned int wait_time = 30000;
 
+static void initialSharedmemory();
+static void allocateSharedMemoryInternal(const string key, size_t size_in_byte);
+static void *mapSharedMemoryInternal(const string key);
+static bool hasSharedMemoryInternal(const string key);
+/*
+===================================================================
+Process lock
+===================================================================
+*/
+void unlock_shared_memory();
+// [[Rcpp::export]]
+void lock_shared_memory()
+{
+	initialSharedmemory();
+	boost::system_time timeout = boost::get_system_time() + boost::posix_time::milliseconds(wait_time);
+	//Rprintf("try lock\n");
+	bool lock_status = semaphore->timed_wait(timeout);
+	if (!lock_status)
+	{
+		Rf_warning("%s%s%s%s%s",
+				   "The process lock takes too long and ",
+				   "we will forcely release the lock. ",
+				   "If you think this is a false positive, ",
+				   "please consider calling <SharedObject:::set_lock_timeout> ",
+				   "to set a larger timeout.");
+		//Rprintf("failed\n");
+		unlock_shared_memory();
+		lock_shared_memory();
+	}
+	else
+	{
+		//Rprintf("successed\n");
+	}
+}
+// [[Rcpp::export]]
+void unlock_shared_memory()
+{
+	//Rprintf("Unlock\n");
+	initialSharedmemory();
+	semaphore->post();
+}
+// [[Rcpp::export]]
+void release_lock()
+{
+	named_semaphore::remove(SEMAPHORE_NAME);
+}
+// [[Rcpp::export]]
+void set_lock_timeout(unsigned int timeout_ms)
+{
+	wait_time = timeout_ms;
+}
 
+class semophore_guard
+{
+public:
+	semophore_guard()
+	{
+		//Rprintf("guard created\n");
+	}
+	~semophore_guard()
+	{
+		//Rprintf("guard destroyed\n");
+		unlock_shared_memory();
+	}
+};
 
 /*
 ===================================================================
@@ -39,40 +110,48 @@ Utilities
 ===================================================================
 */
 template <class T>
-bool keyInMap(T map, std::string key)
+static bool keyInMap(T map, std::string key)
 {
 	return map.find(key) != map.end();
 }
 //Get the key to access a shared data that is used in R
-string getIdKey(uint32_t id)
+static string getIdKey(uint32_t id)
 {
 	//common name + id
 	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_id_") + std::to_string(id);
 }
-string getNamedKey(const string name)
+static string getNamedKey(const string name)
 {
 	//common name + name
 	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_nm_") + name;
 }
+
+/*void flushIndex(){
+	initialSharedmemory();
+	segmentList.at(SHARED_OBJECT_COUNTER)->flush(0,0,false);
+}*/
 /*
  Get the next id
  The id will be searched starting from *last_id + 1
  until find an unused one
  */
-void initialSharedmemory();
-uint32_t getNextId()
+static uint32_t getNextId()
 {
 	initialSharedmemory();
-	uint32_t initial = *last_id;
+	uint32_t initial_id = *last_id;
+	uint32_t final_id = *last_id;
 	do
 	{
-		*last_id = *last_id + 1L;
-		if (!hasSharedMemory(*last_id))
-			return *last_id;
-	} while (*last_id != initial);
+		final_id++;
+		if (!hasSharedMemoryInternal(getIdKey(final_id)))
+		{
+			*last_id = final_id;
+			//flushIndex();
+			return final_id;
+		}
+	} while (final_id != initial_id);
 	Rf_error("Unable to find an available key for creating a shared memory, all keys are in used.");
 }
-
 int32_t getLastIndex()
 {
 	initialSharedmemory();
@@ -131,7 +210,6 @@ static void zeroOutObjectCount(const string key)
 	}
 }
 
-
 /*
 ===================================================================
 Code for the internal functions
@@ -139,25 +217,39 @@ If a function is internal, it means the function will use the key as-is.
 ===================================================================
 */
 /*
- Initialize the variable last_id which is located in the shared memory
- the variable serves as a hint for what the next id should be
+ Initialize the variable last_id and the semaphore
  */
-void allocateSharedMemoryInternal(const string key, size_t size_in_byte);
-static void *mapSharedMemoryInternal(const string key);
-static bool hasSharedMemoryInternal(const string key);
-
 void initialSharedmemory()
 {
 	if (last_id == nullptr)
 	{
 		try
 		{
+			boost::interprocess::permissions perm;
+			perm.set_unrestricted();
+			semaphore = new named_semaphore(open_or_create_t(), SEMAPHORE_NAME, 1, perm);
 			string name = SHARED_OBJECT_COUNTER;
 			if (!hasSharedMemoryInternal(name))
 			{
-				allocateSharedMemoryInternal(name, sizeof(uint32_t));
-				last_id = (uint32_t *)mapSharedMemoryInternal(name);
-				*last_id = 0;
+				//Rprintf("internal lock\n");
+				boost::system_time timeout = boost::get_system_time() + boost::posix_time::milliseconds(5000);
+				//Rprintf("try lock\n");
+				bool lock_status = semaphore->timed_wait(timeout);
+				if (!lock_status)
+				{
+					Rf_warning("Something is wrong with the process lock, we will reset it for you\n");
+					while (!semaphore->try_wait())
+					{
+						semaphore->post();
+					}
+				}
+				semophore_guard guard;
+				if (!hasSharedMemoryInternal(name))
+				{
+					allocateSharedMemoryInternal(name, sizeof(uint32_t));
+					last_id = (uint32_t *)mapSharedMemoryInternal(name);
+					*last_id = 0;
+				}
 			}
 			else
 			{
@@ -170,8 +262,6 @@ void initialSharedmemory()
 		}
 	}
 }
-
-
 
 static bool hasSharedMemoryInternal(const string key)
 {
@@ -198,11 +288,11 @@ static void termination_handler(int signum)
 }
 #endif
 
-void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
+static void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
 {
+	//Rprintf("key:%s\n", key.c_str());
 	DEBUG_SHARED_MEMORY(
-		Rprintf("allocating shared memory, key:%s, size:%llu\n", key.c_str(), size_in_byte);
-	)
+		Rprintf("allocating shared memory, key:%s, size:%llu\n", key.c_str(), size_in_byte);)
 	boost::interprocess::permissions perm;
 	perm.set_unrestricted();
 
@@ -211,7 +301,9 @@ void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
 	try
 	{
 #ifdef WINDOWS_OS
+		//Rprintf("--key:%s\n", key.c_str());
 		shm = new windows_shared_memory(create_only, key.c_str(), read_write, size_in_byte, perm);
+		//Rprintf("--key:%s\n", key.c_str());
 		allocSharedObject = true;
 #else
 		shm = new shared_memory_object(create_only, key.c_str(), read_write, perm);
@@ -251,19 +343,18 @@ void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
 #endif
 			delete shm;
 		}
-		Rf_error("An error has occured in allocating shared memory: %s", ex.what());
+		//Rprintf("This is an error\n");
+		Rf_error("An error has occured in allocating shared memory: %s(key: %s)", ex.what(), key.c_str());
 	}
 	sharedMemoryList.insert(pair<string, OS_shared_memory_object *>(key, shm));
 }
-
 
 // Open the shared memory and return the data pointer
 // The memory must have been allocated!!
 static void *mapSharedMemoryInternal(const string key)
 {
 	DEBUG_SHARED_MEMORY(
-		Rprintf("mapping shared memory, key:%s\n", key.c_str());
-	)
+		Rprintf("mapping shared memory, key:%s\n", key.c_str());)
 	/*
      the function initialSharedmemory will call mapSharedMemoryInternal
      so the argument isInitial is for preventing the infinite loop.
@@ -327,8 +418,7 @@ static void *mapSharedMemoryInternal(const string key)
 static bool unmapSharedMemoryInternal(const string key)
 {
 	DEBUG_SHARED_MEMORY(
-		Rprintf("ummapping shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));
-	)
+		Rprintf("ummapping shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));)
 	bool success = true;
 	if (getObjectCount(key) > 1)
 	{
@@ -377,8 +467,7 @@ After the free
 bool freeSharedMemoryInternal(const string key)
 {
 	DEBUG_SHARED_MEMORY(
-		Rprintf("freeing shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));
-	)
+		Rprintf("freeing shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));)
 	unmapSharedMemoryInternal(key);
 	zeroOutObjectCount(key);
 #ifdef WINDOWS_OS
@@ -398,7 +487,7 @@ bool freeSharedMemoryInternal(const string key)
 
 double getSharedMemorySizeInternal(const string key)
 {
-	DEBUG_SHARED_MEMORY(Rprintf("get shared memory size, Key:%s, exist: %d", key.c_str(),hasSharedMemoryInternal(key)));
+	DEBUG_SHARED_MEMORY(Rprintf("get shared memory size, Key:%s, exist: %d", key.c_str(), hasSharedMemoryInternal(key)));
 	if (hasSharedMemoryInternal(key))
 	{
 		try
@@ -432,8 +521,6 @@ double getSharedMemorySizeInternal(const string key)
 	return 0;
 }
 
-
-
 /*
 ===================================================================
 Code for the public functions
@@ -450,10 +537,10 @@ bool hasSharedMemory(uint32_t id)
 	return hasSharedMemoryInternal(getIdKey(id));
 }
 
-
 uint32_t allocateSharedMemory(size_t size_in_byte)
 {
-	//initialSharedmemory();
+	lock_shared_memory();
+	semophore_guard guard;
 	uint32_t id = getNextId();
 	string key = getIdKey(id);
 	allocateSharedMemoryInternal(key, size_in_byte);
@@ -461,11 +548,11 @@ uint32_t allocateSharedMemory(size_t size_in_byte)
 }
 void allocateNamedSharedMemory(const char *name, size_t size_in_byte)
 {
-	//initialSharedmemory();
+	lock_shared_memory();
+	semophore_guard guard;
 	string key = getNamedKey(name);
 	allocateSharedMemoryInternal(key, size_in_byte);
 }
-
 
 void *mapSharedMemory(uint32_t id)
 {
@@ -477,7 +564,6 @@ void *mapNamedSharedMemory(const char *name)
 	string key = getNamedKey(name);
 	return mapSharedMemoryInternal(key);
 }
-
 
 bool unmapSharedMemory(uint32_t id)
 {
@@ -491,7 +577,6 @@ bool unmapNamedSharedMemory(const char *name)
 	return unmapSharedMemoryInternal(key);
 }
 
-
 bool freeSharedMemory(uint32_t id)
 {
 	string key = getIdKey(id);
@@ -502,7 +587,6 @@ bool freeNamedSharedMemory(const char *name)
 	string key = getNamedKey(name);
 	return freeSharedMemoryInternal(key);
 }
-
 
 double getSharedMemorySize(uint32_t id)
 {

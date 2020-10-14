@@ -325,6 +325,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lock_shared_memory
+void lock_shared_memory();
+RcppExport SEXP _SharedObject_lock_shared_memory() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    lock_shared_memory();
+    return R_NilValue;
+END_RCPP
+}
+// unlock_shared_memory
+void unlock_shared_memory();
+RcppExport SEXP _SharedObject_unlock_shared_memory() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    unlock_shared_memory();
+    return R_NilValue;
+END_RCPP
+}
+// release_lock
+void release_lock();
+RcppExport SEXP _SharedObject_release_lock() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    release_lock();
+    return R_NilValue;
+END_RCPP
+}
+// set_lock_timeout
+void set_lock_timeout(unsigned int timeout_ms);
+RcppExport SEXP _SharedObject_set_lock_timeout(SEXP timeout_msSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< unsigned int >::type timeout_ms(timeout_msSEXP);
+    set_lock_timeout(timeout_ms);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_createSharedMemory", (DL_FUNC) &_SharedObject_C_createSharedMemory, 2},
@@ -356,6 +393,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_freeNamedSharedMemory", (DL_FUNC) &_SharedObject_C_freeNamedSharedMemory, 1},
     {"_SharedObject_C_hasNamedSharedMemory", (DL_FUNC) &_SharedObject_C_hasNamedSharedMemory, 1},
     {"_SharedObject_C_getNamedSharedMemorySize", (DL_FUNC) &_SharedObject_C_getNamedSharedMemorySize, 1},
+    {"_SharedObject_lock_shared_memory", (DL_FUNC) &_SharedObject_lock_shared_memory, 0},
+    {"_SharedObject_unlock_shared_memory", (DL_FUNC) &_SharedObject_unlock_shared_memory, 0},
+    {"_SharedObject_release_lock", (DL_FUNC) &_SharedObject_release_lock, 0},
+    {"_SharedObject_set_lock_timeout", (DL_FUNC) &_SharedObject_set_lock_timeout, 1},
     {NULL, NULL, 0}
 };
 
