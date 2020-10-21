@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#define BOOST_NO_AUTO_PTR
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/sync/named_semaphore.hpp>
 #include <boost/thread/thread_time.hpp>
