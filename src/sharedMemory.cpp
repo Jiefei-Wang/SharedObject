@@ -110,7 +110,7 @@ Utilities
 ===================================================================
 */
 template <class T>
-static bool keyInMap(T map, std::string key)
+static bool keyInMap(T& map, std::string key)
 {
 	return map.find(key) != map.end();
 }
