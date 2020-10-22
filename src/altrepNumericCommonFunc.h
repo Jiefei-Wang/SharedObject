@@ -5,15 +5,14 @@
 #include "C_interface.h"
 #include "sharedMemory.h"
 
-
 Rboolean sharedVector_Inspect(SEXP x, int pre, int deep, int pvec,
-	void (*inspect_subtree)(SEXP, int, int, int))
+							  void (*inspect_subtree)(SEXP, int, int, int))
 {
-	Rprintf(" (len=%llu, type=%d, COW=%d, SC=%d, SS=%d) shared object ID:%d\n", Rf_xlength(x),TYPEOF(x), 
-		Rcpp::as<int>(GET_ALT_SLOT(x,INFO_COPYONWRITE)),
-		Rcpp::as<int>(GET_ALT_SLOT(x,INFO_SHAREDCOPY)),
-		Rcpp::as<int>(GET_ALT_SLOT(x,INFO_SHAREDSUBSET)),
-		Rcpp::as<int>(GET_ALT_SLOT(x, INFO_DATAID)));
+	Rprintf(" (len=%llu, type=%d, COW=%d, SC=%d, SS=%d) shared object ID:%d\n", Rf_xlength(x), TYPEOF(x),
+			Rcpp::as<int>(GET_ALT_SLOT(x, INFO_COPYONWRITE)),
+			Rcpp::as<int>(GET_ALT_SLOT(x, INFO_SHAREDCOPY)),
+			Rcpp::as<int>(GET_ALT_SLOT(x, INFO_SHAREDSUBSET)),
+			Rcpp::as<int>(GET_ALT_SLOT(x, INFO_DATAID)));
 
 	return TRUE;
 }
@@ -25,164 +24,203 @@ R_xlen_t sharedVector_length(SEXP x)
 	return size;
 }
 
-void* sharedVector_dataptr(SEXP x, Rboolean writeable) {
+void *sharedVector_dataptr(SEXP x, Rboolean writeable)
+{
 	DEBUG_ALTREP(Rprintf("accessing data pointer\n"));
 	return ALT_EXTPTR(x);
 }
-const void* sharedVector_dataptr_or_null(SEXP x)
+const void *sharedVector_dataptr_or_null(SEXP x)
 {
 	DEBUG_ALTREP(Rprintf("accessing data pointer or null\n"));
 	return sharedVector_dataptr(x, Rboolean::TRUE);
 }
 
-SEXP sharedVector_duplicate(SEXP x, Rboolean deep) {
-	try {
+SEXP sharedVector_duplicate(SEXP x, Rboolean deep)
+{
+	try
+	{
 		using namespace Rcpp;
 		bool copyOnWrite = as<bool>(GET_ALT_SLOT(x, INFO_COPYONWRITE));
 		bool sharedCopy = as<bool>(GET_ALT_SLOT(x, INFO_SHAREDCOPY));
-		DEBUG_ALTREP(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared copy %d\n", 
-			deep, copyOnWrite, sharedCopy));
-		if (copyOnWrite) {
-			if (sharedCopy) {
+		DEBUG_ALTREP(Rprintf("Duplicating data, deep: %d, copy on write: %d, shared copy %d\n",
+							 deep, copyOnWrite, sharedCopy));
+		if (copyOnWrite)
+		{
+			if (sharedCopy)
+			{
 				List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
 				newDataInfo[INFO_OWNDATA] = Rf_ScalarLogical(true);
 				SEXP result = C_createSharedMemory(x, wrap(newDataInfo));
-				return(result);
+				return (result);
 			}
-			else {
+			else
+			{
 				SEXP result = PROTECT(Rf_allocVector(TYPEOF(x), XLENGTH(x)));
 				memcpy(DATAPTR(result), DATAPTR(x), as<R_xlen_t>(GET_ALT_SLOT(x, INFO_TOTALSIZE)));
 				UNPROTECT(1);
 				return result;
 			}
 		}
-		else {
+		else
+		{
 			List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
 			newDataInfo[INFO_OWNDATA] = Rf_ScalarLogical(false);
 			SEXP result = C_readSharedMemory(newDataInfo);
-			return(result);
+			return (result);
 		}
 	}
-	catch (const std::exception & ex) {
+	catch (const std::exception &ex)
+	{
 		Rf_error("Error in duplicating an altrep\n%s", ex.what());
 	}
 
 	// Just for suppressing the annoying warning, it should never be excuted
-	return(NULL);
+	return (NULL);
 }
 
-
-SEXP sharedVector_serialized_state(SEXP x) {
+uint64_t getObjectSize(SEXP x);
+SEXP sharedVector_serialized_state(SEXP x)
+{
 	DEBUG_ALTREP(Rprintf("serialize state\n"));
 	//We check the memory before serialize the object
 	uint32_t id = Rcpp::as<uint32_t>(GET_ALT_SLOT(x, INFO_DATAID));
-	if(!hasSharedMemory(id)){
-		Rf_error("Fail to serialize the shared object: The shared memory does not exist(id: %lu)", id);
+	if (!hasSharedMemory(id))
+	{
+		Rf_warning("The shared memory does not exist(id: %lu), the unshared data will be exported instead\n", id);
+		SEXP unsharedData = PROTECT(Rf_allocVector(TYPEOF(x), XLENGTH(x)));
+		memcpy(DATAPTR(unsharedData), DATAPTR(x), getObjectSize(x));
+		UNPROTECT(1);
+		return unsharedData;
 	}
-	SEXP dataInfo = PROTECT(Rf_duplicate(ALT_DATAINFO(x)));
-	SET_SLOT(dataInfo, INFO_OWNDATA, Rf_ScalarLogical(0));
-	UNPROTECT(1);
-	return(dataInfo);
+	else
+	{
+		SEXP dataInfo = PROTECT(Rf_duplicate(ALT_DATAINFO(x)));
+		SET_SLOT(dataInfo, INFO_OWNDATA, Rf_ScalarLogical(0));
+		UNPROTECT(1);
+		return (dataInfo);
+	}
 }
 
-void loadLibrary() {
+void loadLibrary()
+{
 	SEXP e;
 	Rf_protect(e = Rf_lang2(Rf_install("library"), Rf_mkString(PACKAGE_NAME)));
 	R_tryEval(e, R_GlobalEnv, NULL);
 	Rf_unprotect(1);
 }
 
-SEXP sharedVector_unserialize(SEXP R_class, SEXP dataInfo) {
-	try {
-		using namespace Rcpp;
-		DEBUG_ALTREP(Rprintf("unserializing data\n"));
-		loadLibrary();
-		DEBUG_ALTREP(Rprintf("Library loaded\n"));
+SEXP sharedVector_unserialize(SEXP R_class, SEXP dataInfo)
+{
+	if (TYPEOF(dataInfo) != VECSXP)
+	{
+		Rf_warning("The shared memory has been released! Receiving unshared object.\n");
+		return dataInfo;
+	}
+	else
+	{
+		try
+		{
+			using namespace Rcpp;
+			DEBUG_ALTREP(Rprintf("unserializing data\n"));
+			loadLibrary();
+			DEBUG_ALTREP(Rprintf("Library loaded\n"));
 
-		SEXP result = C_readSharedMemory(dataInfo);
-		return result;
+			SEXP result = C_readSharedMemory(dataInfo);
+			return result;
+		}
+		catch (const std::exception &ex)
+		{
+			Rf_error("Error in unserializing an altrep\n%s", ex.what());
+		}
+		return dataInfo;
 	}
-	catch (const std::exception & ex) {
-		Rf_error("Error in unserializing an altrep\n%s", ex.what());
-	}
-	return dataInfo;
 }
 
-
-template<class T>
-SEXP template_coerce(T* x, R_xlen_t len, int type)
+template <class T>
+SEXP template_coerce(T *x, R_xlen_t len, int type)
 {
 	DEBUG_ALTREP(Rprintf("coerce\n"));
 	SEXP result = PROTECT(Rf_allocVector(type, len));
-	for (R_xlen_t i = 0; i < len; i++) {
+	for (R_xlen_t i = 0; i < len; i++)
+	{
 		switch (type)
 		{
 		case INTSXP:
-			INTEGER(result)[i] = x[i];
+			INTEGER(result)
+			[i] = x[i];
 			break;
 		case REALSXP:
-			REAL(result)[i] = x[i];
+			REAL(result)
+			[i] = x[i];
 			break;
 		default:
 			Rf_error("Unknown type: %d\n", type);
 		}
 	}
 	UNPROTECT(1);
-	return(result);
+	return (result);
 }
 
-
-template<class T>
-T numeric_Elt(SEXP x, R_xlen_t i) {
+template <class T>
+T numeric_Elt(SEXP x, R_xlen_t i)
+{
 	DEBUG_ALTREP(Rprintf("accessing numeric element %d\n", i));
-	return ((T*)ALT_EXTPTR(x))[i];
+	return ((T *)ALT_EXTPTR(x))[i];
 }
 
-
-template<class T>
-R_xlen_t numeric_region(SEXP x, R_xlen_t start, R_xlen_t size, T* out) {
+template <class T>
+R_xlen_t numeric_region(SEXP x, R_xlen_t start, R_xlen_t size, T *out)
+{
 	DEBUG_ALTREP(Rprintf("accessing numeric region\n"));
-	T* ptr = (T*)ALT_EXTPTR(x);
+	T *ptr = (T *)ALT_EXTPTR(x);
 	R_xlen_t rest_len = Rf_length(x) - start;
 	R_xlen_t ncopy = rest_len > size ? size : rest_len;
 	memcpy(out, ptr + start, ncopy * sizeof(T));
 	return ncopy;
 }
 
-
 #include <type_traits>
-template<class T1, class T2>
-void template_subset_assignment(T1* target, T1* source, T2* indx, R_xlen_t src_len, R_xlen_t ind_len) {
+template <class T1, class T2>
+void template_subset_assignment(T1 *target, T1 *source, T2 *indx, R_xlen_t src_len, R_xlen_t ind_len)
+{
 	source = source - 1L;
 	DEBUG_ALTREP(Rprintf("Index:"));
-	for (R_xlen_t i = 0; i < ind_len; i++) {
+	for (R_xlen_t i = 0; i < ind_len; i++)
+	{
 		DEBUG_ALTREP(Rprintf("%d,", (int)indx[i]));
-		if (indx[i] <= src_len && indx[i] > 0) {
-			if (std::is_same<T2, double>::value) {
+		if (indx[i] <= src_len && indx[i] > 0)
+		{
+			if (std::is_same<T2, double>::value)
+			{
 				target[i] = source[(R_xlen_t)indx[i]];
 			}
-			else {
+			else
+			{
 				target[i] = source[(int)indx[i]];
 			}
 		}
-		else {
+		else
+		{
 			Rf_error("Index out of bound:\n index: %llu length:%llu\n", (R_xlen_t)indx[i], (R_xlen_t)src_len);
 		}
 	}
 	DEBUG_ALTREP(Rprintf("\n"));
 }
 
-template<int SXP_TYPE, class C_TYPE>
-SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
+template <int SXP_TYPE, class C_TYPE>
+SEXP numeric_subset(SEXP x, SEXP indx, SEXP call)
+{
 	using namespace Rcpp;
-	try {
+	try
+	{
 		bool sharedSubset = as<bool>(GET_ALT_SLOT(x, INFO_SHAREDSUBSET));
 		DEBUG_ALTREP(Rprintf("Accessing subset, sharedSubset: %d\n", sharedSubset));
-			
+
 		//Allocate the subset vector and assign values
 		R_xlen_t len = Rf_xlength(indx);
 		SEXP subVector;
-		if (sharedSubset) {
+		if (sharedSubset)
+		{
 			List newDataInfo = Rf_duplicate(ALT_DATAINFO(x));
 
 			Environment package_env(PACKAGE_ENV);
@@ -195,13 +233,15 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 
 			subVector = PROTECT(C_createEmptySharedMemory(newDataInfo));
 		}
-		else {
+		else
+		{
 			subVector = PROTECT(Rf_allocVector(SXP_TYPE, len));
 		}
 
-		C_TYPE* src_ptr = (C_TYPE*)DATAPTR(x);
-		C_TYPE* dest_ptr = (C_TYPE*)DATAPTR(subVector);
-		switch (TYPEOF(indx)) {
+		C_TYPE *src_ptr = (C_TYPE *)DATAPTR(x);
+		C_TYPE *dest_ptr = (C_TYPE *)DATAPTR(subVector);
+		switch (TYPEOF(indx))
+		{
 		case INTSXP:
 			template_subset_assignment(dest_ptr, src_ptr, INTEGER(indx), Rf_xlength(x), Rf_xlength(indx));
 			break;
@@ -212,10 +252,10 @@ SEXP numeric_subset(SEXP x, SEXP indx, SEXP call) {
 		UNPROTECT(1);
 		return subVector;
 	}
-	catch (const std::exception& ex) {
+	catch (const std::exception &ex)
+	{
 		Rf_error("Error in subsetting an altrep\n%s", ex.what());
 	}
 	// Just for suppressing the annoying warning, it should never be excuted
 	return NULL;
-
 }
