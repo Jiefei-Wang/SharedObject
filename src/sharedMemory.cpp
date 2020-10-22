@@ -474,15 +474,7 @@ bool freeSharedMemoryInternal(const string key)
 #ifdef WINDOWS_OS
 	return true;
 #else
-	try
-	{
-		return OS_shared_memory_object::remove(key.c_str());
-	}
-	catch (const std::exception &ex)
-	{
-		Rf_warning("Fail to remove the shared memory: %s\n", ex.what());
-		return false;
-	}
+	return OS_shared_memory_object::remove(key.c_str());
 #endif
 }
 
