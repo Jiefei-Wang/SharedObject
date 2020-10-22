@@ -5,3 +5,8 @@
 #' @import BiocGenerics
 #' @import methods
 NULL
+
+.onLoad <- function(libname, pkgname){
+    initialSharedObjectPackageData()
+}
+

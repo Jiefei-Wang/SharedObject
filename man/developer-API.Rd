@@ -9,6 +9,8 @@
 \alias{freeSharedMemory}
 \alias{hasSharedMemory}
 \alias{getSharedMemorySize}
+\alias{initialSharedObjectPackageData}
+\alias{releaseSharedObjectPackageData}
 \title{Functions to manipulate shared memory}
 \usage{
 getLastIndex()
@@ -26,6 +28,10 @@ freeSharedMemory(x)
 hasSharedMemory(x)
 
 getSharedMemorySize(x)
+
+initialSharedObjectPackageData()
+
+releaseSharedObjectPackageData()
 }
 \arguments{
 \item{size}{numeric(1), the size of the shared memory that you want to allocate}

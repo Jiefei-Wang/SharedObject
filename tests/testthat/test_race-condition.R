@@ -8,7 +8,7 @@ test_that("sharing objects at the same time", {
     })
     expect_error({
         clusterEvalQ(cl, {
-            for(i in 1:10000){
+            for(i in 1:100000){
                 a <- share(123)
             }
         })

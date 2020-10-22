@@ -33,75 +33,43 @@ static std::map<string, OS_shared_memory_object *> sharedMemoryList;
 static std::map<string, mapped_region *> segmentList;
 static std::map<string, uint32_t> segmentObjectCount;
 
-// This last_id attributes is shared
-static volatile uint32_t *last_id = nullptr;
-static named_semaphore *semaphore = nullptr;
-//Wait time in ms
-static unsigned int wait_time = 30000;
+// This lastId attributes is shared
+static std::atomic_uint64_t *lastId;
 
-static void initialSharedmemory();
 static void allocateSharedMemoryInternal(const string key, size_t size_in_byte);
 static void *mapSharedMemoryInternal(const string key);
 static bool hasSharedMemoryInternal(const string key);
 /*
 ===================================================================
-Process lock
+Process lock guard
 ===================================================================
 */
-void unlock_shared_memory();
-// [[Rcpp::export]]
-void lock_shared_memory()
+class auto_semophore
 {
-	initialSharedmemory();
-	boost::system_time timeout = boost::get_system_time() + boost::posix_time::milliseconds(wait_time);
-	//Rprintf("try lock\n");
-	bool lock_status = semaphore->timed_wait(timeout);
-	if (!lock_status)
-	{
-		Rf_warning("%s%s%s%s%s",
-				   "The process lock takes too long and ",
-				   "we will forcely release the lock. ",
-				   "If you think this is a false positive, ",
-				   "please consider calling <SharedObject:::set_lock_timeout> ",
-				   "to set a larger timeout.");
-		//Rprintf("failed\n");
-		unlock_shared_memory();
-		lock_shared_memory();
-	}
-	else
-	{
-		//Rprintf("successed\n");
-	}
-}
-// [[Rcpp::export]]
-void unlock_shared_memory()
-{
-	//Rprintf("Unlock\n");
-	initialSharedmemory();
-	semaphore->post();
-}
-// [[Rcpp::export]]
-void release_lock()
-{
-	named_semaphore::remove(SEMAPHORE_NAME);
-}
-// [[Rcpp::export]]
-void set_lock_timeout(unsigned int timeout_ms)
-{
-	wait_time = timeout_ms;
-}
-
-class semophore_guard
-{
+	named_semaphore *semaphore = nullptr;
+	bool locked= false;
 public:
-	semophore_guard()
+	auto_semophore()
 	{
-		//Rprintf("guard created\n");
+			boost::interprocess::permissions perm;
+			perm.set_unrestricted();
+			semaphore = new named_semaphore(open_or_create_t(), SEMAPHORE_NAME, 1, perm);
 	}
-	~semophore_guard()
+	void lock()
 	{
-		//Rprintf("guard destroyed\n");
-		unlock_shared_memory();
+		//Rprintf("internal lock\n");
+		boost::system_time timeout = boost::get_system_time() + boost::posix_time::milliseconds(3000);
+		bool lock_status = semaphore->timed_wait(timeout);
+		if (!lock_status)
+		{
+			Rf_warning("Something is wrong with the process lock, the package will proceed without lock\n");
+		}
+	}
+	~auto_semophore()
+	{
+		if(locked)
+			semaphore->post();
+		named_semaphore::remove(SEMAPHORE_NAME);
 	}
 };
 
@@ -111,7 +79,7 @@ Utilities
 ===================================================================
 */
 template <class T>
-static bool keyInMap(T& map, std::string key)
+static bool keyInMap(T &map, std::string key)
 {
 	return map.find(key) != map.end();
 }
@@ -127,10 +95,6 @@ static string getNamedKey(const string name)
 	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_nm_") + name;
 }
 
-/*void flushIndex(){
-	initialSharedmemory();
-	segmentList.at(SHARED_OBJECT_COUNTER)->flush(0,0,false);
-}*/
 /*
  Get the next id
  The id will be searched starting from *last_id + 1
@@ -138,25 +102,21 @@ static string getNamedKey(const string name)
  */
 static uint32_t getNextId()
 {
-	initialSharedmemory();
-	uint32_t initial_id = *last_id;
-	uint32_t final_id = *last_id;
+	uint32_t initial_id = *lastId;
+	uint32_t id;
 	do
 	{
-		final_id++;
-		if (!hasSharedMemoryInternal(getIdKey(final_id)))
+		id = (++(*lastId));
+		if (!hasSharedMemoryInternal(getIdKey(id)))
 		{
-			*last_id = final_id;
-			//flushIndex();
-			return final_id;
+			return id;
 		}
-	} while (final_id != initial_id);
+	} while (id != initial_id);
 	Rf_error("Unable to find an available key for creating a shared memory, all keys are in used.");
 }
 int32_t getLastIndex()
 {
-	initialSharedmemory();
-	return *last_id;
+	return *lastId;
 }
 /*
 ===================================================================
@@ -217,52 +177,7 @@ Code for the internal functions
 If a function is internal, it means the function will use the key as-is.
 ===================================================================
 */
-/*
- Initialize the variable last_id and the semaphore
- */
-void initialSharedmemory()
-{
-	if (last_id == nullptr)
-	{
-		try
-		{
-			boost::interprocess::permissions perm;
-			perm.set_unrestricted();
-			semaphore = new named_semaphore(open_or_create_t(), SEMAPHORE_NAME, 1, perm);
-			string name = SHARED_OBJECT_COUNTER;
-			if (!hasSharedMemoryInternal(name))
-			{
-				//Rprintf("internal lock\n");
-				boost::system_time timeout = boost::get_system_time() + boost::posix_time::milliseconds(5000);
-				//Rprintf("try lock\n");
-				bool lock_status = semaphore->timed_wait(timeout);
-				if (!lock_status)
-				{
-					Rf_warning("Something is wrong with the process lock, we will reset it for you\n");
-					while (!semaphore->try_wait())
-					{
-						semaphore->post();
-					}
-				}
-				semophore_guard guard;
-				if (!hasSharedMemoryInternal(name))
-				{
-					allocateSharedMemoryInternal(name, sizeof(uint32_t));
-					last_id = (uint32_t *)mapSharedMemoryInternal(name);
-					*last_id = 0;
-				}
-			}
-			else
-			{
-				last_id = (uint32_t *)mapSharedMemoryInternal(name);
-			}
-		}
-		catch (std::exception &ex)
-		{
-			Rf_error("An error has occured in initializing shared memory object: %s\n", ex.what());
-		}
-	}
-}
+
 
 static bool hasSharedMemoryInternal(const string key)
 {
@@ -532,8 +447,6 @@ bool hasSharedMemory(uint32_t id)
 
 uint32_t allocateSharedMemory(size_t size_in_byte)
 {
-	lock_shared_memory();
-	semophore_guard guard;
 	uint32_t id = getNextId();
 	string key = getIdKey(id);
 	allocateSharedMemoryInternal(key, size_in_byte);
@@ -541,8 +454,6 @@ uint32_t allocateSharedMemory(size_t size_in_byte)
 }
 void allocateNamedSharedMemory(const char *name, size_t size_in_byte)
 {
-	lock_shared_memory();
-	semophore_guard guard;
 	string key = getNamedKey(name);
 	allocateSharedMemoryInternal(key, size_in_byte);
 }
@@ -591,4 +502,49 @@ double getNamedSharedMemorySize(const char *name)
 {
 	string key = getNamedKey(name);
 	return getSharedMemorySizeInternal(key);
+}
+
+
+/*
+ Initialize the variable last_id
+ */
+void initialPkgData()
+{
+	if (lastId == nullptr)
+	{
+		try
+		{
+			string name = SHARED_OBJECT_COUNTER;
+			if (!hasSharedMemoryInternal(name))
+			{
+				auto_semophore semophore;
+				semophore.lock();
+				if (!hasSharedMemoryInternal(name))
+				{
+					allocateSharedMemoryInternal(name, sizeof(std::atomic_uint64_t));
+					void *ptr = mapSharedMemoryInternal(name);
+					lastId = new (ptr) std::atomic_uint64_t(0);
+					*lastId = 0;
+				}
+			}
+			else
+			{
+				lastId = (std::atomic_uint64_t *)mapSharedMemoryInternal(name);
+			}
+		}
+		catch (std::exception &ex)
+		{
+			Rf_error("An error has occured in initializing shared memory object: %s\n%s",
+					 ex.what(),
+					 "You must manually initial the package via <initialSharedObjectPackageData()>");
+		}
+	}
+}
+
+
+void releasePkgData()
+{
+	freeSharedMemoryInternal(SHARED_OBJECT_COUNTER);
+	lastId = nullptr;
+	named_semaphore::remove(SEMAPHORE_NAME);
 }

@@ -21,7 +21,7 @@ checkNamedID <- function(name){
 #' @param start the start value of the ID. The default is `NULL`. See details.
 #' @param end the end value of the ID. The default is `NULL`. See details.
 #' @param includeCharId Whether including the shared objects named by a character ID, it only works
-#' on some linux systems. See details and `?allocateNamedSharedMemory` for more information. 
+#' on some linux systems. See details and `?allocateNamedSharedMemory` for more information.
 #' The default is `FALSE`.
 #'
 #' @details
@@ -247,6 +247,17 @@ getSharedMemorySize <- function(x){
     }else{
         C_getNamedSharedMemorySize(x)
     }
+}
+
+#' @rdname developer-API
+#' @export
+initialSharedObjectPackageData <- function(){
+    C_initialPkgData()
+}
+#' @rdname developer-API
+#' @export
+releaseSharedObjectPackageData <- function(){
+    C_releasePkgData()
 }
 
 

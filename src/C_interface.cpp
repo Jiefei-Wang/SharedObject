@@ -235,6 +235,14 @@ void C_UNSETS4(SEXP x)
 ##########################################
 */
 // [[Rcpp::export]]
+void C_initialPkgData(){
+	initialPkgData();
+}
+// [[Rcpp::export]]
+void C_releasePkgData(){
+	releasePkgData();
+}
+// [[Rcpp::export]]
 int32_t C_getLastIndex()
 {
 	return getLastIndex();

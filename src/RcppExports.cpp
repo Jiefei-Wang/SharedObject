@@ -183,6 +183,24 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// C_initialPkgData
+void C_initialPkgData();
+RcppExport SEXP _SharedObject_C_initialPkgData() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    C_initialPkgData();
+    return R_NilValue;
+END_RCPP
+}
+// C_releasePkgData
+void C_releasePkgData();
+RcppExport SEXP _SharedObject_C_releasePkgData() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    C_releasePkgData();
+    return R_NilValue;
+END_RCPP
+}
 // C_getLastIndex
 int32_t C_getLastIndex();
 RcppExport SEXP _SharedObject_C_getLastIndex() {
@@ -325,43 +343,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// lock_shared_memory
-void lock_shared_memory();
-RcppExport SEXP _SharedObject_lock_shared_memory() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    lock_shared_memory();
-    return R_NilValue;
-END_RCPP
-}
-// unlock_shared_memory
-void unlock_shared_memory();
-RcppExport SEXP _SharedObject_unlock_shared_memory() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    unlock_shared_memory();
-    return R_NilValue;
-END_RCPP
-}
-// release_lock
-void release_lock();
-RcppExport SEXP _SharedObject_release_lock() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    release_lock();
-    return R_NilValue;
-END_RCPP
-}
-// set_lock_timeout
-void set_lock_timeout(unsigned int timeout_ms);
-RcppExport SEXP _SharedObject_set_lock_timeout(SEXP timeout_msSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< unsigned int >::type timeout_ms(timeout_msSEXP);
-    set_lock_timeout(timeout_ms);
-    return R_NilValue;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_createSharedMemory", (DL_FUNC) &_SharedObject_C_createSharedMemory, 2},
@@ -380,6 +361,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_ISS4", (DL_FUNC) &_SharedObject_C_ISS4, 1},
     {"_SharedObject_C_SETS4", (DL_FUNC) &_SharedObject_C_SETS4, 1},
     {"_SharedObject_C_UNSETS4", (DL_FUNC) &_SharedObject_C_UNSETS4, 1},
+    {"_SharedObject_C_initialPkgData", (DL_FUNC) &_SharedObject_C_initialPkgData, 0},
+    {"_SharedObject_C_releasePkgData", (DL_FUNC) &_SharedObject_C_releasePkgData, 0},
     {"_SharedObject_C_getLastIndex", (DL_FUNC) &_SharedObject_C_getLastIndex, 0},
     {"_SharedObject_C_allocateSharedMemory", (DL_FUNC) &_SharedObject_C_allocateSharedMemory, 1},
     {"_SharedObject_C_mapSharedMemory", (DL_FUNC) &_SharedObject_C_mapSharedMemory, 1},
@@ -393,10 +376,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_freeNamedSharedMemory", (DL_FUNC) &_SharedObject_C_freeNamedSharedMemory, 1},
     {"_SharedObject_C_hasNamedSharedMemory", (DL_FUNC) &_SharedObject_C_hasNamedSharedMemory, 1},
     {"_SharedObject_C_getNamedSharedMemorySize", (DL_FUNC) &_SharedObject_C_getNamedSharedMemorySize, 1},
-    {"_SharedObject_lock_shared_memory", (DL_FUNC) &_SharedObject_lock_shared_memory, 0},
-    {"_SharedObject_unlock_shared_memory", (DL_FUNC) &_SharedObject_unlock_shared_memory, 0},
-    {"_SharedObject_release_lock", (DL_FUNC) &_SharedObject_release_lock, 0},
-    {"_SharedObject_set_lock_timeout", (DL_FUNC) &_SharedObject_set_lock_timeout, 1},
     {NULL, NULL, 0}
 };
 

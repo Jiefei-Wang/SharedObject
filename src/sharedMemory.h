@@ -33,6 +33,15 @@ bool freeNamedSharedMemory(const char *name);
 bool hasNamedSharedMemory(const char *name);
 double getNamedSharedMemorySize(const char *name);
 
+/*
+This function will be automatically called by the package.
+You do not need to call it unless you have manually released
+the package data
+*/
+void initialPkgData();
+void releasePkgData();
+
+
 #ifdef __cplusplus
 }
 #endif

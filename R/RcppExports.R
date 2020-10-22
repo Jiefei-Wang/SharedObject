@@ -65,6 +65,14 @@ C_UNSETS4 <- function(x) {
     invisible(.Call(`_SharedObject_C_UNSETS4`, x))
 }
 
+C_initialPkgData <- function() {
+    invisible(.Call(`_SharedObject_C_initialPkgData`))
+}
+
+C_releasePkgData <- function() {
+    invisible(.Call(`_SharedObject_C_releasePkgData`))
+}
+
 C_getLastIndex <- function() {
     .Call(`_SharedObject_C_getLastIndex`)
 }
@@ -115,21 +123,5 @@ C_hasNamedSharedMemory <- function(name) {
 
 C_getNamedSharedMemorySize <- function(name) {
     .Call(`_SharedObject_C_getNamedSharedMemorySize`, name)
-}
-
-lock_shared_memory <- function() {
-    invisible(.Call(`_SharedObject_lock_shared_memory`))
-}
-
-unlock_shared_memory <- function() {
-    invisible(.Call(`_SharedObject_unlock_shared_memory`))
-}
-
-release_lock <- function() {
-    invisible(.Call(`_SharedObject_release_lock`))
-}
-
-set_lock_timeout <- function(timeout_ms) {
-    invisible(.Call(`_SharedObject_set_lock_timeout`, timeout_ms))
 }
 
