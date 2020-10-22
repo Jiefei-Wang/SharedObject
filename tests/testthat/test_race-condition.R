@@ -10,6 +10,9 @@ test_that("sharing objects at the same time", {
         clusterEvalQ(cl, {
             for(i in 1:100000){
                 a <- share(123)
+                if(i%%100==0){
+                    gc()
+                }
             }
         })
     },NA)
