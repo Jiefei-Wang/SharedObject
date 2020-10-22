@@ -142,3 +142,31 @@ if(get_os() == "linux"){
         }
     })
 }
+
+
+test_that("release a shared object when it is still in used", {
+    cl <- makeCluster(1)
+    x <- share(1:10)
+    info <- getSharedObjectProperty(x)
+    expect_true(hasSharedMemory(info$dataId))
+    clusterExport(cl, "x", envir = environment())
+    ## release it from the main process
+    rm(x)
+    gc()
+    if(get_os() == "windows"){
+        expect_true(hasSharedMemory(info$dataId))
+        ## release it from another process
+        clusterEvalQ(cl,{rm(x);gc()})
+        gc()
+        expect_false(hasSharedMemory(info$dataId))
+    }else{
+        expect_false(hasSharedMemory(info$dataId))
+        expect_warning(clusterEvalQ(cl,x))
+        expect_true(clusterEvalQ(cl,{is.shared(x)})[[1]])
+        expect_warning({x <- clusterEvalQ(cl,x)[[1]]})
+        expect_false(is.shared(x))
+        expect_error(clusterEvalQ(cl,{rm(x);gc()}),NA)
+    }
+    expect_error(clusterEvalQ(cl,{gc()}), NA)
+    stopCluster(cl)
+})
