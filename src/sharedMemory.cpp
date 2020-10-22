@@ -112,7 +112,8 @@ static uint32_t getNextId()
 			return id;
 		}
 	} while (id != initial_id);
-	Rf_error("Unable to find an available key for creating a shared memory, all keys are in used.");
+	throwError("Unable to find an available key for creating a shared memory, all keys are in used.");
+	return 0;
 }
 int32_t getLastIndex()
 {
@@ -141,7 +142,7 @@ static void setObjectCount(string key, int offset)
 	{
 		if (offset < 0)
 		{
-			Rf_error("The object count is less than 0");
+			throwError("The object count is less than 0");
 		}
 		segmentObjectCount.insert(pair<string, uint32_t>(key, offset));
 	}
@@ -237,7 +238,7 @@ static void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
 			shared_memory_object::remove(key.c_str());
 			delete shm;
 			signal(SIGBUS, old_handle);
-			Rf_error("Testing shared memory failed, the shared memory size is %llu bytes.", (unsigned long long int)size_in_byte);
+			throwError("Testing shared memory failed, the shared memory size is %llu bytes.", (unsigned long long int)size_in_byte);
 		}
 		else
 		{
@@ -260,7 +261,7 @@ static void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
 			delete shm;
 		}
 		//Rprintf("This is an error\n");
-		Rf_error("An error has occured in allocating shared memory: %s(key: %s)", ex.what(), key.c_str());
+		throwError("An error has occured in allocating shared memory: %s(key: %s)", ex.what(), key.c_str());
 	}
 	sharedMemoryList.insert(pair<string, OS_shared_memory_object *>(key, shm));
 }
@@ -324,7 +325,7 @@ static void *mapSharedMemoryInternal(const string key)
 		{
 			decreaseObjectCount(key);
 		}
-		Rf_error("An error has occured in mapping shared memory: %s", ex.what());
+		throwError("An error has occured in mapping shared memory: %s", ex.what());
 		return nullptr;
 	}
 }
@@ -534,7 +535,7 @@ void initialPkgData()
 		}
 		catch (std::exception &ex)
 		{
-			Rf_error("An error has occured in initializing shared memory object: %s\n%s",
+			throwError("An error has occured in initializing shared memory object: %s\n%s",
 					 ex.what(),
 					 "You must manually initial the package via <initialSharedObjectPackageData()>");
 		}

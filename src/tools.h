@@ -12,7 +12,9 @@
 
 extern const std::string OS_ADDRESS_SIZE;
 
-
+enum dispatchLocation{R_ERROR, CPP_EXCEPTION};
+void setErrorDispatch(dispatchLocation location);
+void throwError(const char *format, ...);
 
 #endif
 
