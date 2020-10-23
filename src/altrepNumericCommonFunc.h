@@ -126,7 +126,7 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP dataInfo)
 			DEBUG_ALTREP(Rprintf("unserializing data\n"));
 			loadLibrary();
 			DEBUG_ALTREP(Rprintf("Library loaded\n"));
-			SEXP result = C_readSharedMemory(dataInfo);
+			result = C_readSharedMemory(dataInfo);
 		}
 		catch (std::string &ex)
 		{
