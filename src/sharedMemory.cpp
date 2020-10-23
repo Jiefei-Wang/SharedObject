@@ -47,13 +47,14 @@ Process lock guard
 class auto_semophore
 {
 	named_semaphore *semaphore = nullptr;
-	bool locked= false;
+	bool locked = false;
+
 public:
 	auto_semophore()
 	{
-			boost::interprocess::permissions perm;
-			perm.set_unrestricted();
-			semaphore = new named_semaphore(open_or_create_t(), SEMAPHORE_NAME, 1, perm);
+		boost::interprocess::permissions perm;
+		perm.set_unrestricted();
+		semaphore = new named_semaphore(open_or_create_t(), SEMAPHORE_NAME, 1, perm);
 	}
 	void lock()
 	{
@@ -67,8 +68,9 @@ public:
 	}
 	~auto_semophore()
 	{
-		if(locked)
+		if (locked)
 			semaphore->post();
+		delete semaphore;
 		named_semaphore::remove(SEMAPHORE_NAME);
 	}
 };
@@ -178,7 +180,6 @@ Code for the internal functions
 If a function is internal, it means the function will use the key as-is.
 ===================================================================
 */
-
 
 static bool hasSharedMemoryInternal(const string key)
 {
@@ -505,7 +506,6 @@ double getNamedSharedMemorySize(const char *name)
 	return getSharedMemorySizeInternal(key);
 }
 
-
 /*
  Initialize the variable last_id
  */
@@ -515,11 +515,11 @@ void initialPkgData()
 	{
 		try
 		{
+			auto_semophore semophore;
+			semophore.lock();
 			string name = SHARED_OBJECT_COUNTER;
 			if (!hasSharedMemoryInternal(name))
 			{
-				auto_semophore semophore;
-				semophore.lock();
 				if (!hasSharedMemoryInternal(name))
 				{
 					allocateSharedMemoryInternal(name, sizeof(std::atomic_uint64_t));
@@ -536,12 +536,11 @@ void initialPkgData()
 		catch (std::exception &ex)
 		{
 			throwError("An error has occured in initializing shared memory object: %s\n%s",
-					 ex.what(),
-					 "You must manually initial the package via <initialSharedObjectPackageData()>");
+					   ex.what(),
+					   "You must manually initial the package via <initialSharedObjectPackageData()>");
 		}
 	}
 }
-
 
 void releasePkgData()
 {
