@@ -118,6 +118,7 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP dataInfo)
 	}
 	else
 	{
+		SEXP result;
 		setErrorDispatch(CPP_EXCEPTION);
 		try
 		{
@@ -126,15 +127,18 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP dataInfo)
 			loadLibrary();
 			DEBUG_ALTREP(Rprintf("Library loaded\n"));
 			SEXP result = C_readSharedMemory(dataInfo);
-			setErrorDispatch(R_ERROR);
-			return result;
 		}
 		catch (std::string &ex)
 		{
-			setErrorDispatch(R_ERROR);
 			Rf_warning("Error in unserializing an altrep\n%s", ex.c_str());
-			return R_NilValue;
+			result = R_NilValue;
 		}
+		catch (const std::exception & ex){
+			Rf_warning("Error in unserializing an altrep\n%s", ex.what());
+			result = R_NilValue;
+		}
+		setErrorDispatch(R_ERROR);
+		return result;
 	}
 }
 
