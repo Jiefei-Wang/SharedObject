@@ -1,21 +1,3 @@
----
-title: "Package Quick Start Guide"
-author: 
-- name: Jiefei Wang
-  affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
-date: "2020-10-23"
-output:
-    BiocStyle::html_document:
-        toc: true
-        toc_float: true
-vignette: >
-  %\VignetteIndexEntry{quickStart}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
-  package: SharedObject
----
-
-
 # Note for developers
 We plan to make a major update in Bioc 3.13, it includes performance boost and more general C++ level API design. The update should only have minor affect on users, but if you plan to develop a package based upon `SharedObject`, it is recommended to use the package in Bioc 3.13 for the old version will not be supported in the next release.
 
