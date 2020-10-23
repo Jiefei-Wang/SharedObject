@@ -16,12 +16,16 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
+# knitr::knit("vignettes/quick_start_guide.Rmd", output = "README.md")
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 library("SharedObject")
 ```
+# Note for developers
+We plan to make a major update in Bioc 3.13, it includes performance boost and more general C++ level API design. The update should only have minor affect on users, but if you plan to develop a package based upon `SharedObject`, it is recommended to use the package in Bioc 3.13 for the old version will not be supported in the next release.
+
 # Introduction
 The `SharedObject` package is designed for sharing data across multiple R processes, where all processes can read the data located in the same memory location. This sharing mechanism has the potential to save the memory usage and reduce the overhead of data transmission in parallel computing. The use of the package arises from many data-science subjects such as high-throughput gene data analysis, in which case the data is very large and a parallel computing is desirable. Blindly exporting data to all R processes via functions such as `clusterExport` will duplicate the data for each process and it is obviously unnecessary if other processes just need to read the data. The `sharedObject` package can share the data without duplications and is able to reduce the time cost. A new set of R APIs called `ALTREP` is used to provide a seamless experience when sharing an object.
 
