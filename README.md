@@ -17,6 +17,8 @@ n <- 3
 A <- matrix(runif(n^2), n, n)
 ## create a shared object
 shared_A <- share(A)
+#> allocating shared memory, key:Local\SO_X64_6, size:72
+#> mapping shared memory, key:Local\SO_X64_6
 ## export the shared object
 clusterExport(cl,"shared_A")
 
@@ -27,15 +29,15 @@ As the code shows above, the procedure of exporting a shared object to the other
 ```r
 ## check the data
 A
-#>            [,1]      [,2]      [,3]
-#> [1,] 0.78041074 0.5784582 0.4693621
-#> [2,] 0.10009928 0.6836577 0.3259367
-#> [3,] 0.08528856 0.5329942 0.9911532
+#>           [,1]      [,2]      [,3]
+#> [1,] 0.6771113 0.2224684 0.3200601
+#> [2,] 0.8706540 0.2970336 0.9447201
+#> [3,] 0.5249925 0.4580965 0.0557467
 shared_A
-#>            [,1]      [,2]      [,3]
-#> [1,] 0.78041074 0.5784582 0.4693621
-#> [2,] 0.10009928 0.6836577 0.3259367
-#> [3,] 0.08528856 0.5329942 0.9911532
+#>           [,1]      [,2]      [,3]
+#> [1,] 0.6771113 0.2224684 0.3200601
+#> [2,] 0.8706540 0.2970336 0.9447201
+#> [3,] 0.5249925 0.4580965 0.0557467
 ## check the class
 class(A)
 #> [1] "matrix" "array"
@@ -59,12 +61,13 @@ is.shared(shared_A[1:2])
 This behavior, however, can be altered via the argument `sharedSubset`. Therefore, if a shared object `shared_A` is made by `share(A, sharedSubset = TRUE)`, then all the subsets of the object `shared_A` will be shared objects automatically. 
 
 # Supported data types and structures
-Currently, the package supports `raw`, `logical`, `integer`, `double` and `complex` data types. `character` is not supported. Sharing the data structure `atomic`(aka `vector`), `matrix`, `data.frame`, `list`, `environment`. The support for the `S3` and `S4` system is available out-of-box. Therefore, there is no additional action required to share an S3/S4 object. However, if the S3/S4 class has a special design(e.g. on-disk data), the function `share` is an S4 generic, developers can define an S4 `share` method to support their own data structures.
+For the basic R types, the package supports `raw`, `logical`, `integer`, `double` and `complex.` character cannot be shared for it closely relates to R's cache. For the containers, the package supports `list`, `pairlist` and `environment.` 
+
+The support for the `S3` and `S4` system is available out-of-box. Therefore, there is no additional action required to share an S3/S4 object. However, if the S3/S4 class has a special design(e.g. on-disk data), the function `share` is an S4 generic, developers can define an S4 `share` method to support their own data structures.
 
 Please note that sharing a container(e.g. `list`) will not share the container itself, but share each element in the container. Therefore, adding or replace an element in a shared list in one process will not implicitly change the shared list in the other processes. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle as sharing a list. 
 
-When an object is not sharable, no error will be given and the same object will be returned.
-The argument `mustWork = TRUE` can be used if you want to make sure the return value is a shared object.
+When an object is not sharable, no error will be given and the same object will be returned. The argument `mustWork = TRUE` can be used if you want to make sure the return value is a shared object.
 
 ```r
 ## the element `a` is sharable and `b` is not
@@ -73,12 +76,16 @@ x <- list(a = 1:3, b = letters[1:3])
 ## No error will be given, 
 ## but the element `b` is not shared
 shared_x <- share(x)
+#> allocating shared memory, key:Local\SO_X64_7, size:12
+#> mapping shared memory, key:Local\SO_X64_7
+#> allocating shared memory, key:Local\SO_X64_8, size:3
+#> mapping shared memory, key:Local\SO_X64_8
 is.shared(shared_x, depth = 1)
 #> $a
 #> [1] TRUE
 #> 
 #> $b
-#> [1] FALSE
+#> [1] TRUE
 
 ## Use the `mustWork` argument
 ## An error will be given for the non-sharable object `b`
@@ -87,11 +94,10 @@ tryCatch({
 },
 error=function(msg)print(msg)
 )
-#> <simpleError in (function (x, ...) {    args <- completeOptions(...)    mustWork <- args[["mustWork"]]    if (is.null(x))         return(x)    if (!mustWork)         return(x)    stop("The object of the class <", paste0(class(x), collapse = ", "),         "> cannot be shared.\n", "To suppress this error and return the same object, \n",         "provide `mustWork = FALSE` as a function argument\n",         "or change its default value in the package settings\n")})(x = base::quote(c("a", "b", "c")), mustWork = base::quote(TRUE)): The object of the class <character> cannot be shared.
-#> To suppress this error and return the same object, 
-#> provide `mustWork = FALSE` as a function argument
-#> or change its default value in the package settings
-#> >
+#> allocating shared memory, key:Local\SO_X64_9, size:12
+#> mapping shared memory, key:Local\SO_X64_9
+#> allocating shared memory, key:Local\SO_X64_10, size:3
+#> mapping shared memory, key:Local\SO_X64_10
 ```
 
 # Check object information
@@ -118,7 +124,7 @@ is.shared(shared_x, depth = 1)
 #> [1] TRUE
 #> 
 #> $b
-#> [1] FALSE
+#> [1] TRUE
 ```
 
 There are several properties associated with the shared object, one can check them via
@@ -126,29 +132,7 @@ There are several properties associated with the shared object, one can check th
 ```r
 ## get a summary report
 getSharedObjectProperty(shared_A)
-#> $dataId
-#> [1] 200224
-#> 
-#> $length
-#> [1] 9
-#> 
-#> $totalSize
-#> [1] 72
-#> 
-#> $dataType
-#> [1] 14
-#> 
-#> $ownData
-#> [1] TRUE
-#> 
-#> $copyOnWrite
-#> [1] TRUE
-#> 
-#> $sharedSubset
-#> [1] FALSE
-#> 
-#> $sharedCopy
-#> [1] FALSE
+#> Error in getSharedObjectProperty(shared_A): could not find function "getSharedObjectProperty"
 
 ## get the individual properties
 getCopyOnWrite(shared_A)
@@ -165,26 +149,17 @@ There are some options that can control the default behavior of a shared object,
 
 ```r
 getSharedObjectOptions()
-#> $mustWork
-#> [1] FALSE
-#> 
-#> $copyOnWrite
-#> [1] TRUE
-#> 
-#> $sharedSubset
-#> [1] FALSE
-#> 
-#> $sharedCopy
-#> [1] FALSE
+#> Error in getSharedObjectOptions(): could not find function "getSharedObjectOptions"
 ```
 As beforementioned, the option `sharedSubset` controls whether the subset of a shared object is still a shared object. The option `mustWork` suppress the error message when the function `share` encounter a non-sharable object and force the function to return the same object. We will talk about the options `copyOnWrite` and `sharedCopy` in the advanced section, but for most users these two options should not be changed. The global setting can be modified via `setSharedObjectOptions`
 
 ```r
 ## change the default setting
 setSharedObjectOptions(mustWork = TRUE)
+#> Error in setSharedObjectOptions(mustWork = TRUE): could not find function "setSharedObjectOptions"
 ## Check if the change is made
 getSharedObjectOptions("mustWork")
-#> [1] TRUE
+#> Error in getSharedObjectOptions("mustWork"): could not find function "getSharedObjectOptions"
 ```
 
 # Advanced topic
@@ -197,15 +172,15 @@ shared_A2 <- shared_A
 shared_A[1,1] <- 10
 
 shared_A
-#>             [,1]      [,2]      [,3]
-#> [1,] 10.00000000 0.5784582 0.4693621
-#> [2,]  0.10009928 0.6836577 0.3259367
-#> [3,]  0.08528856 0.5329942 0.9911532
-shared_A2
 #>            [,1]      [,2]      [,3]
-#> [1,] 0.78041074 0.5784582 0.4693621
-#> [2,] 0.10009928 0.6836577 0.3259367
-#> [3,] 0.08528856 0.5329942 0.9911532
+#> [1,] 10.0000000 0.2224684 0.3200601
+#> [2,]  0.8706540 0.2970336 0.9447201
+#> [3,]  0.5249925 0.4580965 0.0557467
+shared_A2
+#>           [,1]      [,2]      [,3]
+#> [1,] 0.6771113 0.2224684 0.3200601
+#> [2,] 0.8706540 0.2970336 0.9447201
+#> [3,] 0.5249925 0.4580965 0.0557467
 
 ## shared_A became a regular R object
 is.shared(shared_A)
@@ -216,75 +191,84 @@ will result in a memory dulplication. The matrix `shared_A2` is not affected. Th
 
 ```r
 shared_A <- share(A, copyOnWrite=FALSE)
+#> allocating shared memory, key:Local\SO_X64_11, size:72
+#> mapping shared memory, key:Local\SO_X64_11
 shared_A2 <- shared_A
 shared_A[1,1] <- 10
+#> mapping shared memory, key:Local\SO_X64_11
 
 shared_A
-#>             [,1]      [,2]      [,3]
-#> [1,] 10.00000000 0.5784582 0.4693621
-#> [2,]  0.10009928 0.6836577 0.3259367
-#> [3,]  0.08528856 0.5329942 0.9911532
+#>            [,1]      [,2]      [,3]
+#> [1,] 10.0000000 0.2224684 0.3200601
+#> [2,]  0.8706540 0.2970336 0.9447201
+#> [3,]  0.5249925 0.4580965 0.0557467
 shared_A2
-#>             [,1]      [,2]      [,3]
-#> [1,] 10.00000000 0.5784582 0.4693621
-#> [2,]  0.10009928 0.6836577 0.3259367
-#> [3,]  0.08528856 0.5329942 0.9911532
+#>            [,1]      [,2]      [,3]
+#> [1,] 10.0000000 0.2224684 0.3200601
+#> [2,]  0.8706540 0.2970336 0.9447201
+#> [3,]  0.5249925 0.4580965 0.0557467
 ```
 A change in the matrix `shared_A` cause a change in `shared_A2`. This feature could be potentially useful to return the result from each R process without additional memory allocation, so `shared_A` can be both the initial data and the final result. However, due to the limitation of R, it is possible to change the value of a shared object unexpectly. For example
 
 
 ```r
 shared_A <- share(A, copyOnWrite = FALSE)
+#> allocating shared memory, key:Local\SO_X64_12, size:72
+#> mapping shared memory, key:Local\SO_X64_12
 shared_A
-#>            [,1]      [,2]      [,3]
-#> [1,] 0.78041074 0.5784582 0.4693621
-#> [2,] 0.10009928 0.6836577 0.3259367
-#> [3,] 0.08528856 0.5329942 0.9911532
+#>           [,1]      [,2]      [,3]
+#> [1,] 0.6771113 0.2224684 0.3200601
+#> [2,] 0.8706540 0.2970336 0.9447201
+#> [3,] 0.5249925 0.4580965 0.0557467
 -shared_A
-#>             [,1]       [,2]       [,3]
-#> [1,] -0.78041074 -0.5784582 -0.4693621
-#> [2,] -0.10009928 -0.6836577 -0.3259367
-#> [3,] -0.08528856 -0.5329942 -0.9911532
+#> mapping shared memory, key:Local\SO_X64_12
+#>            [,1]       [,2]       [,3]
+#> [1,] -0.6771113 -0.2224684 -0.3200601
+#> [2,] -0.8706540 -0.2970336 -0.9447201
+#> [3,] -0.5249925 -0.4580965 -0.0557467
 shared_A
-#>             [,1]       [,2]       [,3]
-#> [1,] -0.78041074 -0.5784582 -0.4693621
-#> [2,] -0.10009928 -0.6836577 -0.3259367
-#> [3,] -0.08528856 -0.5329942 -0.9911532
+#>            [,1]       [,2]       [,3]
+#> [1,] -0.6771113 -0.2224684 -0.3200601
+#> [2,] -0.8706540 -0.2970336 -0.9447201
+#> [3,] -0.5249925 -0.4580965 -0.0557467
 ```
 The above example shows an unexpected result when the copy-on-write feature is off. Simply calling an unary function can change the values of a shared object. Therefore, for the safty of the naive users, it is recommended to use the default setting. For the sophisticated R users, the copy-on-write feature of an object can be altered via `setCopyOnwrite` funtion. The old value will be invisibly returned by the function.
 
 
 ```r
 shared_A <- share(A, copyOnWrite = FALSE)
+#> allocating shared memory, key:Local\SO_X64_13, size:72
+#> mapping shared memory, key:Local\SO_X64_13
 shared_A2 <- shared_A
 ## change the value of shared_A
 shared_A[1,1] <- 10
+#> mapping shared memory, key:Local\SO_X64_13
 ## Both shared_A and shared_A2 are affected
 shared_A
-#>             [,1]      [,2]      [,3]
-#> [1,] 10.00000000 0.5784582 0.4693621
-#> [2,]  0.10009928 0.6836577 0.3259367
-#> [3,]  0.08528856 0.5329942 0.9911532
+#>            [,1]      [,2]      [,3]
+#> [1,] 10.0000000 0.2224684 0.3200601
+#> [2,]  0.8706540 0.2970336 0.9447201
+#> [3,]  0.5249925 0.4580965 0.0557467
 shared_A2
-#>             [,1]      [,2]      [,3]
-#> [1,] 10.00000000 0.5784582 0.4693621
-#> [2,]  0.10009928 0.6836577 0.3259367
-#> [3,]  0.08528856 0.5329942 0.9911532
+#>            [,1]      [,2]      [,3]
+#> [1,] 10.0000000 0.2224684 0.3200601
+#> [2,]  0.8706540 0.2970336 0.9447201
+#> [3,]  0.5249925 0.4580965 0.0557467
 
 ## Enable copy-on-write
 setCopyOnWrite(shared_A, TRUE)
 ## shared_A is now independent with shared_A2
 shared_A[1,2] <- 10
 shared_A
-#>             [,1]       [,2]      [,3]
-#> [1,] 10.00000000 10.0000000 0.4693621
-#> [2,]  0.10009928  0.6836577 0.3259367
-#> [3,]  0.08528856  0.5329942 0.9911532
+#>            [,1]       [,2]      [,3]
+#> [1,] 10.0000000 10.0000000 0.3200601
+#> [2,]  0.8706540  0.2970336 0.9447201
+#> [3,]  0.5249925  0.4580965 0.0557467
 shared_A2
-#>             [,1]      [,2]      [,3]
-#> [1,] 10.00000000 0.5784582 0.4693621
-#> [2,]  0.10009928 0.6836577 0.3259367
-#> [3,]  0.08528856 0.5329942 0.9911532
+#>            [,1]      [,2]      [,3]
+#> [1,] 10.0000000 0.2224684 0.3200601
+#> [2,]  0.8706540 0.2970336 0.9447201
+#> [3,]  0.5249925 0.4580965 0.0557467
 ```
 These flexibilities provide us a way to do safe operations during the computation and return the results without memory duplications.
 
@@ -296,17 +280,17 @@ The options `sharedSubset` controls whether to create a shared object when subse
 
 ```r
 shared_A <- share(A, sharedSubset = TRUE, sharedCopy = TRUE)
+#> allocating shared memory, key:Local\SO_X64_14, size:72
+#> mapping shared memory, key:Local\SO_X64_14
 getSharedObjectProperty(shared_A, property = c("sharedSubset", "sharedCopy"))
-#> $sharedSubset
-#> [1] TRUE
-#> 
-#> $sharedCopy
-#> [1] TRUE
+#> Error in getSharedObjectProperty(shared_A, property = c("sharedSubset", : could not find function "getSharedObjectProperty"
 
 ## Changing the value of `shared_A` will not 
 ## result in a regular R object
 shared_A2 <- shared_A
 shared_A[1,1] <- 10
+#> allocating shared memory, key:Local\SO_X64_15, size:72
+#> mapping shared memory, key:Local\SO_X64_15
 is.shared(shared_A)
 #> [1] TRUE
 ```
@@ -371,16 +355,17 @@ sessionInfo()
 #> [1] SharedObject_1.3.21 testthat_2.3.2     
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] Rcpp_1.0.5          compiler_4.1.0      prettyunits_1.1.1   remotes_2.2.0      
-#>  [5] tools_4.1.0         digest_0.6.25       pkgbuild_1.1.0      pkgload_1.1.0      
-#>  [9] memoise_1.1.0       evaluate_0.14       rlang_0.4.7         cli_2.0.2          
-#> [13] rstudioapi_0.11     yaml_2.2.1          xfun_0.16           stringr_1.4.0      
-#> [17] withr_2.2.0         knitr_1.29          desc_1.2.0          fs_1.5.0           
-#> [21] devtools_2.3.1      rprojroot_1.3-2     glue_1.4.2          R6_2.4.1           
-#> [25] processx_3.4.4      BH_1.72.0-3         fansi_0.4.1         rmarkdown_2.3      
-#> [29] sessioninfo_1.1.1   callr_3.4.3         magrittr_1.5        backports_1.1.9    
-#> [33] ps_1.3.4            ellipsis_0.3.1      htmltools_0.5.0     BiocGenerics_0.35.4
-#> [37] usethis_1.6.1       assertthat_0.2.1    stringi_1.4.6       crayon_1.3.4
+#>  [1] xfun_0.16           remotes_2.2.0       purrr_0.3.4         usethis_1.6.1      
+#>  [5] htmltools_0.5.0     yaml_2.2.1          rlang_0.4.7         pkgbuild_1.1.0     
+#>  [9] glue_1.4.2          withr_2.2.0         BiocGenerics_0.35.4 sessioninfo_1.1.1  
+#> [13] stringr_1.4.0       commonmark_1.7      devtools_2.3.1      evaluate_0.14      
+#> [17] memoise_1.1.0       knitr_1.29          callr_3.4.3         ps_1.3.4           
+#> [21] fansi_0.4.1         Rcpp_1.0.5          backports_1.1.9     desc_1.2.0         
+#> [25] pkgload_1.1.0       fs_1.5.0            digest_0.6.25       stringi_1.4.6      
+#> [29] processx_3.4.4      rprojroot_1.3-2     BH_1.72.0-3         cli_2.0.2          
+#> [33] tools_4.1.0         magrittr_1.5        crayon_1.3.4        ellipsis_0.3.1     
+#> [37] xml2_1.3.2          prettyunits_1.1.1   assertthat_0.2.1    rmarkdown_2.3      
+#> [41] roxygen2_7.1.1      rstudioapi_0.11     R6_2.4.1            compiler_4.1.0
 ```
 
 

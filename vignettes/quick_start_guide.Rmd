@@ -68,12 +68,13 @@ is.shared(shared_A[1:2])
 This behavior, however, can be altered via the argument `sharedSubset`. Therefore, if a shared object `shared_A` is made by `share(A, sharedSubset = TRUE)`, then all the subsets of the object `shared_A` will be shared objects automatically. 
 
 # Supported data types and structures
-Currently, the package supports `raw`, `logical`, `integer`, `double` and `complex` data types. `character` is not supported. Sharing the data structure `atomic`(aka `vector`), `matrix`, `data.frame`, `list`, `environment`. The support for the `S3` and `S4` system is available out-of-box. Therefore, there is no additional action required to share an S3/S4 object. However, if the S3/S4 class has a special design(e.g. on-disk data), the function `share` is an S4 generic, developers can define an S4 `share` method to support their own data structures.
+For the basic R types, the package supports `raw`, `logical`, `integer`, `double` and `complex.` character cannot be shared for it closely relates to R's cache. For the containers, the package supports `list`, `pairlist` and `environment.` 
+
+The support for the `S3` and `S4` system is available out-of-box. Therefore, there is no additional action required to share an S3/S4 object. However, if the S3/S4 class has a special design(e.g. on-disk data), the function `share` is an S4 generic, developers can define an S4 `share` method to support their own data structures.
 
 Please note that sharing a container(e.g. `list`) will not share the container itself, but share each element in the container. Therefore, adding or replace an element in a shared list in one process will not implicitly change the shared list in the other processes. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle as sharing a list. 
 
-When an object is not sharable, no error will be given and the same object will be returned.
-The argument `mustWork = TRUE` can be used if you want to make sure the return value is a shared object.
+When an object is not sharable, no error will be given and the same object will be returned. The argument `mustWork = TRUE` can be used if you want to make sure the return value is a shared object.
 ```{r}
 ## the element `a` is sharable and `b` is not
 x <- list(a = 1:3, b = letters[1:3])
