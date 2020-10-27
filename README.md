@@ -76,7 +76,7 @@ There are several properties associated with the shared object, one can check th
 ## get a summary report
 getSharedObjectProperty(shared_A)
 #> $dataId
-#> [1] 25
+#> [1] 47
 #> 
 #> $length
 #> [1] 9
@@ -125,10 +125,6 @@ x <- list(A = 1:3, B = as.symbol("x"))
 ## No error will be given, 
 ## but the element `B` is not shared
 shared_x <- share(x)
-#> Error in (function (x, ...) : The object of the class <name> cannot be shared.
-#> To suppress this error and return the same object, 
-#> provide `mustWork = FALSE` as a function argument
-#> or change its default value in the package settings
 
 ## Use the `mustWork` argument
 ## An error will be given for the non-sharable object `B`
@@ -166,7 +162,7 @@ There are some options that can control the creation and the behavior of a share
 ## in Bioc 3.13
 getSharedObjectOptions()
 #> $mustWork
-#> [1] TRUE
+#> [1] FALSE
 #> 
 #> $copyOnWrite
 #> [1] TRUE
@@ -187,6 +183,8 @@ setSharedObjectOptions(mustWork = TRUE)
 ## Check if the change is made
 getSharedObjectOptions("mustWork")
 #> [1] TRUE
+## Resume to default
+setSharedObjectOptions(mustWork = FALSE)
 ```
 Note that all the options can be temporary overwritten by providing the named parameter to the function `share`. For example, you can also turn `mustwork` on via `share(x, mustWork = TRUE)`.
 

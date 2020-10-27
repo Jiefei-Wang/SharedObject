@@ -21,7 +21,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-library("SharedObject")
+library(SharedObject)
+
 ```
 # Note for developers
 We plan to make a major update in Bioc 3.13, this includes performance improvement and more general C++ level API design. The update should only have minor effect on users, but if you plan to develop a package based upon `SharedObject`, it is recommended to use the package in Bioc 3.13 for the old version will not be supported in the next release.
@@ -128,6 +129,8 @@ As we have seen previously, the option `mustWork` suppress the error message whe
 setSharedObjectOptions(mustWork = TRUE)
 ## Check if the change is made
 getSharedObjectOptions("mustWork")
+## Resume to default
+setSharedObjectOptions(mustWork = FALSE)
 ```
 Note that all the options can be temporary overwritten by providing the named parameter to the function `share`. For example, you can also turn `mustwork` on via `share(x, mustWork = TRUE)`.
 
