@@ -35,7 +35,7 @@ static std::map<string, mapped_region *> segmentList;
 static std::map<string, uint32_t> segmentObjectCount;
 
 // This lastId attributes is shared
-static std::atomic_uint64_t *lastId;
+static std::atomic<std::uint64_t> *lastId;
 
 static void allocateSharedMemoryInternal(const string key, size_t size_in_byte);
 static void *mapSharedMemoryInternal(const string key);
@@ -523,15 +523,15 @@ void initialPkgData()
 			{
 				if (!hasSharedMemoryInternal(name))
 				{
-					allocateSharedMemoryInternal(name, sizeof(std::atomic_uint64_t));
+					allocateSharedMemoryInternal(name, sizeof(std::atomic<std::uint64_t>));
 					void *ptr = mapSharedMemoryInternal(name);
-					lastId = new (ptr) std::atomic_uint64_t(0);
+					lastId = new (ptr) std::atomic<std::uint64_t>(0);
 					*lastId = 0;
 				}
 			}
 			else
 			{
-				lastId = (std::atomic_uint64_t *)mapSharedMemoryInternal(name);
+				lastId = (std::atomic<std::uint64_t> *)mapSharedMemoryInternal(name);
 			}
 		}
 		catch (std::exception &ex)
