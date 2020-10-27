@@ -5,6 +5,7 @@
 #include <boost/thread/thread_time.hpp>
 #include <map>
 #include <string>
+#include <atomic>
 #include "sharedMemory.h"
 #include "tools.h"
 
