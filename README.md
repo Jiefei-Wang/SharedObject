@@ -1,96 +1,103 @@
----
-title: "Package Quick Start Guide"
-author: 
-- name: Jiefei Wang
-  affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
-date: "2020-10-27"
-output:
-    BiocStyle::html_document:
-        toc: true
-        toc_float: true
-vignette: >
-  %\VignetteIndexEntry{quickStart}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
-  package: SharedObject
----
-
-
 # Introduction
 `SharedObject` is designed for sharing data across many R workers. It allows multiple workers to read and write the same R object located in the same memory location. This feature is useful in parallel computing when a large R object needs to be read by all R workers. It has the potential to reduce the memory consumption and the overhead of data transmission. 
 
 
 # Quick example
-To share an R object, all you need to do is to call the `share` function with the object you want to share. In this example, we will create a cluster with 2 workers and share an n-by-n matrix `A`, we use the function `share` to create a shared object `shared_A` and call the function `clusterExport` to export it:
-
+## Creating a shared object from an existing object
+To share an R object, all you need to do is to call the `share` function with the object you want to share. In this example, we will create a 3-by-3 matrix `A1` and use the function `share` to make a shared object `A2`
 
 ```r
-library(parallel)
-## Create the cluster
-cl <- makeCluster(2)
 ## Create data
-n <- 3
-A <- matrix(1:(n^2), n, n)
+A1 <- matrix(1:9, 3, 3)
 ## Create a shared object
-shared_A <- share(A)
-## Export the shared object
-clusterExport(cl,"shared_A")
-## Check the exported object
-clusterEvalQ(cl, shared_A)
-#> [[1]]
-#>      [,1] [,2] [,3]
-#> [1,]    1    4    7
-#> [2,]    2    5    8
-#> [3,]    3    6    9
-#> 
-#> [[2]]
-#>      [,1] [,2] [,3]
-#> [1,]    1    4    7
-#> [2,]    2    5    8
-#> [3,]    3    6    9
-
-stopCluster(cl)
+A2 <- share(A1)
 ```
-As the code shows above, the procedure of exporting a shared object to the other R workers is the same as the procedure of exporting a regular R object. Notably, there is no visible difference between the matrix `A` and the shared matrix `shared_A`. There is no need to change the existing code to work with the shared object. We can verify this through
+There is no visible difference between the matrix `A1` and the shared matrix `A2`. There is no need to change the existing code to work with the shared object. We can verify this through
 
 ```r
 ## Check the data
-A
+A1
 #>      [,1] [,2] [,3]
 #> [1,]    1    4    7
 #> [2,]    2    5    8
 #> [3,]    3    6    9
-shared_A
+A2
 #>      [,1] [,2] [,3]
 #> [1,]    1    4    7
 #> [2,]    2    5    8
 #> [3,]    3    6    9
-## Check the class
-class(A)
-#> [1] "matrix" "array"
-class(shared_A)
-#> [1] "matrix" "array"
+
 ## Check if they are identical
-identical(A, shared_A)
+identical(A1, A2)
 #> [1] TRUE
 ```
-Users can treat the shared object `shared_A` as a regular matrix and do operations on it as usual. If one needs to distinguish the shared object, the function `is.shared` can be used to check whether an object is shared.
+Users can treat the shared object `A2` as a regular matrix and do operations on it as usual. The function `is.shared` can be used to check whether an object is shared.
 
 ```r
 ## Check if an object is shared
-is.shared(A)
+is.shared(A1)
 #> [1] FALSE
-is.shared(shared_A)
+is.shared(A2)
 #> [1] TRUE
 ```
+The object `A2` should work with any parallel package including `BiocParallel`. In this vignette we will simply use the `parallel` package to export the object `A2`.
 
+```r
+library(parallel)
+## Create a cluster with only 1 worker
+cl <- makeCluster(1)
+clusterExport(cl, "A2")
+## Check if the object is still a shared object
+clusterEvalQ(cl, is.shared(A2))
+#> [[1]]
+#> [1] TRUE
+stopCluster(cl)
+```
+When a shared object is exported to the other R workers, only the data ID along with some basic information of the shared object will be sent to the workers. We can see the exported data from the `serialize` function.
+
+```r
+## make a larger vector
+x1 <- rep(0, 10000)
+x2 <- share(x1)
+
+## This is the actual data that will
+## be sent to the other R workers
+data1 <-serialize(x1, NULL)
+data2 <-serialize(x2, NULL)
+
+## Check the size of the data
+length(data1)
+#> [1] 80032
+length(data2)
+#> [1] 390
+```
+As we see from the example, the size of the shared object `x2` is significantly smaller than the size of the regular R object `x1`. When workers receive the shared object `x2`, they can get the data from the memory using the memory ID. Therefore, there is no memory allocation for the data of `x2` in the workers. 
+## Creating a shared object from scratch
+Analogy to the `vector` function in R, the shared object can also be made from scratch.
+
+```r
+SharedObject(mode = "integer", length = 6)
+#> [1] 0 0 0 0 0 0
+```
+You can attach the attributes to `x` when creating the empty shared object. For example
+
+```r
+SharedObject(mode = "integer", length = 6, attrib = list(dim = c(2L, 3L)))
+#>      [,1] [,2] [,3]
+#> [1,]    0    0    0
+#> [2,]    0    0    0
+```
+Please refer to `?SharedObject` for the details of the function.
+
+
+## Properties of the shared object
 There are several properties associated with the shared object, one can check them via
 
 ```r
 ## get a summary report
-sharedObjectProperties(shared_A)
+sharedObjectProperties(A2)
 #> $dataId
-#> [1] "58"
+#> [1] "1"
 #> 
 #> $length
 #> [1] 9
@@ -112,21 +119,38 @@ sharedObjectProperties(shared_A)
 #> 
 #> $sharedCopy
 #> [1] FALSE
-
-## get the individual properties
-getCopyOnWrite(shared_A)
-#> [1] TRUE
-getSharedSubset(shared_A)
-#> [1] FALSE
-getSharedCopy(shared_A)
-#> [1] FALSE
 ```
-Please see the advanced topic to see the meaning of the properties and how to set them in a proper way.
+where `dataId` is the memory ID that will be used to find the shared memory, `length` and `totalSize` are pretty self-explained, `dataType` is the type ID of the R object, `ownData` determines whether the shared memory will be released after the shared object is freed in the current process. `copyOnWrite`, `sharedSubset` and `sharedCopy` control the procedures of data writing, subsetting and duplication. please see `Package options` and `Advanced topics` sections to see the meaning of the properties and how to use them properly.
+
+Note that most properties in a shared object are not mutable, only `copyOnWrite`, `sharedSubset` and `sharedCopy` are allowed to be changed. The properties can be viewed by `getCopyOnWrite`, `getSharedSubset` and `getSharedCopy` and set via `setCopyOnWrite`, `setSharedSubset` and `setSharedCopy`.
+
+```r
+## get the individual properties
+getCopyOnWrite(A2)
+#> [1] TRUE
+getSharedSubset(A2)
+#> [1] FALSE
+getSharedCopy(A2)
+#> [1] FALSE
+
+## set the individual properties
+setCopyOnWrite(A2, FALSE)
+setSharedSubset(A2, TRUE)
+setSharedCopy(A2, TRUE)
+
+## Check if the change has been made
+getCopyOnWrite(A2)
+#> [1] FALSE
+getSharedSubset(A2)
+#> [1] TRUE
+getSharedCopy(A2)
+#> [1] TRUE
+```
 
 # Supported data types and structures
-For the basic R type, the function supports `raw`, `logical`, `integer`, `double`, `complex` and `character`. Note that sharing a character vector is beneficial only when there are a lot repetitions in the elements of the vector. Due to the complicated structure of the character vector, you are not allowed to set the value of a shared character vector to a value which haven't presented in the vector. Therefore, It is recommended to treat the shared character vector as read-only.
+For the basic R type, the package supports `raw`, `logical`, `integer`, `numeric`, `complex` and `character`. Note that sharing a character vector is beneficial only when there are a lot repetitions in the elements of the vector. Due to the complicated structure of the character vector, you are not allowed to set the value of a shared character vector to a value which haven't presented in the vector. Therefore, It is recommended to treat the shared character vector as read-only.
 
-For the container, the function supports `list`, `pairlist` and `environment`. Sharing a container is equivalent to sharing all elements in the container, the container itself will not be shared. Therefore, adding or replacing an element in a shared container in one worker will not implicitly change the shared container in the other workers. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle. 
+For the container, the package supports `list`, `pairlist` and `environment`. Sharing a container is equivalent to sharing all elements in the container, the container itself will not be shared. Therefore, adding or replacing an element in a shared container in one worker will not implicitly change the shared container in the other workers. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle. 
 
 For the more complicated data structure like `S3` and `S4` class. They are available out-of-box. Therefore, there is no need to customize the `share` function to support an S3/S4 class. However, if the S3/S4 class has a special design(e.g. on-disk data), the function `share` is an S4 generic and developers are free to define their own `share` method.
 
@@ -168,8 +192,8 @@ is.shared(shared_x, depth = 1)
 #> [1] FALSE
 ```
 
-# Global options
-There are some options that can control the creation and the behavior of a shared object, you can view them via
+# Package options
+There are some options that can control the default behavior of a shared object, you can view them via
 
 ```r
 sharedObjectPkgOptions()
@@ -191,28 +215,32 @@ sharedObjectPkgOptions()
 #> $minLength
 #> [1] 3
 ```
-As we have seen previously, the option `mustWork` suppress the error message when the function `share` encounter a non-sharable object and force the function to return the same object. The option `sharedSubset` controls whether the subset of a shared object is still a shared object. The option `minLength` is the minimum length of a shared object. If the length of the input object is less than the minimum length, it will not be shared. 
+As we have seen previously, the option `mustWork = FALSE` suppress the error message when the function `share` encounter a non-sharable object and force the function to return the same object. `sharedSubset` controls whether the subset of a shared object is still a shared object. `minLength` determines the minimum length of a shared object. An R object will not be shared if its length is less than the minimum length.
 
-We will talk about the options `copyOnWrite` and `sharedCopy` in the advanced section, but for most users it is safe to ignore these two options. The global setting can be modified via `sharedObjectPkgOptions`
+We will talk about the options `copyOnWrite` and `sharedCopy` in the advanced section, but for most users it is safe to ignore them. The global setting can be modified via `sharedObjectPkgOptions`
 
 ```r
 ## change the default setting
 sharedObjectPkgOptions(mustWork = TRUE)
+
 ## Check if the change is made
 sharedObjectPkgOptions("mustWork")
 #> [1] TRUE
-```
-Note that all the options can be temporary overwritten by providing the named parameter to the function `share`. For example, you can also turn `mustwork` on via `share(x, mustWork = TRUE)`.
 
-# Advanced topic
+## Restore the default
+sharedObjectPkgOptions(mustWork = FALSE)
+```
+Note that the package options can be temporary overwritten by providing named parameters to the function `share`. For example, you can overwrite the package `mustwork` via `share(x, mustWork = TRUE)`.
+
+# Advanced topics
 ## Copy-On-Write
-Since all workers are using shared objects located in the same memory location, a change made on a shared object in one worker can affect the value of the object in the other workers. To prevent users from changing the values of a shared object without awareness, a shared object will duplicate itself if a change of its value is made. For example
+Since all workers are using shared objects located in the same memory location, a change made on a shared object in one worker can affect the value of the object in the other workers. To prevent users from changing the values of a shared object unintentionally, a shared object will duplicate itself if a change of its value is made. For example
 
 ```r
 x1 <- share(1:4)
 x2 <- x1
 
-## x2 became a regular R object after the change
+## x2 becames a regular R object after the change
 is.shared(x2)
 #> [1] TRUE
 x2[1] <- 10L
@@ -225,10 +253,10 @@ x1
 x2
 #> [1] 10  2  3  4
 ```
-The change made on `x2` results in a memory duplication. The vector `x1` is intact. This default behavior can be overwritten by passing an argument `copyOnWrite` to the function `share`
+When we change the value of `x2`, R will first duplicate the object `x2`, then applies the change. Therefore, although `x1` and `x2` share the same data, the change in `x2` will not affect the value of `x1`. This default behavior can be overwritten by the parameter `copyOnWrite`.
 
 ```r
-x1 <- share(1:4, copyOnWrite=FALSE)
+x1 <- share(1:4, copyOnWrite = FALSE)
 x2 <- x1
 
 ## x2 will not be duplicated when a change is made
@@ -244,8 +272,7 @@ x1
 x2
 #> [1] 0 2 3 4
 ```
-A change in the matrix `x2` cause a change in `x1`. This feature could be potentially useful to return the result from each R worker without additional memory allocation. A shared object can be pre-allocated to collect the final result from workers. However, due to the limitation of R, it is possible to change the value of a shared object unexpectedly. For example
-
+If copy-on-write is off, a change in the matrix `x2` causes a change in `x1`. This feature could be potentially useful to collect the results from workers. For example, you can pre-allocate an empty shared object with `copyOnWrite = FALSE` and let the workers write their results back to the shared object. This will avoid the need of sending the data from workers to the main process. However, due to the limitation of R, it is possible to change the value of a shared object unexpectedly. For example
 
 ```r
 x <- share(1:4, copyOnWrite = FALSE)
@@ -256,12 +283,12 @@ x
 x
 #> [1] -1 -2 -3 -4
 ```
-The above example shows a surprising result when the copy-on-write feature is off. Simply calling an unary function can change the values of a shared object. Therefore, users must use the feature with caution. The copy-on-write feature of an object can be set via the `setCopyOnwrite` function or the `copyOnWrite` parameter in the `share` function.
+The above example shows a surprising result when the copy-on-write feature is off. Simply calling an unary function can change the values of a shared object. Therefore, users must use this feature with caution. The copy-on-write feature of an object can be set via the `setCopyOnwrite` function or the `copyOnWrite` parameter in the `share` function.
 
 
 ```r
 ## Create x1 with copy-on-write off
-x1 <- share(1:4, copyOnWrite=FALSE)
+x1 <- share(1:4, copyOnWrite = FALSE)
 x2 <- x1
 ## change the value of x2
 x2[1] <- 0L
@@ -281,12 +308,12 @@ x1
 x2
 #> [1] 0 0 3 4
 ```
-This flexibility provide us a way to do safe operations during the computation and return the results without memory duplication.
+This flexibility provides a way to do safe operations during the computation and return the results without memory duplication.
 
 ### Warning
 If a high-precision value is assigned to a low-precision shared object(E.g. assigning a numeric value to an integer shared object), an implicit type conversion will be triggered for correctly storing the change. The resulting object would be a regular R object, not a shared object. Therefore, the change will not be broadcasted even if the copy-on-write feature is off. Users should be cautious with the data type that a shared object is using.
 
-## shared copy
+## Shared copy
 The options `sharedCopy` determines if the duplication of a shared object is still a shared object. For example
 
 ```r
@@ -312,20 +339,38 @@ is.shared(x2)
 ```
 For performance consideration, the default settings are `sharedCopy=FALSE`, but you can turn it on and off at any time via `setSharedCopy`. Please note that `sharedCopy` is only available when `copyOnWrite = TRUE`.
 
+## Listing the shared object 
+You can list the ID of the shared object you have created via
+
+```r
+listSharedObjects()
+#>   Id  size
+#> 1  1  4096
+#> 2  2 81920
+#> 3  5  4096
+#> 4  8  4096
+#> 5  9  4096
+#> 6 10  4096
+#> 7 11  4096
+#> 8 12  4096
+#> 9 13  4096
+```
+Getting a list of shared object should have a rare use case, but it can be useful if you have a memory leaking problem and a shared memory can be manually released by `freeSharedMemory(ID)`.
+
 # Developing package based upon SharedObject
-The package offers three levels of APIs to help the package developers to build their own shared object. 
+The package offers three levels of API to help the package developers to build their own shared object. 
 
 ## user API
 The simplest and recommended way to make your own shared object is to define an S4 function `share` in your own package, where you can rely on the existing `share` functions to quickly add the support for an S4 class which is not provided by `SharedObject`. We recommend to use this method to build your package for the developers do not have to bother with the memory management. The package will automatically free the shared object after use.
 
-## R memory management APIs
-It is a common request to have a low level control to the shared memory. To achieve that, the package exports some low-level R APIs for the developers who want to have a fine control of their shared objects. These functions are `allocateSharedMemory`, `mapSharedMemory`, `unmapSharedMemory`, `freeSharedMemory`, `hasSharedMemory` and `getSharedMemorySize`. Note that developers are responsible for freeing the shared memory after use. Please see the function documentation for more information
+## R's shared memory API
+It is a common request to have a low level control to the shared memory. To achieve that, the package exports some low-level R API for the developers who want to have a fine control of their shared objects. These functions are `allocateSharedMemory`, `mapSharedMemory`, `unmapSharedMemory`, `freeSharedMemory`, `hasSharedMemory` and `getSharedMemorySize`. Note that developers are responsible for freeing the shared memory after use. Please see the function documentation for more information
 
-## C++ memory management APIs
-For the most sophisticated package developers, it might be more comfortable to use the C++ APIs rather than the R APIs. All the R functions in `SharedObject` are based upon its C++ APIs. Here is the instruction on show how to use the `SharedObject` C++ APIs in your package. 
+## C++ shared memory API
+For the most sophisticated package developers, it might be more comfortable to use the C++ API rather than the R API. All the R functions in `SharedObject` are based upon its C++ API. Here is the instruction on show how to use the `SharedObject` C++ API in your package. 
 
 ### Step 1
-For using the C++ APIS, you must add `SharedObject` to the LinkingTo field of the DESCRIPTION file, e.g.,
+For using the C++ API, you must add `SharedObject` to the LinkingTo field of the DESCRIPTION file, e.g.,
 ```
 LinkingTo: SharedObject
 ```
@@ -369,13 +414,11 @@ sessionInfo()
 #> [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] SharedObject_1.3.17
+#> [1] SharedObject_1.5.1
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] Rcpp_1.0.5          digest_0.6.25       magrittr_1.5        evaluate_0.14       rlang_0.4.7        
-#>  [6] stringi_1.4.6       rmarkdown_2.3       BiocStyle_2.17.0    tools_4.1.0         stringr_1.4.0      
-#> [11] xfun_0.16           yaml_2.2.1          compiler_4.1.0      BiocGenerics_0.35.4 BiocManager_1.30.10
-#> [16] htmltools_0.5.0     knitr_1.29
+#>  [1] compiler_4.1.0      magrittr_1.5        tools_4.1.0         Rcpp_1.0.5          stringi_1.4.6      
+#>  [6] knitr_1.29          stringr_1.4.0       xfun_0.16           BiocGenerics_0.35.4 evaluate_0.14
 ```
 
 
