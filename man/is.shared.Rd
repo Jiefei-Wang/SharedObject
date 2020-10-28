@@ -3,7 +3,7 @@
 \name{is.shared}
 \alias{is.shared}
 \alias{is.shared,ANY-method}
-\title{Test whether the object is a shared object}
+\title{Test whether an object is shared}
 \usage{
 is.shared(x, ..., depth = 0, showAttributes = FALSE)
 
@@ -14,26 +14,27 @@ is.shared(x, ..., depth = 0, showAttributes = FALSE)
 
 \item{...}{For generalization purpose only}
 
-\item{depth}{Whether to recursively check the element of \code{x} if \code{x} is a container
-(e.g. \code{list} or \code{environment}), see details}
+\item{depth}{Whether to recursively check the element of \code{x}. This parameter
+only works for container objects(e.g. \code{list} and \code{environment}), see details.}
 
-\item{showAttributes}{Whether to check the attributes of \code{x}.}
+\item{showAttributes}{Whether to check the attributes of \code{x}, default \code{FALSE}.}
 }
 \value{
-a single logical value of a list.
+a single logical value or a list.
 }
 \description{
-Test whether the object is a shared object
+Test whether an object is shared
 }
 \details{
 When \code{depth=0}, the \code{is.shared} function return a single logical value indicating
-whether \code{x} contains any shared objects. When \code{depth>0} and \code{x} is a
+whether \code{x} is shared or contains any shared objects. When \code{depth>0} and \code{x} is a
 container(e.g. \code{list}), the function will recursively check each element of \code{x} and
 return a list with each elements corresponding to the elements in \code{x}.
-The depth of the checking procedure is determined by the \code{depth} parameter.
+The \code{depth} parameter determines the depth of the checking procedure.
 
 if \code{showAttributes = TRUE}, the attributes of the object will also be checked. The
-result can be find in \code{sharedAttributes} attribute. Note that \code{showAttributes} has
+check result is returned as attributes of the return value by appending \code{Shared} to the
+end of the original attribute names. Note that \code{showAttributes} has
 no effect on an S4 object for the attributes of an S4 object are used to store the
 slots and should not be treated as the attributes of an object.
 }
@@ -41,8 +42,9 @@ slots and should not be treated as the attributes of an object.
 x1 <- share(1:10)
 is.shared(x1)
 
-x2 <- share(list(a=list(b=1, d=2)))
+x2 <- share(list(a=1:10, b = list(d = letters, e = runif(10))))
 is.shared(x2, depth=0)
+is.shared(x2, depth=0, showAttributes = TRUE)
 is.shared(x2, depth=1)
 is.shared(x2, depth=2)
 }

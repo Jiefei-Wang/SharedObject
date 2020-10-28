@@ -1,45 +1,37 @@
-#include <Rcpp.h>
-#define BOOST_NO_AUTO_PTR
-#include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/sync/named_semaphore.hpp>
-#include <boost/thread/thread_time.hpp>
 #include <map>
 #include <string>
+#include <memory>
 #include <atomic>
+#include <Rcpp.h>
+#define BOOST_NO_AUTO_PTR
+#include <boost/interprocess/sync/named_semaphore.hpp>
+#include <boost/thread/thread_time.hpp>
 #include "sharedMemory.h"
-#include "tools.h"
+#include "sharedObjectClass.h"
+#include "utils.h"
+
+#define atomic_uint64_type atomic<uint64_t>
 
 #ifdef _WIN32
-#define WINDOWS_OS
-#endif
-
-#ifdef WINDOWS_OS
-#include <boost/interprocess/windows_shared_memory.hpp>
-#define OS_shared_memory_object windows_shared_memory
 #define OS_SHARED_OBJECT_PKG_SPACE ("Local\\SO_" + OS_ADDRESS_SIZE).c_str()
 #else
-#include <boost/interprocess/shared_memory_object.hpp>
-#define OS_shared_memory_object shared_memory_object
 #define OS_SHARED_OBJECT_PKG_SPACE ("SO_" + OS_ADDRESS_SIZE).c_str()
-#endif //  WINDOWS_OS
+#endif
+
+#define keyInMap(map, x) (map.find(x) != map.end())
 
 #define SHARED_OBJECT_COUNTER "sharedObjectCounter"
 #define SEMAPHORE_NAME "sharedObjectSemaphore"
-
 using std::pair;
 using std::string;
 using namespace boost::interprocess;
 
-static std::map<string, OS_shared_memory_object *> sharedMemoryList;
-static std::map<string, mapped_region *> segmentList;
-static std::map<string, uint32_t> segmentObjectCount;
+static std::map<string, int> mapCounter;
+static std::map<string, std::unique_ptr<SharedObjectClass>> sharedObjectList;
 
 // This lastId attributes is shared
-static std::atomic_uint64_t *lastId;
+static std::atomic_uint64_type *lastId;
 
-static void allocateSharedMemoryInternal(const string key, size_t size_in_byte);
-static void *mapSharedMemoryInternal(const string key);
-static bool hasSharedMemoryInternal(const string key);
 /*
 ===================================================================
 Process lock guard
@@ -81,98 +73,32 @@ public:
 Utilities
 ===================================================================
 */
-template <class T>
-static bool keyInMap(T &map, std::string key)
-{
-	return map.find(key) != map.end();
-}
-//Get the key to access a shared data that is used in R
-static string getIdKey(uint32_t id)
-{
-	//common name + id
-	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_id_") + std::to_string(id);
-}
-static string getNamedKey(const string name)
-{
-	//common name + name
-	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_nm_") + name;
-}
 
+//Get the key that is used as the name of the shared memory object
+string getKey(string id)
+{
+	return string(OS_SHARED_OBJECT_PKG_SPACE).append("_") + id;
+}
 /*
  Get the next id
- The id will be searched starting from *last_id + 1
+ The id will be searched starting from *lastId + 1
  until find an unused one
  */
-static uint32_t getNextId()
+std::string getNextId()
 {
-	uint32_t initial_id = *lastId;
-	uint32_t id;
+	uint64_t initialId = *lastId;
+	uint64_t id;
+	//TODO: make this process-safe
 	do
 	{
 		id = (++(*lastId));
-		if (!hasSharedMemoryInternal(getIdKey(id)))
+		if (!hasSharedMemory(std::to_string(id)))
 		{
-			return id;
+			return std::to_string(id);
 		}
-	} while (id != initial_id);
-	throwError("Unable to find an available key for creating a shared memory, all keys are in used.");
-	return 0;
-}
-int32_t getLastIndex()
-{
-	return *lastId;
-}
-/*
-===================================================================
-Code for manage the reference count of the shared memory object
-===================================================================
-*/
-static uint32_t getObjectCount(const string key)
-{
-	if (!keyInMap(segmentObjectCount, key))
-	{
-		return 0;
-	}
-	else
-	{
-		return segmentObjectCount[key];
-	}
-}
-
-static void setObjectCount(string key, int offset)
-{
-	if (!keyInMap(segmentObjectCount, key))
-	{
-		if (offset < 0)
-		{
-			throwError("The object count is less than 0");
-		}
-		segmentObjectCount.insert(pair<string, uint32_t>(key, offset));
-	}
-	else
-	{
-		segmentObjectCount[key] = segmentObjectCount[key] + offset;
-		if (segmentObjectCount[key] == 0)
-		{
-			segmentObjectCount.erase(key);
-		}
-	}
-}
-static void increaseObjectCount(const string key)
-{
-	setObjectCount(key, 1);
-}
-static void decreaseObjectCount(const string key)
-{
-	setObjectCount(key, -1);
-}
-
-static void zeroOutObjectCount(const string key)
-{
-	if (keyInMap(segmentObjectCount, key))
-	{
-		segmentObjectCount.erase(key);
-	}
+	} while (id != initialId);
+	throwError("Unable to find an available key for creating a shared memory, all keys are in used.\n");
+	return "";
 }
 
 /*
@@ -182,200 +108,52 @@ If a function is internal, it means the function will use the key as-is.
 ===================================================================
 */
 
-static bool hasSharedMemoryInternal(const string key)
+void allocateSharedMemoryInternal(string key, uint64_t size_in_byte)
 {
-	try
+	if (!keyInMap(sharedObjectList, key))
 	{
-		OS_shared_memory_object sharedData(open_only, key.c_str(), read_write);
-		return true;
+		SharedObjectClass *so = new SharedObjectClass(key, size_in_byte);
+		sharedObjectList.emplace(key, so);
 	}
-	catch (const std::exception &ex)
+	else
 	{
-		return false;
-	}
-}
-
-#ifndef WINDOWS_OS
-// This code is for checking the memory status on Linux
-#include <signal.h>
-#include <setjmp.h>
-static jmp_buf reset;
-static void (*old_handle)(int);
-static void termination_handler(int signum)
-{
-	longjmp(reset, 1);
-}
-#endif
-
-static void allocateSharedMemoryInternal(const string key, size_t size_in_byte)
-{
-	//Rprintf("key:%s\n", key.c_str());
-	DEBUG_SHARED_MEMORY(
-		Rprintf("allocating shared memory, key:%s, size:%llu\n", key.c_str(), size_in_byte);)
-	boost::interprocess::permissions perm;
-	perm.set_unrestricted();
-
-	bool allocSharedObject = false;
-	OS_shared_memory_object *shm;
-	try
-	{
-#ifdef WINDOWS_OS
-		//Rprintf("--key:%s\n", key.c_str());
-		shm = new windows_shared_memory(create_only, key.c_str(), read_write, size_in_byte, perm);
-		//Rprintf("--key:%s\n", key.c_str());
-		allocSharedObject = true;
-#else
-		shm = new shared_memory_object(create_only, key.c_str(), read_write, perm);
-		allocSharedObject = true;
-		shm->truncate(size_in_byte);
-		/*Checking the memory status on Linux
-		If the shared memory is not allocated successfully,
-		boost will not throw an error, we need to manually check if
-		the memory can be allocated or not.
-		*/
-		mapped_region region(*shm, read_write);
-		void *ptr = region.get_address();
-		if (setjmp(reset) != 0)
+		if (sharedObjectList.at(key)->getSize() < size_in_byte)
 		{
-			shared_memory_object::remove(key.c_str());
-			delete shm;
-			signal(SIGBUS, old_handle);
-			throwError("Testing shared memory failed, the shared memory size is %llu bytes.", (unsigned long long int)size_in_byte);
+			throwError("The shared memory size is smaller than you request(reqeust: %llu, actual:%llu)\n",
+					 size_in_byte, (uint64_t)sharedObjectList.at(key)->getSize());
 		}
-		else
-		{
-			old_handle = signal(SIGBUS, termination_handler);
-			if (old_handle != SIG_ERR)
-			{
-				memset(ptr, UCHAR_MAX, size_in_byte);
-				signal(SIGBUS, old_handle);
-			}
-		}
-#endif
 	}
-	catch (const std::exception &ex)
-	{
-		if (allocSharedObject)
-		{
-#ifndef WINDOWS_OS
-			shared_memory_object::remove(key.c_str());
-#endif
-			delete shm;
-		}
-		//Rprintf("This is an error\n");
-		throwError("An error has occured in allocating shared memory: %s(key: %s)", ex.what(), key.c_str());
-	}
-	sharedMemoryList.insert(pair<string, OS_shared_memory_object *>(key, shm));
+	sharedObjectList.at(key)->allocateSharedMemory();
 }
 
 // Open the shared memory and return the data pointer
 // The memory must have been allocated!!
 static void *mapSharedMemoryInternal(const string key)
 {
-	DEBUG_SHARED_MEMORY(
-		Rprintf("mapping shared memory, key:%s\n", key.c_str());)
-	/*
-     the function initialSharedmemory will call mapSharedMemoryInternal
-     so the argument isInitial is for preventing the infinite loop.
-     */
-	bool allocSharedObject = false;
-	bool allocSegmentObject = false;
-	bool ObjectCount = false;
-	OS_shared_memory_object *shm = nullptr;
-	mapped_region *region = nullptr;
-	try
+	if (!keyInMap(sharedObjectList, key))
 	{
-		if (keyInMap(segmentList, key))
-		{
-			increaseObjectCount(key);
-			return segmentList[key]->get_address();
-		}
-
-		// Otherwise, check if the shared memory object has been created
-		if (keyInMap(sharedMemoryList, key))
-		{
-			shm = sharedMemoryList[key];
-		}
-		else
-		{
-			shm = new OS_shared_memory_object(open_only, key.c_str(), read_write);
-			allocSharedObject = true;
-			sharedMemoryList.insert(pair<string, OS_shared_memory_object *>(key, shm));
-		}
-
-		region = new mapped_region(*shm, read_write);
-		allocSegmentObject = true;
-		void *ptr = region->get_address();
-		segmentList.insert(pair<string, mapped_region *>(key, region));
-		increaseObjectCount(key);
-		ObjectCount = true;
-		return ptr;
+		SharedObjectClass *so = new SharedObjectClass(key, 0);
+		sharedObjectList.emplace(key, so);
+		mapCounter[key] = 0;
 	}
-	catch (const std::exception &ex)
-	{
-		if (allocSharedObject)
-		{
-			sharedMemoryList.erase(key);
-			delete shm;
-		}
-		if (allocSegmentObject)
-		{
-			segmentList.erase(key);
-			delete region;
-		}
-		if (ObjectCount)
-		{
-			decreaseObjectCount(key);
-		}
-		throwError("An error has occured in mapping shared memory: %s", ex.what());
-		return nullptr;
-	}
+	void *ptr = sharedObjectList.at(key)->mapSharedMemory();
+	mapCounter[key]++;
+	return ptr;
 }
 
-//remove the shared memory object from the record
+//remove the mapping from the program virtual memory
 //but the data may be still in the shared memory
-static bool unmapSharedMemoryInternal(const string key)
+static void unmapSharedMemoryInternal(const string key)
 {
-	DEBUG_SHARED_MEMORY(
-		Rprintf("ummapping shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));)
-	bool success = true;
-	if (getObjectCount(key) > 1)
+	if (keyInMap(sharedObjectList, key))
 	{
-		decreaseObjectCount(key);
-	}
-	else
-	{
-		zeroOutObjectCount(key);
-		// Try to release the segment
-		try
+		mapCounter[key]--;
+		if (mapCounter[key] <= 0)
 		{
-			if (keyInMap(segmentList, key))
-			{
-				delete segmentList[key];
-				segmentList.erase(key);
-			}
-		}
-		catch (const std::exception &ex)
-		{
-			Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
-			success = false;
-		}
-		// Try to release the shared memory object handle
-		try
-		{
-			if (keyInMap(sharedMemoryList, key))
-			{
-				delete sharedMemoryList[key];
-				sharedMemoryList.erase(key);
-			}
-		}
-		catch (const std::exception &ex)
-		{
-			Rf_warning("An error has occured in closing the shared memory object: %s\n", ex.what());
-			success = false;
+			sharedObjectList.at(key)->unmapSharedMemory();
+			sharedObjectList.erase(key);
 		}
 	}
-	return success;
 }
 
 /*
@@ -383,53 +161,28 @@ Close and destroy the shared memory
 It is user's responsibility to make sure the memory will not be used
 After the free
 */
-bool freeSharedMemoryInternal(const string key)
+void freeSharedMemoryInternal(const string key)
 {
-	DEBUG_SHARED_MEMORY(
-		Rprintf("freeing shared memory, key:%s, reference count:%d\n", key.c_str(), getObjectCount(key));)
-	unmapSharedMemoryInternal(key);
-	zeroOutObjectCount(key);
-#ifdef WINDOWS_OS
-	return true;
-#else
-	return OS_shared_memory_object::remove(key.c_str());
-#endif
+	if (keyInMap(sharedObjectList, key))
+	{
+		sharedObjectList.erase(key);
+		mapCounter.erase(key);
+	}
+	SharedObjectClass::freeSharedMemory(key);
 }
 
 double getSharedMemorySizeInternal(const string key)
 {
-	DEBUG_SHARED_MEMORY(Rprintf("get shared memory size, Key:%s, exist: %d", key.c_str(), hasSharedMemoryInternal(key)));
-	if (hasSharedMemoryInternal(key))
+	if (keyInMap(sharedObjectList, key))
 	{
-		try
-		{
-			offset_t size = 0;
-			if (keyInMap(sharedMemoryList, key))
-			{
-#ifdef WINDOWS_OS
-				size = sharedMemoryList[key]->get_size();
-#else
-				sharedMemoryList[key]->get_size(size);
-#endif
-			}
-			else
-			{
-				OS_shared_memory_object sharedMemory(open_only, key.c_str(), read_write);
-#ifdef WINDOWS_OS
-				size = sharedMemory.get_size();
-#else
-				sharedMemory.get_size(size);
-#endif
-			}
-			return size;
-		}
-		catch (const std::exception &ex)
-		{
-			Rf_warning("Fail to get the  size of the shared memory: %s\n", ex.what());
-			return 0;
-		}
+		return sharedObjectList.at(key)->getSize();
 	}
-	return 0;
+	else
+	{
+		SharedObjectClass so(key);
+		so.mapSharedMemory();
+		return so.getSize();
+	}
 }
 
 /*
@@ -438,78 +191,113 @@ Code for the public functions
 ===================================================================
 */
 
-bool hasNamedSharedMemory(const char *name)
-{
-	return hasSharedMemoryInternal(getNamedKey(name));
-}
 /*  Check whether the shared memory exist*/
-bool hasSharedMemory(uint32_t id)
+bool hasSharedMemory(std::string id)
 {
-	return hasSharedMemoryInternal(getIdKey(id));
+	string key = getKey(id);
+	return SharedObjectClass::hasSharedMemory(key);
+}
+bool isSharedMemoryMapped(std::string id)
+{
+	string key = getKey(id);
+	if (!keyInMap(sharedObjectList, key))
+	{
+		return false;
+	}
+	return sharedObjectList.at(key)->hasMappedRegionHandle();
 }
 
-uint32_t allocateSharedMemory(size_t size_in_byte)
+std::string allocateSharedMemory(unsigned long long int size_in_byte, std::string id)
 {
-	uint32_t id = getNextId();
-	string key = getIdKey(id);
+	if (id == "")
+	{
+		id = getNextId();
+	}
+	string key = getKey(id);
 	allocateSharedMemoryInternal(key, size_in_byte);
 	return id;
 }
-void allocateNamedSharedMemory(const char *name, size_t size_in_byte)
-{
-	string key = getNamedKey(name);
-	allocateSharedMemoryInternal(key, size_in_byte);
-}
 
-void *mapSharedMemory(uint32_t id)
+void *mapSharedMemory(std::string id)
 {
-	string key = getIdKey(id);
-	return mapSharedMemoryInternal(key);
-}
-void *mapNamedSharedMemory(const char *name)
-{
-	string key = getNamedKey(name);
+	string key = getKey(id);
 	return mapSharedMemoryInternal(key);
 }
 
-bool unmapSharedMemory(uint32_t id)
+void unmapSharedMemory(std::string id)
 {
-	string key = getIdKey(id);
+	string key = getKey(id);
 	return unmapSharedMemoryInternal(key);
 }
 
-bool unmapNamedSharedMemory(const char *name)
+void freeSharedMemory(std::string id)
 {
-	string key = getNamedKey(name);
-	return unmapSharedMemoryInternal(key);
-}
-
-bool freeSharedMemory(uint32_t id)
-{
-	string key = getIdKey(id);
-	return freeSharedMemoryInternal(key);
-}
-bool freeNamedSharedMemory(const char *name)
-{
-	string key = getNamedKey(name);
+	string key = getKey(id);
 	return freeSharedMemoryInternal(key);
 }
 
-double getSharedMemorySize(uint32_t id)
+double getSharedMemorySize(std::string id)
 {
-	string key = getIdKey(id);
+	string key = getKey(id);
 	return getSharedMemorySizeInternal(key);
 }
 
-double getNamedSharedMemorySize(const char *name)
+// [[Rcpp::export]]
+Rcpp::DataFrame getSharedObjectList()
 {
-	string key = getNamedKey(name);
-	return getSharedMemorySizeInternal(key);
+	using namespace Rcpp;
+	int n = sharedObjectList.size();
+	CharacterVector name(n);
+	LogicalVector sharedMemoryHandle(n);
+	LogicalVector mappedRegionHandle(n);
+	NumericVector sharedMemoryCounter(n);
+	int j = 0;
+	for (auto &i : sharedObjectList)
+	{
+		name[j] = i.first;
+		sharedMemoryHandle[j] = i.second->hasSharedMemoryHandle();
+		mappedRegionHandle[j] = i.second->hasMappedRegionHandle();
+		sharedMemoryCounter[j] = mapCounter[i.first];
+		j++;
+	}
+	DataFrame df = DataFrame::create(Named("name") = name,
+									 Named("sharedMemoryHandle") = sharedMemoryHandle,
+									 Named("mappedRegionHandle") = mappedRegionHandle,
+									 Named("sharedMemoryCounter") = sharedMemoryCounter);
+	return df;
+}
+
+bool autoReleaseAfterUse(std::string id)
+{
+	string key = getKey(id);
+	if (!keyInMap(sharedObjectList, key))
+	{
+		throwError("Error in <autoReleaseAfterUse>: The shared object have not been mapped to the current process(key: %s)\n",
+				 key.c_str());
+	}
+	return sharedObjectList.at(key)->getOwnership();
+}
+void autoReleaseAfterUse(std::string id, bool releaseAfterUse)
+{
+	string key = getKey(id);
+	if (!keyInMap(sharedObjectList, key))
+	{
+		throwError("Error in <autoReleaseAfterUse>: The shared object have not been mapped to the current process(key: %s)\n",
+				 key.c_str());
+	}
+	sharedObjectList.at(key)->setOwnership(releaseAfterUse);
+}
+
+uint64_t getLastIndex()
+{
+	return *lastId;
 }
 
 /*
- Initialize the variable last_id
+ Initialize the variable lastId which is located in the shared memory
+ the variable serves as a hint for what the next id should be
  */
+
 void initialPkgData()
 {
 	if (lastId == nullptr)
@@ -518,27 +306,27 @@ void initialPkgData()
 		{
 			auto_semophore semophore;
 			semophore.lock();
-			string name = SHARED_OBJECT_COUNTER;
-			if (!hasSharedMemoryInternal(name))
+			ERROR_CATCHER catcher;
+			bool hasSharedMemory = SharedObjectClass::hasSharedMemory(SHARED_OBJECT_COUNTER);
+			void *ptr;
+			if (hasSharedMemory)
 			{
-				if (!hasSharedMemoryInternal(name))
-				{
-					allocateSharedMemoryInternal(name, sizeof(std::atomic_uint64_t));
-					void *ptr = mapSharedMemoryInternal(name);
-					lastId = new (ptr) std::atomic_uint64_t(0);
-					*lastId = 0;
-				}
+				ptr = mapSharedMemoryInternal(SHARED_OBJECT_COUNTER);
 			}
 			else
 			{
-				lastId = (std::atomic_uint64_t *)mapSharedMemoryInternal(name);
+				allocateSharedMemoryInternal(SHARED_OBJECT_COUNTER, sizeof(std::atomic_uint64_type));
+				ptr = mapSharedMemoryInternal(SHARED_OBJECT_COUNTER);
+				new (ptr) std::atomic_uint64_type(0);
 			}
+			lastId = (std::atomic_uint64_type *)ptr;
 		}
 		catch (std::exception &ex)
 		{
+			lastId = nullptr;
 			throwError("An error has occured in initializing shared memory object: %s\n%s",
-					   ex.what(),
-					   "You must manually initial the package via <initialSharedObjectPackageData()>");
+					 ex.what(),
+					 "You must manually initial the package via <initialSharedObjectPackageData()>\n");
 		}
 	}
 }
@@ -547,5 +335,4 @@ void releasePkgData()
 {
 	freeSharedMemoryInternal(SHARED_OBJECT_COUNTER);
 	lastId = nullptr;
-	named_semaphore::remove(SEMAPHORE_NAME);
 }

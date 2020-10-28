@@ -1,184 +1,105 @@
 #include <Rcpp.h>
+#include <map>
 #include "R_ext/Altrep.h"
-#include "R_ext/Itermacros.h"
-#include "tools.h"
 #include "sharedMemory.h"
 #include "altrep.h"
-#include "C_interface.h"
-#include "macro.h"
+#include "utils.h"
 
-// [[Rcpp::plugins(unwindProtect)]]
 using namespace Rcpp;
 using std::string;
 
 /*
 ##########################################
-## Create shared objects
+## shared object APIs
 ##########################################
 */
-
-void copyData(void *target, SEXP source);
-static void ptrFinalizer(SEXP extPtr);
-SEXP C_createEmptySharedMemory(List dataInfo)
+// [[Rcpp::export]]
+SEXP C_getDataInfoTemplate()
 {
-	uint64_t dataSize = as<uint64_t>(dataInfo[INFO_TOTALSIZE]);
-	//Allocate the shared memory
-	uint32_t id = allocateSharedMemory(dataSize);
-	SEXP R_id = PROTECT(Rf_ScalarReal(id));
-	dataInfo[INFO_DATAID] = R_id;
-	//Map the shared memory to the current process
-	void *ptr = mapSharedMemory(id);
-	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, dataInfo[INFO_OWNDATA]));
-	R_RegisterCFinalizerEx(sharedExtPtr, ptrFinalizer, TRUE);
-
-	//Create altrep
-	R_altrep_class_t alt_class = getAltClass(as<int>(dataInfo[INFO_DATATYPE]));
-	SEXP res = PROTECT(R_new_altrep(alt_class, sharedExtPtr, dataInfo));
-	UNPROTECT(3);
-	return res;
+	return getDataInfoTemplate();
 }
 // [[Rcpp::export]]
-SEXP C_createSharedMemory(SEXP x, List dataInfo)
+SEXP C_getStringDataInfoTemplate()
 {
-	SEXP R_type = PROTECT(Rf_ScalarReal(TYPEOF(x)));
-	dataInfo[INFO_DATATYPE] = R_type;
-	SEXP result = C_createEmptySharedMemory(dataInfo);
-	// If x has data pointer, we just use memcpy function
-	// Otherwise, we use get_region function to get the data from x
-	if (DATAPTR_OR_NULL(x) != NULL)
-	{
-		uint64_t dataSize = as<uint64_t>(dataInfo[INFO_TOTALSIZE]);
-		memcpy(DATAPTR(result), DATAPTR_OR_NULL(x), dataSize);
-	}
-	else
-	{
-		copyData(DATAPTR(result), x);
-	}
-	UNPROTECT(1);
-	return result;
+	return getStringDataInfoTemplate();
 }
-
-// [[Rcpp::export]]
-SEXP C_readSharedMemory(SEXP dataInfo)
-{
-	SEXP R_id = GET_SLOT(dataInfo, INFO_DATAID);
-	//Map the shared memory to the current process
-	void *ptr = mapSharedMemory(as<uint32_t>(R_id));
-	SEXP sharedExtPtr = PROTECT(R_MakeExternalPtr(ptr, R_id, GET_SLOT(dataInfo, INFO_OWNDATA)));
-	R_RegisterCFinalizerEx(sharedExtPtr, ptrFinalizer, TRUE);
-
-	//Create altrep
-	R_altrep_class_t alt_class = getAltClass(as<int>(GET_SLOT(dataInfo, INFO_DATATYPE)));
-	SEXP res = PROTECT(R_new_altrep(alt_class, sharedExtPtr, dataInfo));
-	UNPROTECT(2);
-	return res;
-}
-
-static void ptrFinalizer(SEXP extPtr)
-{
-	uint32_t id = as<uint32_t>(R_ExternalPtrTag(extPtr));
-	bool own_data = as<bool>(R_ExternalPtrProtected(extPtr));
-	
-	DEBUG_SHARED_MEMORY(Rprintf("Finalizer, id:%d, own_data:%d\n", id,own_data));
-	if (own_data)
-	{
-		freeSharedMemory(id);
-	}
-	else
-	{
-		unmapSharedMemory(id);
-	}
-	return;
-}
-
 /*
-Copy data from source to target without using the 
-data pointer of the source.
+Create new shared object and make it auto
+release after use.
 */
-void copyData(void *target, SEXP source)
+// [[Rcpp::export]]
+SEXP C_createEmptySharedObject(int type, uint64_t length,
+							   bool copyOnWrite, bool sharedSubset, bool sharedCopy,
+							   SEXP attributes)
 {
-	int data_type = TYPEOF(source);
-	if (data_type == RAWSXP)
-	{
-		ITERATE_BY_REGION(source, buffer, ind, nbatch, Rbyte, RAW,
-						  {
-							  size_t size = sizeof(buffer[0]);
-							  memcpy((Rbyte *)target + ind * nbatch, buffer, nbatch * size);
-						  });
-		return;
-	}
-	if (data_type == LGLSXP)
-	{
-		ITERATE_BY_REGION(source, buffer, ind, nbatch, int, LOGICAL,
-						  {
-							  size_t size = sizeof(buffer[0]);
-							  memcpy((int *)target + ind * nbatch, buffer, nbatch * size);
-						  });
-		return;
-	}
-	if (data_type == INTSXP)
-	{
-		ITERATE_BY_REGION(source, buffer, ind, nbatch, int, INTEGER,
-						  {
-							  size_t size = sizeof(buffer[0]);
-							  memcpy((int *)target + ind, buffer, nbatch * size);
-						  });
-		return;
-	}
-
-	if (data_type == REALSXP)
-	{
-		ITERATE_BY_REGION(source, buffer, ind, nbatch, double, REAL,
-						  {
-							  size_t size = sizeof(buffer[0]);
-							  memcpy((double *)target + ind * nbatch, buffer, nbatch * size);
-						  });
-		return;
-	}
-	if (data_type == CPLXSXP)
-	{
-		ITERATE_BY_REGION(source, buffer, ind, nbatch, Rcomplex, COMPLEX,
-						  {
-							  size_t size = sizeof(buffer[0]);
-							  memcpy((Rcomplex *)target + ind * nbatch, buffer, nbatch * size);
-						  });
-		return;
-	}
+	return createEmptySharedObject(type, length,
+								   copyOnWrite, sharedSubset, sharedCopy,
+								   attributes);
 }
 
-/*Copy data from source to target*/
+// Attributes must be a pairlist
 // [[Rcpp::export]]
-void C_memcpy(SEXP source, SEXP target, R_xlen_t byteSize)
+SEXP C_createSharedObjectFromSource(
+	SEXP x, bool copyOnWrite, bool sharedSubset, bool sharedCopy,
+	SEXP attributes)
 {
-	void *sourcePtr = DATAPTR(source);
-	void *targetPtr = DATAPTR(target);
-	memcpy(targetPtr, sourcePtr, byteSize);
+	return createSharedObjectFromSource(
+		x, copyOnWrite, sharedSubset, sharedCopy,
+		attributes);
+}
+
+// copyOnWrite,sharedSubset,sharedCopy will be disabled
+// [[Rcpp::export]]
+SEXP C_createSharedStringFromSource(SEXP x, bool copyOnWrite, SEXP attributes)
+{
+	return createSharedStringFromSource(x, copyOnWrite, attributes);
 }
 
 // [[Rcpp::export]]
-bool C_isSameObject(SEXP x, SEXP y)
+SEXP C_readSharedObject(SEXP dataInfo)
 {
-	return ((void *)x) == ((void *)y);
+	return readSharedObject(dataInfo);
+}
+
+// [[Rcpp::export]]
+SEXP C_unshare(SEXP x, SEXP attributes)
+{
+	return unshare(x, attributes);
+}
+// [[Rcpp::export]]
+SEXP C_unshareString(SEXP x, SEXP attributes)
+{
+	return unshareString(x, attributes);
 }
 
 //Function to set the ownership of a shared object
 // [[Rcpp::export]]
-void C_setSharedObjectOwership(SEXP x, bool ownData){
-  DEBUG_SHARED_MEMORY(Rprintf("set owndata :%d\n",ownData));
-  SEXP sharedExtPtr = R_altrep_data1(x);
-  R_SetExternalPtrProtected(sharedExtPtr, wrap(ownData));
+void C_setSharedObjectOwership(SEXP x, bool ownData)
+{
+	packagePrint("set owndata :%d\n", ownData);
+	SEXP extPtr = R_altrep_data1(x);
+	string id = as<string>(R_ExternalPtrTag(extPtr));
+	autoReleaseAfterUse(id, ownData);
 }
-
 // [[Rcpp::export]]
-void C_setAttributes(SEXP x, SEXP attrs){
-  SET_ATTRIB(x, attrs);
+bool C_getSharedObjectOwership(SEXP x)
+{
+	packagePrint("get owndata\n");
+	SEXP extPtr = R_altrep_data1(x);
+	string id = as<string>(R_ExternalPtrTag(extPtr));
+	return autoReleaseAfterUse(id);
 }
-
 /*
 ##########################################
 ## ALTREP related C API
 ##########################################
 */
+// [[Rcpp::export]]
+R_xlen_t C_xlength(SEXP x)
+{
+	return XLENGTH(x);
+}
+
 // [[Rcpp::export]]
 bool C_ALTREP(SEXP x)
 {
@@ -197,6 +118,34 @@ SEXP C_getAltData2(SEXP x)
 }
 
 // [[Rcpp::export]]
+bool C_isShared(SEXP x)
+{
+	if (!ALTREP(x))
+		return false;
+	bool result;
+	int type = TYPEOF(x);
+	switch (type)
+	{
+	case REALSXP:
+	case INTSXP:
+	case LGLSXP:
+	case RAWSXP:
+	case CPLXSXP:
+	case STRSXP:
+		result = R_altrep_inherits(x, getAltClass(type));
+		break;
+	default:
+		result = false;
+	}
+	//If x is not a shared object, it might be a wrapper.
+	if (!result)
+	{
+		result = C_isShared(R_altrep_data1(x));
+	}
+	return result;
+}
+
+// [[Rcpp::export]]
 void C_setAltData1(SEXP x, SEXP data)
 {
 	R_set_altrep_data1(x, data);
@@ -206,18 +155,25 @@ void C_setAltData2(SEXP x, SEXP data)
 {
 	R_set_altrep_data2(x, data);
 }
-
+/*
+##########################################
+## R SEXP APIs
+##########################################
+*/
 // [[Rcpp::export]]
-int C_getObject(SEXP x){
-  return OBJECT(x);
+int C_getObject(SEXP x)
+{
+	return OBJECT(x);
 }
 // [[Rcpp::export]]
-void C_setObject(SEXP x, int i){
-  SET_OBJECT(x,i);
+void C_setObject(SEXP x, int i)
+{
+	SET_OBJECT(x, i);
 }
 // [[Rcpp::export]]
-bool C_ISS4(SEXP x){
-  return IS_S4_OBJECT(x);
+bool C_ISS4(SEXP x)
+{
+	return IS_S4_OBJECT(x);
 }
 // [[Rcpp::export]]
 void C_SETS4(SEXP x)
@@ -229,83 +185,111 @@ void C_UNSETS4(SEXP x)
 {
 	UNSET_S4_OBJECT(x);
 }
+// [[Rcpp::export]]
+bool C_isSameObject(SEXP x, SEXP y)
+{
+	return ((void *)x) == ((void *)y);
+}
+
+// [[Rcpp::export]]
+int C_getDataTypeId(string type)
+{
+	if (type == "raw")
+	{
+		return RAWSXP;
+	}
+	if (type == "logical")
+	{
+		return LGLSXP;
+	}
+	if (type == "integer")
+	{
+		return INTSXP;
+	}
+	if (type == "real"||type=="numeric")
+	{
+		return REALSXP;
+	}
+	if (type == "complex")
+	{
+		return CPLXSXP;
+	}
+	if (type == "character")
+	{
+		return STRSXP;
+	}
+	Rf_error("Cannot find the type id for the type <%s>\n", type.c_str());
+	return 0;
+}
+
 /*
 ##########################################
 ## Export sharedMemory function to R
 ##########################################
 */
 // [[Rcpp::export]]
-void C_initialPkgData(){
+void C_initialPkgData()
+{
 	initialPkgData();
 }
 // [[Rcpp::export]]
-void C_releasePkgData(){
+void C_releasePkgData()
+{
 	releasePkgData();
 }
+
 // [[Rcpp::export]]
 int32_t C_getLastIndex()
 {
 	return getLastIndex();
 }
 // [[Rcpp::export]]
-uint32_t C_allocateSharedMemory(size_t size_in_byte)
+string C_allocateSharedMemory(size_t size_in_byte, string name = "")
 {
-	return allocateSharedMemory(size_in_byte);
+	return allocateSharedMemory(size_in_byte, name);
 }
 // [[Rcpp::export]]
-SEXP C_mapSharedMemory(uint32_t id)
+SEXP C_mapSharedMemory(string id)
 {
 	return R_MakeExternalPtr(mapSharedMemory(id), R_NilValue, R_NilValue);
 }
 // [[Rcpp::export]]
-bool C_unmapSharedMemory(uint32_t id)
+void C_unmapSharedMemory(string id)
 {
 	return unmapSharedMemory(id);
 }
 // [[Rcpp::export]]
-bool C_freeSharedMemory(uint32_t id)
+void C_freeSharedMemory(string id)
 {
 	return freeSharedMemory(id);
 }
 // [[Rcpp::export]]
-bool C_hasSharedMemory(uint32_t id)
+bool C_hasSharedMemory(string id)
 {
 	return hasSharedMemory(id);
 }
 // [[Rcpp::export]]
-double C_getSharedMemorySize(uint32_t id)
+uint64_t C_getSharedMemorySize(string id)
 {
 	return getSharedMemorySize(id);
 }
 
+#ifdef __linux__
+#include <sys/statvfs.h>
+#endif
+#pragma weak __shm_directory
+extern "C" const char *__shm_directory(size_t *len);
 // [[Rcpp::export]]
-void C_allocateNamedSharedMemory(const string name, size_t size_in_byte)
+string C_getSharedMemoryPath()
 {
-	allocateNamedSharedMemory(name.c_str(), size_in_byte);
-}
-// [[Rcpp::export]]
-SEXP C_mapNamedSharedMemory(const string name)
-{
-	return R_MakeExternalPtr(mapNamedSharedMemory(name.c_str()), R_NilValue, R_NilValue);
-}
-// [[Rcpp::export]]
-bool C_unmapNamedSharedMemory(const string name)
-{
-	return unmapNamedSharedMemory(name.c_str());
-}
-// [[Rcpp::export]]
-bool C_freeNamedSharedMemory(const string name)
-{
-	return freeNamedSharedMemory(name.c_str());
-}
-// [[Rcpp::export]]
-bool C_hasNamedSharedMemory(const string name)
-{
-	return hasNamedSharedMemory(name.c_str());
-}
-
-// [[Rcpp::export]]
-double C_getNamedSharedMemorySize(const string name)
-{
-	return getNamedSharedMemorySize(name.c_str());
+	if (__shm_directory)
+	{
+		size_t size;
+		const char *path = __shm_directory(&size);
+		return path;
+	}
+	else
+	{
+		return "";
+	}
 }

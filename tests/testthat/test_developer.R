@@ -1,24 +1,9 @@
-context("developers: shared memory management")
-gc()
-get_os <- function(){
-    sysinf <- Sys.info()
-    if (!is.null(sysinf)){
-        os <- sysinf['sysname']
-        if (os == 'Darwin')
-            os <- "osx"
-    } else { ## mystery machine
-        os <- .Platform$OS.type
-        if (grepl("^darwin", R.version$os))
-            os <- "osx"
-        if (grepl("linux-gnu", R.version$os))
-            os <- "linux"
-    }
-    tolower(os)
-}
+context("developer APIs")
+sharedObjectPkgOptions(minLength = 1)
 
 test_that("Testing memory tools", {
     x <- share(1:10)
-    info <- getSharedObjectProperty(x)
+    info <- sharedObjectProperties(x)
     check1 <- hasSharedMemory(info$dataId)
     expect_true(check1)
     check2 <- getSharedMemorySize(info$dataId)
@@ -28,23 +13,21 @@ test_that("Testing memory tools", {
 test_that("Create memory by ID", {
     size <- 10
     id <- allocateSharedMemory(size)
-    expect_true(is.numeric(id))
+    expect_true(is.character(id))
     result <- hasSharedMemory(id)
     expect_true(result)
     ptr <- mapSharedMemory(id)
     expect_true(is(ptr,"externalptr"))
     result <- getSharedMemorySize(id)
     expect_true(result>=size)
-    result <- unmapSharedMemory(id)
-    expect_true(result)
+    unmapSharedMemory(id)
     result <- hasSharedMemory(id)
-    if(get_os()=="windows"){
+    if(getOS()=="windows"){
         expect_false(result)
     }else{
         expect_true(result)
     }
-    result <- freeSharedMemory(id)
-    expect_true(result)
+    freeSharedMemory(id)
     result <- hasSharedMemory(id)
     expect_false(result)
 })
@@ -54,27 +37,30 @@ test_that("Create memory by name", {
     size <- 10
     noMemory <- TRUE
     if(hasSharedMemory(name)){
-        noMemory <- freeSharedMemory(name)
+        freeSharedMemory(name)
     }
-    expect_true(noMemory)
-    if(noMemory){
-        allocateNamedSharedMemory(name,size)
+    expect_true(!hasSharedMemory(name))
+    if(!hasSharedMemory(name)){
+        expect_equal(allocateSharedMemory(size, name),
+                     name)
+        ## Repeat allocating the same memory
+        expect_error(allocateSharedMemory(size, name), NA)
+        expect_error(allocateSharedMemory(1000000, name))
+        ## Check memory existence
         result <- hasSharedMemory(name)
         expect_true(result)
         ptr <- mapSharedMemory(name)
         expect_true(is(ptr,"externalptr"))
         result <- getSharedMemorySize(name)
         expect_true(result>=size)
-        result <- unmapSharedMemory(name)
-        expect_true(result)
+        unmapSharedMemory(name)
         result <- hasSharedMemory(name)
-        if(get_os()=="windows"){
+        if(getOS()=="windows"){
             expect_false(result)
         }else{
             expect_true(result)
         }
-        result <- freeSharedMemory(name)
-        expect_true(result)
+        freeSharedMemory(name)
         result <- hasSharedMemory(name)
         expect_false(result)
     }
@@ -86,11 +72,10 @@ test_that("Create memory by name", {
 test_that("Create memory by ID without unmap", {
     size <- 10
     id <- allocateSharedMemory(size)
-    expect_true(is.numeric(id))
+    expect_true(is.character(id))
     ptr <- mapSharedMemory(id)
     expect_true(is(ptr,"externalptr"))
-    result <- freeSharedMemory(id)
-    expect_true(result)
+    freeSharedMemory(id)
     result <- hasSharedMemory(id)
     expect_false(result)
 })
@@ -98,75 +83,43 @@ test_that("Create memory by ID without unmap", {
 test_that("Create memory by name without unmap", {
     name <- "SharedObjectPackageTest"
     size <- 10
-    noMemory <- TRUE
     if(hasSharedMemory(name)){
-        noMemory <- freeSharedMemory(name)
+        freeSharedMemory(name)
     }
-    expect_true(noMemory)
-    if(noMemory){
-        allocateNamedSharedMemory(name,size)
+    expect_true(!hasSharedMemory(name))
+    if(!hasSharedMemory(name)){
+        allocateSharedMemory(size, name)
         ptr <- mapSharedMemory(name)
         expect_true(is(ptr,"externalptr"))
-        result <- freeSharedMemory(name)
-        expect_true(result)
+        freeSharedMemory(name)
         result <- hasSharedMemory(name)
         expect_false(result)
     }
 })
-gc()
 
-if(get_os() == "linux"){
-    test_that("listSharedObject", {
-        expect_equal(nrow(listSharedObject()), 0)
+if(getOS() == "linux"){
+    test_that("listSharedObjects", {
+        gc()
+        expect_equal(nrow(listSharedObjects()), 0)
         x <- lm(mpg~cyl, mtcars)
         x2 <- share(x)
-        expect_true(nrow(listSharedObject())>0)
+        expect_true(nrow(listSharedObjects())>0)
         rm(list = "x2")
         gc()
-        expect_equal(nrow(listSharedObject()), 0)
+        expect_equal(nrow(listSharedObjects()), 0)
     })
     test_that("list named shared object", {
         name <- "SharedObjectPackageTest2"
         size <- 10
-        noMemory <- TRUE
         if(hasSharedMemory(name)){
-            noMemory <- freeSharedMemory(name)
+            freeSharedMemory(name)
         }
-        expect_true(noMemory)
-        if(noMemory){
-            allocateNamedSharedMemory(name,size)
-            expect_equal(nrow(listSharedObject(includeCharId = TRUE)),1)
-            result <- freeSharedMemory(name)
-            expect_true(result)
-            expect_equal(nrow(listSharedObject(includeCharId = TRUE)),0)
+        expect_true(!hasSharedMemory(name))
+        if(!hasSharedMemory(name)){
+            allocateSharedMemory(size,name)
+            expect_equal(nrow(listSharedObjects()),1)
+            freeSharedMemory(name)
+            expect_equal(nrow(listSharedObjects()),0)
         }
     })
 }
-
-
-test_that("release a shared object when it is still in used", {
-    cl <- makeCluster(1)
-    x <- share(1:10)
-    info <- getSharedObjectProperty(x)
-    expect_true(hasSharedMemory(info$dataId))
-    clusterExport(cl, "x", envir = environment())
-    ## release it from the main process
-    rm(x)
-    gc()
-    if(get_os() == "windows"){
-        expect_true(hasSharedMemory(info$dataId))
-        ## release it from another process
-        clusterEvalQ(cl,{rm(x);gc()})
-        gc()
-        expect_false(hasSharedMemory(info$dataId))
-    }else{
-        expect_false(hasSharedMemory(info$dataId))
-        expect_warning(clusterEvalQ(cl,x))
-        expect_true(clusterEvalQ(cl,{is.shared(x)})[[1]])
-        expect_warning({x <- clusterEvalQ(cl,x)[[1]]})
-        expect_false(is.shared(x))
-        expect_error(clusterEvalQ(cl,{rm(x);gc()}),NA)
-    }
-    expect_error(clusterEvalQ(cl,{gc()}), NA)
-    stopCluster(cl)
-})

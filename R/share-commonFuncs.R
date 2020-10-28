@@ -1,4 +1,5 @@
 doList <- function(func,tryFunc, x, ...){
+    options <- completeOptions(...)
     ## We do not create a new list unless
     ## there exists any sharable elements
     for(i in seq_along(x)){
@@ -7,20 +8,21 @@ doList <- function(func,tryFunc, x, ...){
             x[[i]] <- Elt
         }
     }
-    ## share attributes
-    oldAttrs <- attributes(x)
-    if(!is.null(oldAttrs)){
-        ## Exclude names and class attributes.
-        ## The former one will cause an infinit loop.
-        ## If attributes(x) contains the names attribute,
-        ## attributes(attributes(x)) still contains the names attributes,
-        ## we must ignore it.
-        ## The later one is not sharable
-        if(!all(names(oldAttrs) %in% c("class","names"))){
-            attrs <- tryFunc(oldAttrs,...)
-            ## set the attributes only when it is different from the old one
-            if(!C_isSameObject(oldAttrs,attrs)){
-                attributes(x) <- attrs
+    if(options$sharedAttributes){
+        ## share attributes
+        oldAttrs <- attributes(x)
+        if(!is.null(oldAttrs)){
+            ## Exclude names and class attributes.
+            ## If attributes(x) contains the names attribute,
+            ## attributes(attributes(x)) still contains the names attributes
+            ## and will cause an infinit loop. We must ignore it.
+            ## The later one is not worthy to share
+            if(!all(names(oldAttrs) %in% c("class","names"))){
+                attrs <- doAttributes(tryFunc, oldAttrs, ...)
+                ## set the attributes only when it is different from the old one
+                if(!C_isSameObject(oldAttrs,attrs)){
+                    attributes(x) <- attrs
+                }
             }
         }
     }
@@ -35,24 +37,41 @@ doS4 <- function(func, x, ...){
         C_UNSETS4(x)
         if(isS4(x))
             stop("Unexpected error, cannot convert an S4 object to a non-S4 object")
-        x1 <- func(x,...)
+        result <- func(x,...)
         C_SETS4(x)
-        C_SETS4(x1)
+        C_SETS4(result)
     }else{
-        x1 <- x
-        slots <- slotNames(x1)
+        result <- x
+        slots <- slotNames(result)
         for(i in slots){
-            slot(x1, i, check = FALSE) <- func(slot(x, i), ...)
+            slot(result, i, check = FALSE) <- func(slot(x, i), ...)
         }
     }
-    validObject(x1)
-    x1
+    validObject(result)
+    result
 }
 
 doEnvironment <- function(func,tryFunc, x, ...){
+    options <- completeOptions(...)
     for(i in names(x)){
         x[[i]] <- func(x[[i]],...)
     }
-    attributes(x) <- tryFunc(attributes(x),...)
+    if(options$sharedAttributes){
+        attributes(x) <- tryFunc(attributes(x),...)
+    }
     x
+}
+
+
+
+doAttributes<-function(tryFunc, attrs, ...){
+    attrNames <- names(attrs)
+    idx <- which(!attrNames%in%c("class","names","levels"))
+    for(i in idx){
+        newAttri <- tryFunc(attrs[[i]], ...)
+        if(!C_isSameObject(newAttri,attrs[[i]])){
+            attrs[[i]] <- newAttri
+        }
+    }
+    attrs
 }

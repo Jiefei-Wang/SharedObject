@@ -1,20 +1,26 @@
-setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
-
 #############################
 ## constructor for a shared object
 #############################
 #' Create a shared object
 #'
-#' This function will create a shared object in the shared memory
-#' for the object `x`.
-#' There is no duplication of the shared object when it is
-#' exported to the other processes.
+#' This function will create a shared object for the object `x`.
+#' The behavior of the shared object is exactly the same as `x`,
+#' but the data of the shared object is allocated in the shared
+#' memory space. Therefore, a shared object can be easily exported to the other
+#' R workers without duplicating the data, which can reduce the memory consumption
+#' and the overhead of data transmission.
 #'
-#' @param x An R object that you want to shared, see details.
-#' @param copyOnWrite,sharedSubset,sharedCopy The parameters controlling the behavior of the shared object,
-#' see details.
-#' @param mustWork Whether to throw an error if `x` is not a sharable object(e.g. Character).
-#' This parameter has no effect on the S4 object.
+#' @param x An R object that will be shared, see details.
+#' @param copyOnWrite,sharedSubset,sharedCopy The parameters
+#' controlling the behavior of a shared object, see details.
+#' @param mustWork Whether to throw an error if `x` is not sharable
+#' (e.g. x is a function).
+#' This parameter has no effect on the object's attributes and S4 object.
+#' @param sharedAttributes Whether to share the attributes of the object `x`
+#' (default `TRUE`). Note that attribute `class` and `names` will never be shared.
+#' @param minLength The minimum length of a shared object(default `3`).
+#' If `length(x)` is smaller than the minimum length, it would not be shared.
+#' This parameter can be used to reduce the memory fragmentation.
 #' @param ... For generalization purpose.
 #'
 #' @aliases share,vector-method share,matrix-method
@@ -22,61 +28,61 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #'
 #' @return A shared object
 #' @details
-#'
 #' The function returns a shared object corresponding to the argument `x` if it
 #' is sharable. There should be no different between `x` and the return value except
-#' that the latter one is shared. The attribute(s) of `x` will also be shared.
+#' that the latter one is shared. The attributes of `x` will also be shared if possible.
 #'
 #' **Supported types**
 #'
-#' For the basic R types, the function supports `raw`,`logical` ,`integer`, `double`,
-#' `complex`.
-#' `character` cannot be shared for it has a complicated data structure and closely
-#' relates to R's cache. For the containers, the function supports `list`, `pairlist`
-#' and `environment`. Note that sharing a container is equivalent sharing all elements
-#' in the container, the container itself will not be shared.
+#' For the basic R type, the function supports `raw`, `logical`,`integer`,
+#'  `double`, `complex`. `character` can be shared, but sharing a `character`
+#' is beneficial only when there are a lot repetitions in the
+#' elements of the vector. Due to the complicated structure of the character
+#' vector, you are not allowed to set the value of a shared
+#' character vector to a value which haven't presented in the vector before.
+#' It is recommended to treat a shared character vector as read-only.
+#'
+#' For the container, the function supports `list`, `pairlist`
+#' and `environment`. Note that sharing a container is equivalent
+#' to share all elements in the container, the container itself
+#' will not be shared.
 #'
 #' The function `share` is an S4 generic. The default share method works for
-#' most S4 objects. Therefore, there is no need to define a S4 share method
-#' for each S4 class unless the S4 class has a special implementation(e.g. on-disk data).
-#' The default method will share the object itself and
-#' all slots it contains. No error will be given if any of these objects are not
+#' most S3/S4 objects. Therefore, there is no need to define a S4 share method
+#' for each S3/S4 class unless the S3/S4 class has a special implementation
+#' (e.g. on-disk data).
+#' The default method will share all slots the object contains and the object itself
+#' if possible. No error will be given if any of these objects are not
 #' sharable and they will be kept unchanged.
 #'
 #'
 #' **Behavior control**
 #'
-#' In the R level, the behaviors of an ALTREP object is exactly the same as an atomic object
-#' but the data of an ALTREP object is allocated in the shared memory space. Therefore an
-#' ALTREP object can be easily exported to the other R processes without dulplicating the
-#' data, which reduces the memory usage and the overhead of data transmission.
-#'
 #' The behavior of a shared object can be controlled through three parameters:
 #' `copyOnWrite`, `sharedSubset` and `sharedCopy`.
 #'
-#' `copyOnWrite` determines Whether a new R object need to be allocated when the
-#' shared object is changed. The default value is `TRUE`, but can be altered by passing
-#' an argument `copyOnWrite = FALSE` to the function.
+#' `copyOnWrite` determines Whether a shared object needs to be duplicated when the
+#' data of the shared object is changed. The default value is `TRUE`,
+#' but can be altered by passing `copyOnWrite = FALSE` to the function.
+#' This parameter can be used to let workers directly write the result back to
+#' a shared object.
 #'
 #' Please note that the no-copy-on-write feature is not fully supported by R. When
-#' `copyOnWrite` is `FALSE`, a shared object might not behaves as user expects.
+#' `copyOnWrite` is `FALSE`, a shared object might not behaves as one expects.
 #' Please refer to the example code to see the exceptions.
 #'
 #' `sharedSubset` determines whether the subset of a shared object is still a shared object.
 #'  The default value is `FALSE`, and can be changed by passing `sharedSubset = TRUE`
 #'  to the function
 #'
-#'  At the time this documentation is being written, The shared subset feature will
-#'  cause an unnecessary memory duplication in R studio. Therefore, for the performance
-#'  consideration, it is better to turn the feature off when using R studio.
+#'  At the time of writing, The shared subset feature will
+#'  cause an unnecessary memory duplication in R studio. Therefore, for
+#'  the performance consideration, it is recommended to keep the feature
+#'  off in R studio.
 #'
-#' `sharedCopy` determines whether the object is still a shared object after a
-#' duplication. If `copyOnWrite` is `FALSE`, this feature is off since the duplication
-#' cannot be triggered. In current version (R 3.6), an object will be duplicated four times
-#' for creating a shared object and lead to a serious performance problem. Therefore,
-#' the default value is `FALSE`, user can alter it by passing `sharedCopy = FALSE`
-#' to the function.
-#'
+#' `sharedCopy` determines whether the object is still a shared object after the
+#' duplication. Note that it must be used with `copyOnWrite = TRUE`. Otherwise,
+#' the shared object will never be duplicated. The default value is `FALSE`.
 #'
 #'
 #' @examples
@@ -108,8 +114,7 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' ## close the connection
 #' stopCluster(cl)
 #'
-#' ## Copy-on-write
-#' ## This is the default setting
+#' ## Copy on write
 #' x <- runif(10)
 #' so1 <- share(x, copyOnWrite = TRUE)
 #' so2 <- so1
@@ -118,7 +123,7 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' so1
 #' so2
 #'
-#' ## No-copy-on-write
+#' ## No copy on write
 #' so1 <- share(x, copyOnWrite = FALSE)
 #' so2 <- so1
 #' so2[1] <- 10
@@ -127,11 +132,13 @@ setClassUnion("characterOrNULLOrMissing", c("character", "NULL", "missing"))
 #' so2
 #'
 #' ## Flaw of no-copy-on-write
-#' ## The following code changes the value of so1, highly unexpected! Please use with caution!
+#' ## The following code changes the value of so1,
+#' ## highly unexpected! Please use with caution!
 #' -so1
 #' so1
-#' ## The reason is that the minus function trys to dulplicate so1 object,
-#' ## but the dulplicate function will return so1 itself, so the value in so1 also get changed.
+#' ## The reason is that the minus function tries to
+#' ## duplicate so1 object, but the duplication function
+#' ## will return so1 itself, so the values in so1 get changed.
 #'
 #' @rdname share
 #' @export
@@ -158,33 +165,34 @@ setGeneric("unshare", signature="x", function(x){
 })
 
 
-
-#' Test whether the object is a shared object
+#' Test whether an object is shared
 #'
 #' @param x An R object
-#' @param depth Whether to recursively check the element of `x` if `x` is a container
-#' (e.g. `list` or `environment`), see details
-#' @param showAttributes Whether to check the attributes of `x`.
+#' @param depth Whether to recursively check the element of `x`. This parameter
+#' only works for container objects(e.g. `list` and `environment`), see details.
+#' @param showAttributes Whether to check the attributes of `x`, default `FALSE`.
 #' @param ... For generalization purpose only
 #' @details
 #' When `depth=0`, the `is.shared` function return a single logical value indicating
-#' whether `x` contains any shared objects. When `depth>0` and `x` is a
+#' whether `x` is shared or contains any shared objects. When `depth>0` and `x` is a
 #' container(e.g. `list`), the function will recursively check each element of `x` and
 #' return a list with each elements corresponding to the elements in `x`.
-#' The depth of the checking procedure is determined by the `depth` parameter.
+#' The `depth` parameter determines the depth of the checking procedure.
 #'
 #' if `showAttributes = TRUE`, the attributes of the object will also be checked. The
-#' result can be find in `sharedAttributes` attribute. Note that `showAttributes` has
+#' check result is returned as attributes of the return value by appending `Shared` to the
+#' end of the original attribute names. Note that `showAttributes` has
 #' no effect on an S4 object for the attributes of an S4 object are used to store the
 #' slots and should not be treated as the attributes of an object.
 #'
-#' @return a single logical value of a list.
+#' @return a single logical value or a list.
 #' @examples
 #' x1 <- share(1:10)
 #' is.shared(x1)
 #'
-#' x2 <- share(list(a=list(b=1, d=2)))
+#' x2 <- share(list(a=1:10, b = list(d = letters, e = runif(10))))
 #' is.shared(x2, depth=0)
+#' is.shared(x2, depth=0, showAttributes = TRUE)
 #' is.shared(x2, depth=1)
 #' is.shared(x2, depth=2)
 #' @rdname is.shared
@@ -197,34 +205,48 @@ setGeneric("is.shared", signature="x",
 
 
 
-#' Get/Set the properties of the shared object.
-#'
-#' Get/Set the properties of the shared object.
-#' The available properties are `dataId`, `length`, `totalSize`,
-#' `dataType`, `ownData`, `copyOnWrite`, `sharedSubset`, `sharedCopy`.
+#' Get/Set the properties of a shared object.
 #'
 #' @param x A shared object
-#' @param property A character vector. The name of the property(s),
-#' if the argument is missing or the value is `NULL`, it represents all properties.
-#' @param ... Not used
+#' @param literal Whether the parameters in `...` are always treated as characters.
+#' @param ... The name of the property(s), it can be either symbols or characters.
+#' if the argument is missing, it means getting all properties. See examples.
+#' @details
+#' For numeric objects, the properties are `dataId`, `length`,
+#' `totalSize`, `dataType`, `ownData`, `copyOnWrite`, `sharedSubset`,
+#' `sharedCopy`.
+#'
+#' For character objects, the properties are
+#' `length`, `unitSize`,`totalSize`,`dataType`,`uniqueChar`,`copyOnWrite`.
+#'
+#' Note that only `copyOnWrite`, `sharedSubset` and `sharedCopy` are mutable.
+#' The other attributes are read-only.
 #' @return
 #' get: The property(s) of a shared object
-#' @rdname sharedObjectProperty
+#'
+#' set: The old property(s)
+#' @examples
+#' ## For numeric objects
+#' x1 <- share(1:10)
+#'
+#' ## Get attributes
+#' sharedObjectProperties(x1)
+#' sharedObjectProperties(x1, copyOnWrite)
+#' sharedObjectProperties(x1, "copyOnWrite")
+#' props <- "copyOnWrite"
+#' sharedObjectProperties(x1, props, literal = FALSE)
+#' getCopyOnWrite(x1)
+#'
+#' ## Set attributes
+#' sharedObjectProperties(x1, copyOnWrite = FALSE)
+#' setCopyOnWrite(x1, FALSE)
+#'
+#' ## For character objects
+#' x2 <- share(letters)
+#' sharedObjectProperties(x2)
+#' @rdname sharedObjectProperties
 #' @export
-setGeneric("getSharedObjectProperty", function(x, property = NULL, ...) {
-    standardGeneric("getSharedObjectProperty")
+setGeneric("sharedObjectProperties", function(x, ..., literal = TRUE) {
+    standardGeneric("sharedObjectProperties")
 })
 
-
-
-#' @param value The new value of the property, if the length of value
-#' does not match the length of the property, the argument `value` will
-#' be repeated to match the length.
-#' @rdname sharedObjectProperty
-#' @return
-#' set: No return value
-#' @export
-setGeneric("setSharedObjectProperty",
-           function(x, property, value, ...) {
-               standardGeneric("setSharedObjectProperty")
-           })

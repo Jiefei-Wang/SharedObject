@@ -15,7 +15,3 @@ A logical value
 \description{
 Whether an object is an ALTREP object
 }
-\examples{
-x <- share(runif(10))
-is.altrep(x)
-}

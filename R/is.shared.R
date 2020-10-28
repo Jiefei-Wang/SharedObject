@@ -1,19 +1,19 @@
 ## recursive: Whether to show the details of all elements
 ## of the object x which are not directly associated with x
 ## showAttributes: whether to show the information of the attributes of x
-isSharedSEXP <- function(x, showAttributes = FALSE){
+isSharedSEXP <- function(x, showAttributes = FALSE, depth = 1){
     result <- FALSE
     if (is.altrep(x)) {
-        dataInfoTemplate <- getDataInfoTemplate()
-        info <- C_getAltData2(x)
-        if (is.list(info) &&
-            length(info) == length(dataInfoTemplate) &&
-            identical(names(dataInfoTemplate), names(dataInfoTemplate))) {
-            result <- TRUE
-        }
+        result <- C_isShared(x)
     }
-    if(showAttributes&&!is.null(attributes(x))){
-        attr(result, "sharedAttributes") <- is.shared(attributes(x), showAttributes = FALSE, depth = 1)
+    attrs <- attributes(x)
+    if(showAttributes&&!is.null(attrs)&& depth>0){
+        attrsShared <- rep(list(NA),length(attrs))
+        names(attrsShared) <- paste0(names(attrs), "Shared")
+        for(i in seq_along(attrs)){
+            attrsShared[[i]] <- is.shared(attrs[[i]], showAttributes = FALSE, depth = depth - 1)
+        }
+        attributes(result) <- attrsShared
     }
     result
 }
@@ -26,12 +26,20 @@ isSharedANY <- function(x,...,depth,showAttributes){
 }
 isSharedList <- function(x,...,depth,showAttributes){
     result <- lapply(x, function(x,...)is.shared(x,...),
-                     ...,depth=depth-1L,showAttributes=FALSE)
+                     ...,depth=depth-1L, showAttributes=FALSE)
     if(depth<=0){
         result <- any(unlist(result))
     }
-    if(showAttributes&&!is.null(attributes(x))){
-        attr(result, "sharedAttributes") <- is.shared(attributes(x), showAttributes = FALSE, depth = 1)
+    attrs <- attributes(x)
+    if(showAttributes&&!is.null(attrs)){
+        attrsShared <- is.shared(attrs, showAttributes = FALSE, depth = 1)
+        names(attrsShared) <- paste0(names(attrs), "Shared")
+        if(depth>0){
+            if("names"%in%names(attrs)){
+                attrsShared["names"] <-attrs["names"]
+            }
+        }
+        attributes(result) <- attrsShared
     }
     result
 }

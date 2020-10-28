@@ -11,81 +11,102 @@
 \usage{
 share(x, ...)
 
-\S4method{share}{ANY}(x, ..., copyOnWrite, sharedSubset, sharedCopy, mustWork)
+\S4method{share}{ANY}(
+  x,
+  ...,
+  copyOnWrite,
+  sharedSubset,
+  sharedCopy,
+  sharedAttributes,
+  mustWork,
+  minLength
+)
 }
 \arguments{
-\item{x}{An R object that you want to shared, see details.}
+\item{x}{An R object that will be shared, see details.}
 
 \item{...}{For generalization purpose.}
 
-\item{copyOnWrite, sharedSubset, sharedCopy}{The parameters controlling the behavior of the shared object,
-see details.}
+\item{copyOnWrite, sharedSubset, sharedCopy}{The parameters
+controlling the behavior of a shared object, see details.}
 
-\item{mustWork}{Whether to throw an error if \code{x} is not a sharable object(e.g. Character).
-This parameter has no effect on the S4 object.}
+\item{sharedAttributes}{Whether to share the attributes of the object \code{x}
+(default \code{TRUE}). Note that attribute \code{class} and \code{names} will never be shared.}
+
+\item{mustWork}{Whether to throw an error if \code{x} is not sharable
+(e.g. x is a function).
+This parameter has no effect on the object's attributes and S4 object.}
+
+\item{minLength}{The minimum length of a shared object(default \code{3}).
+If \code{length(x)} is smaller than the minimum length, it would not be shared.
+This parameter can be used to reduce the memory fragmentation.}
 }
 \value{
 A shared object
 }
 \description{
-This function will create a shared object in the shared memory
-for the object \code{x}.
-There is no duplication of the shared object when it is
-exported to the other processes.
+This function will create a shared object for the object \code{x}.
+The behavior of the shared object is exactly the same as \code{x},
+but the data of the shared object is allocated in the shared
+memory space. Therefore, a shared object can be easily exported to the other
+R workers without duplicating the data, which can reduce the memory consumption
+and the overhead of data transmission.
 }
 \details{
 The function returns a shared object corresponding to the argument \code{x} if it
 is sharable. There should be no different between \code{x} and the return value except
-that the latter one is shared. The attribute(s) of \code{x} will also be shared.
+that the latter one is shared. The attributes of \code{x} will also be shared if possible.
 
 \strong{Supported types}
 
-For the basic R types, the function supports \code{raw},\code{logical} ,\code{integer}, \code{double},
-\code{complex}.
-\code{character} cannot be shared for it has a complicated data structure and closely
-relates to R's cache. For the containers, the function supports \code{list}, \code{pairlist}
-and \code{environment}. Note that sharing a container is equivalent sharing all elements
-in the container, the container itself will not be shared.
+For the basic R type, the function supports \code{raw}, \code{logical},\code{integer},
+\code{double}, \code{complex}. \code{character} can be shared, but sharing a \code{character}
+is beneficial only when there are a lot repetitions in the
+elements of the vector. Due to the complicated structure of the character
+vector, you are not allowed to set the value of a shared
+character vector to a value which haven't presented in the vector before.
+It is recommended to treat a shared character vector as read-only.
+
+For the container, the function supports \code{list}, \code{pairlist}
+and \code{environment}. Note that sharing a container is equivalent
+to share all elements in the container, the container itself
+will not be shared.
 
 The function \code{share} is an S4 generic. The default share method works for
-most S4 objects. Therefore, there is no need to define a S4 share method
-for each S4 class unless the S4 class has a special implementation(e.g. on-disk data).
-The default method will share the object itself and
-all slots it contains. No error will be given if any of these objects are not
+most S3/S4 objects. Therefore, there is no need to define a S4 share method
+for each S3/S4 class unless the S3/S4 class has a special implementation
+(e.g. on-disk data).
+The default method will share all slots the object contains and the object itself
+if possible. No error will be given if any of these objects are not
 sharable and they will be kept unchanged.
 
 \strong{Behavior control}
 
-In the R level, the behaviors of an ALTREP object is exactly the same as an atomic object
-but the data of an ALTREP object is allocated in the shared memory space. Therefore an
-ALTREP object can be easily exported to the other R processes without dulplicating the
-data, which reduces the memory usage and the overhead of data transmission.
-
 The behavior of a shared object can be controlled through three parameters:
 \code{copyOnWrite}, \code{sharedSubset} and \code{sharedCopy}.
 
-\code{copyOnWrite} determines Whether a new R object need to be allocated when the
-shared object is changed. The default value is \code{TRUE}, but can be altered by passing
-an argument \code{copyOnWrite = FALSE} to the function.
+\code{copyOnWrite} determines Whether a shared object needs to be duplicated when the
+data of the shared object is changed. The default value is \code{TRUE},
+but can be altered by passing \code{copyOnWrite = FALSE} to the function.
+This parameter can be used to let workers directly write the result back to
+a shared object.
 
 Please note that the no-copy-on-write feature is not fully supported by R. When
-\code{copyOnWrite} is \code{FALSE}, a shared object might not behaves as user expects.
+\code{copyOnWrite} is \code{FALSE}, a shared object might not behaves as one expects.
 Please refer to the example code to see the exceptions.
 
 \code{sharedSubset} determines whether the subset of a shared object is still a shared object.
 The default value is \code{FALSE}, and can be changed by passing \code{sharedSubset = TRUE}
 to the function
 
-At the time this documentation is being written, The shared subset feature will
-cause an unnecessary memory duplication in R studio. Therefore, for the performance
-consideration, it is better to turn the feature off when using R studio.
+At the time of writing, The shared subset feature will
+cause an unnecessary memory duplication in R studio. Therefore, for
+the performance consideration, it is recommended to keep the feature
+off in R studio.
 
-\code{sharedCopy} determines whether the object is still a shared object after a
-duplication. If \code{copyOnWrite} is \code{FALSE}, this feature is off since the duplication
-cannot be triggered. In current version (R 3.6), an object will be duplicated four times
-for creating a shared object and lead to a serious performance problem. Therefore,
-the default value is \code{FALSE}, user can alter it by passing \code{sharedCopy = FALSE}
-to the function.
+\code{sharedCopy} determines whether the object is still a shared object after the
+duplication. Note that it must be used with \code{copyOnWrite = TRUE}. Otherwise,
+the shared object will never be duplicated. The default value is \code{FALSE}.
 }
 \examples{
 ## For vector
@@ -116,8 +137,7 @@ clusterEvalQ(cl, so)
 ## close the connection
 stopCluster(cl)
 
-## Copy-on-write
-## This is the default setting
+## Copy on write
 x <- runif(10)
 so1 <- share(x, copyOnWrite = TRUE)
 so2 <- so1
@@ -126,7 +146,7 @@ so2[1] <- 10
 so1
 so2
 
-## No-copy-on-write
+## No copy on write
 so1 <- share(x, copyOnWrite = FALSE)
 so2 <- so1
 so2[1] <- 10
@@ -135,10 +155,12 @@ so1
 so2
 
 ## Flaw of no-copy-on-write
-## The following code changes the value of so1, highly unexpected! Please use with caution!
+## The following code changes the value of so1,
+## highly unexpected! Please use with caution!
 -so1
 so1
-## The reason is that the minus function trys to dulplicate so1 object,
-## but the dulplicate function will return so1 itself, so the value in so1 also get changed.
+## The reason is that the minus function tries to
+## duplicate so1 object, but the duplication function
+## will return so1 itself, so the values in so1 get changed.
 
 }

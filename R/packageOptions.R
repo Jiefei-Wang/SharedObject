@@ -1,42 +1,67 @@
-sharedAtomicOptions = c("copyOnWrite", "sharedSubset", "sharedCopy")
-
 globalSettings = new.env()
 globalSettings$copyOnWrite = TRUE
 globalSettings$sharedSubset = FALSE
 globalSettings$sharedCopy = FALSE
+globalSettings$sharedAttributes = TRUE
+globalSettings$minLength = 3L
 globalSettings$mustWork = FALSE
 
 #' Get or set the global options for the SharedObject package
 #'
-#' @param ...
-#' `setSharedObjectOptions`: the options you want to set, it can be copyOnWrite,
-#' sharedSubset and sharedCopy.
+#' @param ... The name of the option(s), it can be either symbols or characters.
+#' if the argument is missing, it means getting all option. See examples.
+#' @param literal Whether the parameters in `...` are always treated as characters.
 #'
-#' `getSharedObjectOptions`: A character vector. If empty, all options will be returned.
 #' @return
-#' `setSharedObjectOptions`: No return value
-#' `getSharedObjectOptions`: A list of the package options or a single value
+#' `set`: The old package options
+#'
+#' `get`: A list of the package options or a single value
 #' @examples
-#' getSharedObjectOptions()
-#' setSharedObjectOptions(copyOnWrite = FALSE)
-#' getSharedObjectOptions()
-#' getSharedObjectOptions("copyOnWrite")
+#' ## Get all options
+#' sharedObjectPkgOptions()
+#'
+#' ## Get copyOnWrite only
+#' sharedObjectPkgOptions(copyOnWrite)
+#' sharedObjectPkgOptions("copyOnWrite")
+#' opt <- "copyOnWrite"
+#' sharedObjectPkgOptions(opt, literal = FALSE)
 #'
 #'
-#' @rdname sharedObjectOptions
+#' ## Set options
+#' sharedObjectPkgOptions(copyOnWrite = FALSE)
+#' ## Check if we have changed the option
+#' sharedObjectPkgOptions(copyOnWrite)
+#'
+#' ## Restore the default
+#' sharedObjectPkgOptions(copyOnWrite = TRUE)
+#' @rdname sharedObjectPkgOptions
 #' @export
-setSharedObjectOptions <- function(...) {
-    options = list(...)
+sharedObjectPkgOptions <- function(..., literal = TRUE){
+    sysCall <- as.list(sys.call())[-1]
+    args <- processArgs(sysCall,literal)
+    if(length(args$argsGetCommand)!=0&&
+       length(args$argsSetCommand)!=0){
+        stop("You cannot get and set the package settings at the same time")
+    }
+    if(length(args$argsSetCommand)!=0){
+        setSharedObjectPkgOptions(args$argsSetCommand)
+    }else{
+        getSharedObjectPkgOptions(args$argsGetCommand)
+    }
+}
+setSharedObjectPkgOptions <- function(options) {
     options = checkOptionExistance(options)
+    oldOptions <- as.list(globalSettings)[names(options)]
     for (i in seq_along(options)) {
         globalSettings[[names(options)[i]]] = options[[i]]
     }
+    if(length(options)==1){
+        oldOptions <- unlist(oldOptions)
+    }
+    invisible(oldOptions)
 }
 
-#' @rdname sharedObjectOptions
-#' @export
-getSharedObjectOptions <- function(...) {
-    options = c(...)
+getSharedObjectPkgOptions <- function(options) {
     if (length(options) == 0) {
         return(as.list(globalSettings))
     } else{
@@ -64,7 +89,7 @@ checkOptionExistance <- function(options) {
 ## if not specified
 completeOptions <- function(...) {
     options <- list(...)
-    defaultOptions <- getSharedObjectOptions()
+    defaultOptions <- sharedObjectPkgOptions()
     ind <- !names(defaultOptions) %in% names(options)
     c(options,defaultOptions[ind])
 }

@@ -13,29 +13,21 @@ unshareANY <- function(x){
 
 ## x must be an atomic object
 unshareAtomic <- function(x) {
-    result <- x
     oldAttrs <- attributes(x)
-    ## we first unshare the attributes because
-    ## it may be able to unshare the atomic vector as well
-    ## when we call the `attributes<-` function
-    if(!is.null(oldAttrs)){
-        if(isSharedSEXP(x)){
-            oldCopyOnWrite <- setCopyOnWrite(x, TRUE)
+    newAttrs <- unshare(oldAttrs)
+    ## If the object is a shared object.
+    if(C_isShared(x)){
+        if(typeof(x)!="character"){
+            unshareFunc <- C_unshare
+        }else{
+            unshareFunc <- C_unshareString
         }
-        attrs <- unshare(oldAttrs)
-        if(!C_isSameObject(oldAttrs,attrs)){
-            attributes(result) <- attrs
+        result<- unshareFunc(x, as.pairlist(newAttrs))
+    }else{
+        result <- x
+        if(!C_isSameObject(newAttrs,oldAttrs)){
+            attributes(result) <- newAttrs
         }
-        if(isSharedSEXP(x)){
-            setCopyOnWrite(x, oldCopyOnWrite)
-        }
-    }
-    ## If the object is still a shared object.
-    if(isSharedSEXP(result)){
-        attris <- attributes(result)
-        result <- vector(mode = typeof(x),length = length(x))
-        C_memcpy(x, result, calculateSharedMemorySize(x))
-        attributes(result) <- attris
     }
     result
 }

@@ -1,0 +1,308 @@
+---
+title: "新手指引"
+author: 
+- name: Jiefei Wang
+  affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
+date: "`r Sys.Date()`"
+output:
+    BiocStyle::html_document:
+        toc: true
+        toc_float: true
+vignette: >
+  %\VignetteIndexEntry{quickStartChinese}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  package: SharedObject
+---
+
+```{r setup, include = FALSE}
+# knitr::knit("vignettes/quick_start_guide.Rmd", output = "README.md")
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library("SharedObject")
+SharedObject:::setVerbose(FALSE)
+```
+# 介绍
+在R的多进程并行运算中，如果每个进程需要读取同一个数据，常见的做法就是将数据读入每个进程内，然后再进行运算。虽然这种方法简单直接，但是对于只读数据来说，这是一种极大的内存浪费。举个例子，在一个常见的4核8线程的计算机上面，如果进行8个进程的并行运算，需要读取的数据为1GB， 那么总共就需要8GB的内存用以加载数据。在生物学领域，这种问题会更加严重，像高通量测序动辄几个GB的大小，如果希望将数据全部读入内存，那么需要的配置将会非常昂贵。
+
+`SharedObject` 是一个用来解决并行运算内存问题的package， 它可以将一个R对象的数据存放在共享内存中，使得多个进程可以读取同一个数据，因此只要数据可以放入内存，无论使用多少R进程运算都不会增加内存负担。这样可以极大减少并行运算中内存的瓶颈。
+
+# 基础用法
+## 通过现有的对象创建共享对象
+如果希望以现有的R对象为模版创建共享对象，你只需要调用`share`函数，并且将R对象作为参数传入即可。在下面的例子中，我们将创建一个3*3的矩阵`A1`，然后调用`share`函数创建一个共享对象`A2`
+```{r}
+## Create data
+A1 <- matrix(1:9, 3, 3)
+## Create a shared object
+A2 <- share(A1)
+```
+对于R使用者来说，`A1`和`A2`是完全一样的。所有可以用于`A1`的代码都可以无缝衔接到`A2`上面，我们可以检查`A1`和`A2`的数据类型
+```{r}
+## Check the data
+A1
+A2
+
+## Check if they are identical
+identical(A1, A2)
+```
+用户可以将`A2`当作一个普通的矩阵来使用。如果需要区分共享对象的话，可以使用`is.shared`函数
+```{r}
+## Check if an object is shared
+is.shared(A1)
+is.shared(A2)
+```
+我们知道R里面有许多并行运算的package，例如`parallel`和`BiocParallel`。你可以使用任何package来传输共享对象`A2`，在下面的例子中我们使用最基础的`parallel` package来传输数据。
+```{r}
+library(parallel)
+## Create a cluster with only 1 worker
+cl <- makeCluster(1)
+clusterExport(cl, "A2")
+## Check if the object is still a shared object
+clusterEvalQ(cl, is.shared(A2))
+stopCluster(cl)
+```
+当你传输一个共享对象的时候，实际上只有共享内存的编号，还有一些R对象的信息被传输过去了。我们可以通过`serialize`函数来验证这一点
+```{r}
+## make a larger vector
+x1 <- rep(0, 10000)
+x2 <- share(x1)
+
+## This is the actual data that will
+## be sent to the other R workers
+data1 <-serialize(x1, NULL)
+data2 <-serialize(x2, NULL)
+
+## Check the size of the data
+length(data1)
+length(data2)
+```
+通过查看被传输的数据，我们可以看到`x2`是明显小于`x1`的。当其他R进程接受到数据后，他们并不会为`x2`的数据分配内存，而是通过共享内存的编号来直接读取`x2`数据。因此，内存使用量会明显减少。
+
+## 创建空的共享对象
+和`vector`函数相似，你也可以直接创建一个空的共享对象
+```{r}
+SharedObject(mode = "integer", length = 6)
+```
+在创建共享对象过程中，你可以将对象的attributes直接给出
+```{r}
+SharedObject(mode = "integer", length = 6, attrib = list(dim = c(2L, 3L)))
+```
+如果需要了解更多细节，请参考`?SharedObject`
+
+## 共享对象的属性
+共享对象的内部结构里面有许多属性，你可以直接通过`sharedObjectProperties`来查看它们
+```{r}
+## get a summary report
+sharedObjectProperties(A2)
+```
+
+`dataId`是共享内存的编号, `length`是共享对象的长度， `totalSize`是共享对象的大小, `dataType`是共享对象的数据类型, `ownData`决定了是否在当前进程内共享对象不需要使用的时候回收共享内存. `copyOnWrite`，`sharedSubset`和`sharedCopy` 决定了共享对象数据写入，取子集，和复制时候的行为. 我们将会在`package默认设置`和`进阶教程`里面详细讨论这三个参数.
+
+需要注意的是，大部分共享对象的属性是不可变更的， 只有 `copyOnWrite`，`sharedSubset`和`sharedCopy` 是可变的. 你可以通过`getCopyOnWrite`，`getSharedSubset`和`getSharedCopy` 去得到一个共享对象的属性，也可以通过`setCopyOnWrite`，`setSharedSubset`和`setSharedCopy`去设置他们
+```{r}
+## get the individual properties
+getCopyOnWrite(A2)
+getSharedSubset(A2)
+getSharedCopy(A2)
+
+## set the individual properties
+setCopyOnWrite(A2, FALSE)
+setSharedSubset(A2, TRUE)
+setSharedCopy(A2, TRUE)
+
+## Check if the change has been made
+getCopyOnWrite(A2)
+getSharedSubset(A2)
+getSharedCopy(A2)
+```
+
+# 支持的数据类型和结构
+对于基础R类型来说，`SharedObject`支持`raw`，`logical`，`integer`，`numeric`，`complex`和`character`. 需要注意的是，共享字符串向量并不一定能够保证减少内存使用，因为字符串在R中有自己的缓存池，所以在传输字符向量串的时候我们仍然需要传输单个字符串，因此共享字符串向量只有在字符串重复次数比较多的时候会比较节约内存。因为字符串向量的特殊性，你也不能把字符串向量里面的字符串更改为一个从来没有在字符串向量里面出现过的字符串。
+
+对于容器类型，`SharedObject`支持`list`，`pairlist`和`environment`。共享容器类型数据只会将容器内部的元素共享，容器本身并不会被共享，因此，如果你尝试向共享容器里面添加或删除元素，其他R进程是无法观测到你的修改的。因为`data.frame`本质上是一个`list`，因此它也符合上述规则。
+
+对于S3和S4类型来说，通常你可以直接共享S3/S4对象的数据。如果你希望共享的S3/S4对象非常特殊，例如它需要读取磁盘数据，`share`函数本身是一个S4的generic， 你可以通过重载函数来定义你自己的共享方法。
+
+如果一个对象的数据结构并不支持被共享，`share`函数将会直接返回原本的对象。这只会在很特殊情况发生，因为`SharedObject`包支持大部分数据类型。如果你希望在无法共享的情况下返回一个异常，你可以在使用`share`时传入参数`mustWork = TRUE`。
+```{r}
+## the element `A` is sharable and `B` is not
+x <- list(A = 1:3, B = as.symbol("x"))
+
+## No error will be given, 
+## but the element `B` is not shared
+shared_x <- share(x)
+
+## Use the `mustWork` argument
+## An error will be given for the non-sharable object `B`
+tryCatch({
+  shared_x <- share(x, mustWork = TRUE)
+},
+error=function(msg)message(msg$message)
+)
+```
+就像我们之前看到的一样，你可以使用`is.shared`去查看一个对象是否是共享对象。在默认的情况下，`is.shared`只会返回一个逻辑值，告诉你这个对象本身是否被共享了，或者它含至少一个共享对象。你可以通过传入`depth`参数来看到具体细节
+```{r}
+## A single logical is returned
+is.shared(shared_x)
+## Check each element in x
+is.shared(shared_x, depth = 1)
+```
+
+# Package默认设置
+package默认设置控制着默认情况下的共享对象的属性，你可以通过`sharedObjectPkgOptions`来查看它们
+```{r}
+sharedObjectPkgOptions()
+```
+就像我们之前讨论的一样，`mustWork = FALSE`意味着在默认情况下，当`share`函数遇到个不可共享的对象，它不会抛出任何异常而是直接返回对象本身。`sharedSubset` 决定了当你对一个共享对象取子集的时候，得到的子集是否是一个共享对象. `minLength`是共享对象最小的长度，当一个对象的长度小于最小长度的时候，它将不会被共享。
+
+我们会在进阶章节里面讨论 `copyOnWrite` 和 `sharedCopy`，不过对于大部分用户来说，你并不需要关心它们。package的参数可以通过`sharedObjectPkgOptions`来更改
+```{r}
+## change the default setting
+sharedObjectPkgOptions(mustWork = TRUE)
+
+## Check if the change is made
+sharedObjectPkgOptions("mustWork")
+
+## Restore the default
+sharedObjectPkgOptions(mustWork = FALSE)
+```
+需要注意的是，`share`函数的参数有着比package参数更高的优先级，因此你可以通过向`share`函数添加参数的方法来临时改变默认设置。例如，你可以通过`share(x, mustWork = TRUE)`来忽略package的默认`mustWork`设置。
+
+# 进阶教程
+## 写时拷贝
+由于所有的R进程都会访问同一个共享内存的数据，如果在一个进程中更改了共享内存的数据，其他进程的数据也会受到影响。为了防止这种情况的发生，当一个进程试图修改数据内容的时候，共享对象将会被复制。举例来说
+```{r}
+x1 <- share(1:4)
+x2 <- x1
+
+## x2 becames a regular R object after the change
+is.shared(x2)
+x2[1] <- 10L
+is.shared(x2)
+
+## x1 is not changed
+x1
+x2
+```
+当我们尝试修改`x2`的时候，R首先会复制`x2`的数据，然后再修改它的值。因此，虽然`x1`和`x2`是同一个共享对象，对于`x2`的修改并不会影响`x1`的值。这个默认的行为可以通过`copyOnWrite`来进行更改
+```{r}
+x1 <- share(1:4, copyOnWrite = FALSE)
+x2 <- x1
+
+## x2 will not be duplicated when a change is made
+is.shared(x2)
+x2[1] <- 0L
+is.shared(x2)
+
+## x1 has been changed
+x1
+x2
+```
+当我们手动把`copyOnWrite`关闭的时候，修改`x2`会导致`x1`也被修改了。这个参数可以用于并行运算时写回数据，你可以提前分配好一个空的共享对象，关闭它的`copyOnWrite`，然后将它传给所有相关进程。当进程计算出结果后，直接将数据写回到共享对象中，这样子就不需要通过传统的数据传输方式将结果传回给主进程了。不过，需要注意的是，当我们关闭`copyOnWrite`的时候，你对共享对象的操作也可能导致意外的结果。举例来说
+```{r}
+x <- share(1:4, copyOnWrite = FALSE)
+x
+-x
+x
+```
+仅仅是对于负数的调用，就会导致`x`的值被更改。因此，用户需要小心使用这个功能。写时拷贝可以通过`share`函数的`copyOnWrite`参数来设置，也可以通过`setCopyOnwrite`函数随时打开或者关闭
+
+```{r}
+## Create x1 with copy-on-write off
+x1 <- share(1:4, copyOnWrite = FALSE)
+x2 <- x1
+## change the value of x2
+x2[1] <- 0L
+## Both x1 and x2 are affected
+x1
+x2
+
+## Enable copy-on-write
+## x2 is now independent with x1
+setCopyOnWrite(x2, TRUE)
+x2[2] <- 0L
+## only x2 is affected
+x1
+x2
+```
+
+
+### 警告
+如果你在尝试修改共享对象的时候，将一个高精度的值赋给一个低精度的共享对象上，R会自动进行数据类型转换，将低精度的共享对象变为一个高精度的对象，因此，你实际上修改的将是高精度的普通对象而不是共享对象，即便你将写时拷贝关闭掉，你对它的修改也不会被其他R进程所共享。所以，当你尝试修改一个共享对象时，你需要特别小心共享对象所使用的数据类型。
+
+## 共享拷贝
+`sharedCopy` 参数决定了一个共享对象的拷贝是否仍然是一个共享对象。举例来说
+```{r}
+x1 <- share(1:4)
+x2 <- x1
+## x2 is not shared after the duplication
+is.shared(x2)
+x2[1] <- 0L
+is.shared(x2)
+
+
+x1 <- share(1:4, sharedCopy = TRUE)
+x2 <- x1
+## x2 is still shared(but different from x1) 
+## after the duplication
+is.shared(x2)
+x2[1] <- 0L
+is.shared(x2)
+```
+由于性能上的考虑，默认的设置为`sharedCopy=FALSE`，不过你可以随时通过`setSharedCopy`来更改一个共享对象的设置。需要注意的是，`sharedCopy`只能够在`copyOnWrite = TRUE`的时候生效。
+
+## 列出共享内存编号
+你可以通过`listSharedObjects`函数来列出所有的共享对象使用的共享内存编号
+```{r}
+listSharedObjects()
+```
+对用户来说，这个函数并不会被经常使用，不过如果你遇到了共享内存泄漏的问题，你可以通过`freeSharedMemory(ID)`手动释放共享内存。
+
+# 基于`SharedObject`开发package
+我们提供了三个级别的函数库来帮助开发者开发新的package。
+
+## 用户API
+开发新package最简单的方法是通过重载`share`函数来支持更加多的数据类型。我们推荐基于已有的`share`功能来开发更加丰富的功能，这样`SharedObject`将会帮你管理所有的共享内存，你不需要手动管理内存的生命周期。
+
+## R的共享内存管理API
+如果你需要手动管理共享内存，你可以通过`SharedObject`中提供的`allocateSharedMemory`，`mapSharedMemory`，`unmapSharedMemory`，`freeSharedMemory`，`hasSharedMemory`和`getSharedMemorySize`来进行内存的申请和释放. 需要注意的事，如果你手动申请了一个共享内存，在你使用后你需要手动释放它，否则将会导致内存泄漏。
+
+## C++的共享内存管理API
+如果你需要使用C++开发package，你可能需要使用C++函数去管理共享内存。`SharedObject`中所有的功能你都可以通过package里面的C++函数来做到。下面是关于如何链接和使用`SharedObject`中C++ API的教程。
+
+### 第一步
+为了使用C++ API，你需要将`SharedObject`添加进DESCRIPTION文件中的LinkingTo条目里面
+```
+LinkingTo: SharedObject
+```
+### 第二步
+在你的C++文件里，引用`SharedObject`的头文件`#include "SharedObject/sharedMemory.h"`。
+
+### 第三步
+为了编译和链接你的package， 你需要在src目录下添加个Makevars文件
+```
+SHARED_OBJECT_LIBS = $(shell echo 'SharedObject:::pkgconfig("PKG_LIBS")'|\
+"${R_HOME}/bin/R" --vanilla --slave)
+SHARED_OBJECT_CPPFLAGS = $(shell echo 'SharedObject:::pkgconfig("PKG_CPPFLAGS")'|\
+"${R_HOME}/bin/R" --vanilla --slave)
+
+PKG_LIBS := $(PKG_LIBS) $(SHARED_OBJECT_LIBS)
+PKG_CPPFLAGS := $(PKG_CPPFLAGS) $(SHARED_OBJECT_CPPFLAGS)
+```
+需要注意的是`$(shell ...)`是个GNU make语法，因此你也需要把GNU make添加进DESCRIPTION文件中SystemRequirements条目
+```
+SystemRequirements: GNU make
+```
+
+你可以在`SharedObject`的头文件中找到关于它C++ API的使用说明。
+
+# Session Information
+```{r}
+sessionInfo()
+```
+
+
+
+

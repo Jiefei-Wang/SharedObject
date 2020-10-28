@@ -1,7 +1,7 @@
 context("cluster export")
+sharedObjectPkgOptions(minLength = 1)
 library(parallel)
 cl = makeCluster(1)
-
 
 n = 100
 data = floor(abs(runif(n) * 2))
@@ -19,7 +19,7 @@ for (i in seq_along(typeName)) {
         so = share(curData)
         expect_equal(curData, so)
         expect_equal(is.shared(so),TRUE)
-        expect_equal(is.shared(so[1:2]), getSharedObjectOptions("sharedSubset"))
+        expect_equal(is.shared(so[1:2]), sharedObjectPkgOptions("sharedSubset"))
     })
     gc()
     test_that(paste0("Testing duplicate for type ", typeName[i]), {
@@ -49,7 +49,7 @@ for (i in seq_along(typeName)) {
         expect_equal(curData, res[[1]])
         ## ownership
         res = clusterEvalQ(cl, {
-            getSharedObjectProperty(sv)$ownData
+            sharedObjectProperties(sv)$ownData
         })
         expect_equal(res[[1]], FALSE)
     })

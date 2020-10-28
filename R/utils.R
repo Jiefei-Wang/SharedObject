@@ -1,56 +1,19 @@
-typeSize <- list(
-    logical = 4,
-    integer = 4,
-    double = 8,
-    raw = 1,
-    complex = 16
-)
-## the size of the type
-getTypeSize <- function(x) {
-    if (is.null(typeSize[[x]]))
-        stop("The type has not been defined: ", x)
-    typeSize[[x]]
-}
-
-calculateSharedMemorySize <- function(x) {
-    length(x) * getTypeSize(typeof(x))
-}
-
-
-
-getDataInfoTemplate <- function(...){
-    args <- list(...)
-    dataInfoPropNames = c("dataId", "length", "totalSize", "dataType", "ownData")
-    dataInfoNames = c(dataInfoPropNames, sharedAtomicOptions)
-    dataInfo = as.list(rep(0, length(dataInfoNames)))
-    names(dataInfo) = dataInfoNames
-    if(any(!names(args)%in%dataInfoNames)){
-        stop("Illegal data info name has been found")
-    }
-    dataInfo[names(args)] <- args
-    dataInfo
-}
-
-
-isSharableAtomic <- function(x){
-    typeof(x) %in% c("raw","logical","integer","double","complex")
-}
-isSEXPList <- function(x){
-    is.list(x)&&!is.pairlist(x)
-}
-
 #' Whether an object is an ALTREP object
 #'
 #' Whether an object is an ALTREP object
 #' @param x an R object
-#' @examples
-#' x <- share(runif(10))
-#' is.altrep(x)
 #' @return
 #' A logical value
-#' @export
 is.altrep <- function(x) {
     C_ALTREP(x)
+}
+
+
+isSharableAtomic <- function(x){
+    typeof(x) %in% c("raw","logical","integer","double","complex","character")
+}
+isSEXPList <- function(x){
+    is.list(x)&&!is.pairlist(x)
 }
 
 ## The function return the value in data 1
@@ -111,38 +74,66 @@ pkgconfig <- function(x){
 
 ## Get POSIX shared memory files
 getSharedFiles <- function(){
-    files <- list.files("/dev/shm")
+    files <- list.files(C_getSharedMemoryPath())
     bits <- as.character(c(32,64))
     res <- list()
     for(i in bits){
-        headerId <- paste0("SO_X",i,"_id_")
-        headerName <- paste0("SO_X",i,"_nm_")
+        headerId <- paste0("SO_X",i,"_")
         idIndex <- startsWith(files, headerId)
         objectId <- substring(files[idIndex], nchar(headerId)+1)
-        nameIndex <- startsWith(files, headerName)
-        objectName <- substring(files[nameIndex], nchar(headerName)+1)
-        res[[paste0(i,"_num")]] <- as.numeric(objectId)
-        res[[paste0(i,"_char")]] <- objectName
+        res[[as.character(i)]] <- objectId
     }
     res
 }
 
-## Alternative to stopifnot
-assert <- function(expr, error){
-    if(!expr){
-        stop(error, call. = FALSE)
-    }
-}
-## x can be a vector of any length
-is.charInteger <-function(x){
-    !grepl("\\D",x)
+setVerbose<- function(x){
+    C_setSharedMemoryPrint(x)
+    C_setAltrepPrint(x)
+    C_setPackagePrint(x)
 }
 
-## x must be a vector of lenght 1
-tryChar2Int <-function(x){
-    if(is.charInteger(x)){
-        x <- as.numeric(x)
+
+processArgs <- function(args, literal){
+    argNames <- names(args)
+    argsSetCommand <- list()
+    argsGetCommand <- c()
+    if("args"%in%names(args)){
+        return(eval(args$args, envir = parent.frame(n=2)))
     }
-    x
+    for(i in seq_along(args)){
+        curArg <- args[[i]]
+        if(is.null(argNames)||argNames[i]==""){
+            if(literal){
+                curArg <- as.character(args[[i]])
+            }else{
+                curArg <- eval(curArg, envir = parent.frame(n=2))
+            }
+            argsGetCommand <- c(argsGetCommand, curArg)
+        }else{
+            if(argNames[i]!="literal"){
+                if(is.language(curArg)){
+                    curArg <-eval(curArg, envir = parent.frame(n=2))
+                }
+                argsSetCommand[argNames[i]] <- curArg
+            }
+        }
+    }
+    list(argsGetCommand= argsGetCommand, argsSetCommand=argsSetCommand)
 }
 
+
+getOS <- function(){
+    sysinf <- Sys.info()
+    if (!is.null(sysinf)){
+        os <- sysinf['sysname']
+        if (os == 'Darwin')
+            os <- "osx"
+    } else { ## mystery machine
+        os <- .Platform$OS.type
+        if (grepl("^darwin", R.version$os))
+            os <- "osx"
+        if (grepl("linux-gnu", R.version$os))
+            os <- "linux"
+    }
+    tolower(os)
+}

@@ -1,5 +1,20 @@
-# Note for developers
-We plan to make a major update in Bioc 3.13, this includes performance improvement and more general C++ level API design. The update should only have minor effect on users, but if you plan to develop a package based upon `SharedObject`, it is recommended to use the package in Bioc 3.13 for the old version will not be supported in the next release.
+---
+title: "Package Quick Start Guide"
+author: 
+- name: Jiefei Wang
+  affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
+date: "2020-10-27"
+output:
+    BiocStyle::html_document:
+        toc: true
+        toc_float: true
+vignette: >
+  %\VignetteIndexEntry{quickStart}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  package: SharedObject
+---
+
 
 # Introduction
 `SharedObject` is designed for sharing data across many R workers. It allows multiple workers to read and write the same R object located in the same memory location. This feature is useful in parallel computing when a large R object needs to be read by all R workers. It has the potential to reduce the memory consumption and the overhead of data transmission. 
@@ -68,15 +83,14 @@ is.shared(A)
 is.shared(shared_A)
 #> [1] TRUE
 ```
+
 There are several properties associated with the shared object, one can check them via
 
 ```r
-## This function has been renamed to `sharedObjectProperties` 
-## in Bioc 3.13
 ## get a summary report
-getSharedObjectProperty(shared_A)
+sharedObjectProperties(shared_A)
 #> $dataId
-#> [1] 47
+#> [1] "58"
 #> 
 #> $length
 #> [1] 9
@@ -107,16 +121,16 @@ getSharedSubset(shared_A)
 getSharedCopy(shared_A)
 #> [1] FALSE
 ```
-The properties can be changed via `setCopyOnWrite`, `setSharedSubset` and `setSharedCopy`. Please see `Global options` and `Advanced topics` sections to see the meaning of the properties and how to use them in a proper way.
+Please see the advanced topic to see the meaning of the properties and how to set them in a proper way.
 
 # Supported data types and structures
-For the basic R type, the function supports `raw`, `logical`, `integer`, `double` and `complex`. `character` is not supported as it closely relates to R cache(`character` has been supported in Bioc 3.13).
+For the basic R type, the function supports `raw`, `logical`, `integer`, `double`, `complex` and `character`. Note that sharing a character vector is beneficial only when there are a lot repetitions in the elements of the vector. Due to the complicated structure of the character vector, you are not allowed to set the value of a shared character vector to a value which haven't presented in the vector. Therefore, It is recommended to treat the shared character vector as read-only.
 
 For the container, the function supports `list`, `pairlist` and `environment`. Sharing a container is equivalent to sharing all elements in the container, the container itself will not be shared. Therefore, adding or replacing an element in a shared container in one worker will not implicitly change the shared container in the other workers. Since a data frame is fundamentally a list object, sharing a data frame will follow the same principle. 
 
 For the more complicated data structure like `S3` and `S4` class. They are available out-of-box. Therefore, there is no need to customize the `share` function to support an S3/S4 class. However, if the S3/S4 class has a special design(e.g. on-disk data), the function `share` is an S4 generic and developers are free to define their own `share` method.
 
-When an object is not sharable, no error will be given and the same object will be returned. The argument `mustWork = TRUE` can be used if you want to make sure the return value is a shared object.
+When an object is not sharable, no error will be given and the same object will be returned. This should be a rare case as most data types are supported. The argument `mustWork = TRUE` can be used if you want to make sure the return value is a shared object.
 
 ```r
 ## the element `A` is sharable and `B` is not
@@ -158,11 +172,12 @@ is.shared(shared_x, depth = 1)
 There are some options that can control the creation and the behavior of a shared object, you can view them via
 
 ```r
-## This function has been renamed to `sharedObjectPkgOptions` 
-## in Bioc 3.13
-getSharedObjectOptions()
+sharedObjectPkgOptions()
 #> $mustWork
 #> [1] FALSE
+#> 
+#> $sharedAttributes
+#> [1] TRUE
 #> 
 #> $copyOnWrite
 #> [1] TRUE
@@ -172,23 +187,24 @@ getSharedObjectOptions()
 #> 
 #> $sharedCopy
 #> [1] FALSE
+#> 
+#> $minLength
+#> [1] 3
 ```
-As we have seen previously, the option `mustWork` suppress the error message when the function `share` encounter a non-sharable object and force the function to return the same object. The option `sharedSubset` controls whether the subset of a shared object is still a shared object. We will talk about the options `copyOnWrite` and `sharedCopy` in the advanced section, but for most users it is safe to ignore these two options. The global setting can be modified via `setSharedObjectOptions`
+As we have seen previously, the option `mustWork` suppress the error message when the function `share` encounter a non-sharable object and force the function to return the same object. The option `sharedSubset` controls whether the subset of a shared object is still a shared object. The option `minLength` is the minimum length of a shared object. If the length of the input object is less than the minimum length, it will not be shared. 
+
+We will talk about the options `copyOnWrite` and `sharedCopy` in the advanced section, but for most users it is safe to ignore these two options. The global setting can be modified via `sharedObjectPkgOptions`
 
 ```r
-## These functions have been renamed to `sharedObjectPkgOptions` 
-## in Bioc 3.13
 ## change the default setting
-setSharedObjectOptions(mustWork = TRUE)
+sharedObjectPkgOptions(mustWork = TRUE)
 ## Check if the change is made
-getSharedObjectOptions("mustWork")
+sharedObjectPkgOptions("mustWork")
 #> [1] TRUE
-## Resume to default
-setSharedObjectOptions(mustWork = FALSE)
 ```
 Note that all the options can be temporary overwritten by providing the named parameter to the function `share`. For example, you can also turn `mustwork` on via `share(x, mustWork = TRUE)`.
 
-# Advanced topics
+# Advanced topic
 ## Copy-On-Write
 Since all workers are using shared objects located in the same memory location, a change made on a shared object in one worker can affect the value of the object in the other workers. To prevent users from changing the values of a shared object without awareness, a shared object will duplicate itself if a change of its value is made. For example
 
@@ -296,13 +312,6 @@ is.shared(x2)
 ```
 For performance consideration, the default settings are `sharedCopy=FALSE`, but you can turn it on and off at any time via `setSharedCopy`. Please note that `sharedCopy` is only available when `copyOnWrite = TRUE`.
 
-## listing the shared object 
-For listing the shared objects the package created, it can be done via
-```
-listSharedObject()
-```
-Getting a list of shared object should have a rare use case, but the function can be useful if you have a memory leaking problem. The shared object can be manually released by `freeSharedMemory(ID)`.
-
 # Developing package based upon SharedObject
 The package offers three levels of APIs to help the package developers to build their own shared object. 
 
@@ -310,7 +319,7 @@ The package offers three levels of APIs to help the package developers to build 
 The simplest and recommended way to make your own shared object is to define an S4 function `share` in your own package, where you can rely on the existing `share` functions to quickly add the support for an S4 class which is not provided by `SharedObject`. We recommend to use this method to build your package for the developers do not have to bother with the memory management. The package will automatically free the shared object after use.
 
 ## R memory management APIs
-It is a common request to have a low level control to the shared memory. To achieve that, the package exports some low-level R APIs for the developers who want to have a fine control of their shared objects. These functions are `allocateSharedMemory`, `allocateNamedSharedMemory`, `mapSharedMemory`, `unmapSharedMemory`, `freeSharedMemory`, `hasSharedMemory` and `getSharedMemorySize`. Note that developers are responsible for freeing the shared memory after use. Please see the function documentation for more information
+It is a common request to have a low level control to the shared memory. To achieve that, the package exports some low-level R APIs for the developers who want to have a fine control of their shared objects. These functions are `allocateSharedMemory`, `mapSharedMemory`, `unmapSharedMemory`, `freeSharedMemory`, `hasSharedMemory` and `getSharedMemorySize`. Note that developers are responsible for freeing the shared memory after use. Please see the function documentation for more information
 
 ## C++ memory management APIs
 For the most sophisticated package developers, it might be more comfortable to use the C++ APIs rather than the R APIs. All the R functions in `SharedObject` are based upon its C++ APIs. Here is the instruction on show how to use the `SharedObject` C++ APIs in your package. 
@@ -360,7 +369,7 @@ sessionInfo()
 #> [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] SharedObject_1.3.22
+#> [1] SharedObject_1.3.17
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] Rcpp_1.0.5          digest_0.6.25       magrittr_1.5        evaluate_0.14       rlang_0.4.7        

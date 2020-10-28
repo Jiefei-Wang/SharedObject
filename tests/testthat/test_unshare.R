@@ -1,4 +1,5 @@
 context("Unshare function")
+sharedObjectPkgOptions(minLength = 1)
 
 
 test_that("unshare Atomic", {
@@ -31,3 +32,4 @@ test_that("unshare class", {
     removeClass("myClass")
 })
 
+gc()

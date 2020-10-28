@@ -1,15 +1,12 @@
 context("Shared vector memory burden test")
-gc()
+sharedObjectPkgOptions(minLength = 1)
 
 library(parallel)
+cl = makeCluster(2)
+
 
 N <- 100
 n<- 1000
-
-
-
-
-cl = makeCluster(2)
 for(i in seq_len(N)){
     test_that(paste0("Testing small memory alloc/free: ", i ),
               {
@@ -31,12 +28,12 @@ for(i in seq_len(N)){
 stopCluster(cl)
 gc()
 
+cl = makeCluster(2)
 ## use 128MB + 128MB each time
 ## If not shared, use 4*128MB in total each time
 N <- 10
 n<- round(128*1024*1024/8)
 
-cl = makeCluster(2)
 for(i in seq_len(N)){
     test_that(paste0("Testing big memory alloc/free: ", i),
               {
@@ -58,5 +55,3 @@ for(i in seq_len(N)){
 }
 stopCluster(cl)
 gc()
-
-

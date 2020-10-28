@@ -12,3 +12,4 @@ SharedObject.Rproj
 autom4te.cache
 config.log
 config.status
+inst/doc

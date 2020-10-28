@@ -1,62 +1,91 @@
 context("Share basic types")
+sharedObjectPkgOptions(minLength = 1)
 
 test_that("basic types",{
-    listData <- list(a=runif(10), b=letters[1:4])
     #define NILSXP	     0	  /* nil = NULL */
-    x <- share(NULL)
+    value <- NULL
+    x <- share(value)
     expect_false(is.shared(x))
+    expect_identical(x, value)
 
     #define SYMSXP	     1	  /* symbols */
-    x <- share(as.symbol("a"))
+    value <- as.symbol("a")
+    x <- share(value)
     expect_false(is.shared(x))
+    expect_identical(x, value)
 
     #define LISTSXP	     2	  /* lists of dotted pairs */
-    x <- share(as.pairlist(listData))
-    expect_equal(is.shared(x,depth = 1), list(a=TRUE,b=FALSE))
+    listData <- list(a=runif(10), b=letters[1:10])
+    value <- as.pairlist(listData)
+    x <- share(value)
+    expect_equal(is.shared(x,depth = 1), list(a=TRUE,b=TRUE))
+    expect_identical(x, value)
 
     #define CLOSXP	     3	  /* closures */
-    x <- share(function(x)x)
+    value <- function(x)x
+    x <- share(value)
     expect_false(is.shared(x))
+    expect_identical(x, value)
 
     #define ENVSXP	     4	  /* environments */
-    x <- share(as.environment(listData))
-    expect_equal(is.shared(x), TRUE)
+    value <- as.environment(listData)
+    x <- share(value)
+    expect_true(is.shared(x))
+    expect_identical(x, value)
 
     #define LANGSXP	     6	  /* language constructs (special lists) */
-    x <- share(call("sin", pi))
+    value <- call("sin", pi)
+    x <- share(value)
     expect_false(is.shared(x))
+    expect_identical(x, value)
 
     #define LGLSXP	    10	  /* logical vectors */
-    x <- share(c(TRUE,FALSE))
+    value <- c(TRUE,FALSE)
+    x <- share(value)
     expect_true(is.shared(x))
+    expect_identical(x, value)
 
     #define INTSXP	    13	  /* integer vectors */
-    x <- share(1L)
+    value <- 1L
+    x <- share(value)
     expect_true(is.shared(x))
+    expect_identical(x, value)
 
     #define REALSXP	    14	  /* real variables */
-    x <- share(1.0)
+    value <- 1.0
+    x <- share(value)
     expect_true(is.shared(x))
+    expect_identical(x, value)
 
     #define CPLXSXP	    15	  /* complex variables */
-    x <- share(complex(1))
+    value <- complex(1)
+    x <- share(value)
     expect_true(is.shared(x))
+    expect_identical(x, value)
 
     #define STRSXP	    16	  /* string vectors */
-    x <- share("a")
-    expect_false(is.shared(x))
+    value <- "a"
+    x <- share(value)
+    expect_true(is.shared(x))
+    expect_identical(x, value)
 
     #define VECSXP	    19	  /* generic vectors */
-    x <- share(listData)
-    expect_equal(is.shared(x,depth = 1), list(a=TRUE,b=FALSE))
+    value <- listData
+    x <- share(value)
+    expect_equal(is.shared(x,depth = 1), list(a=TRUE,b=TRUE))
+    expect_identical(x, value)
 
     #define EXPRSXP	    20	  /* expressions vectors */
-    x <- share(expression(1 + 0:9))
+    value <- expression(1 + 0:9)
+    x <- share(value)
     expect_false(is.shared(x))
+    expect_identical(x, value)
 
     #define RAWSXP      24    /* raw bytes */
-    x <- share(as.raw(1:10))
+    value <- as.raw(1:10)
+    x <- share(value)
     expect_true(is.shared(x))
+    expect_identical(x, value)
 
     ## These types will not be supported/tested
     #define PROMSXP	     5	  /* promises: [un]evaluated closure arguments */
@@ -74,3 +103,4 @@ test_that("basic types",{
     #define FUNSXP      99    /* Closure or Builtin or Special */
 })
 
+gc()

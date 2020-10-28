@@ -3,7 +3,6 @@
 \name{getLastIndex}
 \alias{getLastIndex}
 \alias{allocateSharedMemory}
-\alias{allocateNamedSharedMemory}
 \alias{mapSharedMemory}
 \alias{unmapSharedMemory}
 \alias{freeSharedMemory}
@@ -15,52 +14,44 @@
 \usage{
 getLastIndex()
 
-allocateSharedMemory(size)
+allocateSharedMemory(size, name = "")
 
-allocateNamedSharedMemory(name, size)
+mapSharedMemory(id)
 
-mapSharedMemory(x)
+unmapSharedMemory(id)
 
-unmapSharedMemory(x)
+freeSharedMemory(id)
 
-freeSharedMemory(x)
+hasSharedMemory(id)
 
-hasSharedMemory(x)
-
-getSharedMemorySize(x)
+getSharedMemorySize(id)
 
 initialSharedObjectPackageData()
 
 releaseSharedObjectPackageData()
 }
 \arguments{
-\item{size}{numeric(1), the size of the shared memory that you want to allocate}
+\item{size}{The size of the shared memory that you want to allocate}
 
-\item{name}{character(1), a single name that names the shared memory}
-
-\item{x}{integer(1) or character(1), an ID or a name that is used to find
-the shared memory. If x is a character with pure number, it will be
-treated as an ID.}
+\item{name, id}{The name of the shared memory}
 }
 \value{
 \code{getLastIndex}: An interger ID served as a hint of the last created shared memory ID.
 
-\code{allocateSharedMemory}: an integer ID that can be used to find the shared memory
+\code{allocateSharedMemory}: character ID(s) that can be used to find the shared memory
 
-\code{allocateNamedSharedMemory}: no return value
+\code{mapSharedMemory}: External pointer(s) to the shared memory
 
-\code{mapSharedMemory}: An external pointer to the shared memory
+\code{unmapSharedMemory}: No return value
 
-\code{unmapSharedMemory}: Logical value indicating whether the operation is success.
+\code{freeSharedMemory}: No return value
 
-\code{freeSharedMemory}: Logical value indicating whether the operation is success.
-
-\code{hasSharedMemory}: Logical value indicating whether the shared memory exist
+\code{hasSharedMemory}: Logical value(s) indicating whether the shared memory exist
 
 \code{getSharedMemorySize}: A numeric value
 }
 \description{
-These functions are for package developers only, they can
+These functions are designed for package developers only, they can
 allocate, open, close and destroy shared memory without touching
 C++ code. Normal users should not use these functions unless
 dealing with memory leaking
@@ -73,35 +64,29 @@ dealing with memory leaking
 \code{allocateSharedMemory}: allocate a shared memory of a given size,
 the memory ID is returned by the function
 
-\code{allocateNamedSharedMemory}: allocate a shared memory of a given size, the memory
-can be found by the name that is passed to the function.
-
 \code{mapSharedMemory}: map the shared memory to the current process memory space
 
 \code{unmapSharedMemory}: unmap the shared memory(without destroying it)
 
-\code{freeSharedMemory}: destroy the shared memory. This function will only unmap the
+\code{freeSharedMemory}: free the shared memory. This function will only unmap the
 shared memory on Windows.
 
 \code{hasSharedMemory}: whether the memory exist?
 
 \code{getSharedMemorySize}: get the actual size of the shared memory, it may be larger than the
-size you required.
+size that you required.
 
 \strong{Details}
 
-Creating and using shared memory involves three steps: allocating, mapping, and
-destroying the shared memory. There are two types of naming scheme that you can
-use to find the shared memory: an integer ID or a character name. They are determined
-in the first creation step.
+A complete lifecycle of a shared memory involves four steps:
+allocating, mapping, unmapping and freeing the shared memory.
 
-The shared memory can be created by \code{allocateSharedMemory} or
-\code{allocateNamedSharedMemory}.
+The shared memory can be created by \code{allocateSharedMemory}.
 The function \code{allocateSharedMemory} will return the ID of the shared memory.
 After creating the shared memory, it can be mapped to the current process by
 \code{mapSharedMemory}. The return value is an external pointer to the shared memory.
-Once the shared memory is no longer needed, it can be destroyed by \code{freeSharedMemory}.
-There is no need to unmap the shared memory unless you intentionally want to do so.
+Once the shared memory is no longer needed, it can be unmapped and destroyed by
+\code{unmapSharedMemory} and \code{freeSharedMemory} respectively.
 }
 \examples{
 size <- 10L
@@ -111,21 +96,23 @@ hasSharedMemory(id)
 ptr <- mapSharedMemory(id)
 ptr
 getSharedMemorySize(id)
+unmapSharedMemory(id)
 freeSharedMemory(id)
 hasSharedMemory(id)
 
 ## named shared memory
 name <- "SharedObjectExample"
 if(!hasSharedMemory(name)){
-    allocateNamedSharedMemory(name,size)
+    allocateSharedMemory(size, name = name)
     hasSharedMemory(name)
     ptr <- mapSharedMemory(name)
     ptr
     getSharedMemorySize(name)
+    unmapSharedMemory(name)
     freeSharedMemory(name)
     hasSharedMemory(name)
 }
 }
 \seealso{
-\code{\link{listSharedObject}}
+\code{\link{listSharedObjects}}
 }

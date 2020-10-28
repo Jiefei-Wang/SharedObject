@@ -1,15 +1,16 @@
 context("package options")
+sharedObjectPkgOptions(minLength = 1)
 
 test_that("Shared Object Global options", {
-    old <- getSharedObjectOptions()
-    setSharedObjectOptions(
+    old <- sharedObjectPkgOptions()
+    sharedObjectPkgOptions(
         copyOnWrite = FALSE,
         sharedSubset = FALSE,
         sharedCopy = FALSE
     )
 
     x = share(runif(10))
-    getSharedObjectProperty(x, NULL)
+    # sharedObjectProperties(x)
     expect_equal(getCopyOnWrite(x), FALSE)
     expect_equal(getSharedCopy(x), FALSE)
     expect_equal(getSharedSubset(x), FALSE)
@@ -17,16 +18,19 @@ test_that("Shared Object Global options", {
     setCopyOnWrite(x, TRUE)
     setSharedCopy(x, FALSE)
     setSharedSubset(x, TRUE)
+    expect_equal(getCopyOnWrite(x), TRUE)
+    expect_equal(getSharedCopy(x), FALSE)
+    expect_equal(getSharedSubset(x), TRUE)
 
-    do.call(setSharedObjectOptions,old)
+    do.call(sharedObjectPkgOptions,old)
 })
 gc()
 
 test_that("Option: mustWork", {
-    old <- getSharedObjectOptions()
+    old <- sharedObjectPkgOptions()
     ## Use the default setting, expect error
-    setSharedObjectOptions(mustWork = TRUE)
-    data <- list(a= 1:10,b="a")
+    sharedObjectPkgOptions(mustWork = TRUE)
+    data <- list(a= 1:10,b=as.symbol("a"))
     expect_error(so <- share(data))
     expect_error(so <- tryShare(data), NA)
 
@@ -36,15 +40,14 @@ test_that("Option: mustWork", {
     expect_error(so <- tryShare(data), NA)
 
     ## Overwrite global setting, expect no error
-    setSharedObjectOptions(mustWork = FALSE)
+    sharedObjectPkgOptions(mustWork = FALSE)
     expect_error(so <- share(data), NA)
     expect_error(so <- tryShare(data), NA)
-
 
     ## Temporary overwrite the setting, expect error
     expect_error(so <- share(data, mustWork = TRUE))
     expect_error(so <- tryShare(data), NA)
 
-    do.call(setSharedObjectOptions,old)
+    do.call(sharedObjectPkgOptions,old)
 })
 
