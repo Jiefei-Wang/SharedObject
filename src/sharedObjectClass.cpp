@@ -39,6 +39,7 @@ static uint64_t get_size(boost::interprocess::OS_shared_memory_object *obj)
 //Check with long jump
 #include <signal.h>
 #include <setjmp.h>
+#include <sys/statvfs.h>
 static jmp_buf reset;
 static void (*old_handle)(int);
 static void termination_handler(int signum)
