@@ -163,7 +163,6 @@ void copyData(void *target, SEXP source)
 }
 
 #ifdef __linux__
-#include <sys/statvfs.h>
 #pragma weak __shm_directory
 extern "C" const char *__shm_directory(size_t *len);
 // [[Rcpp::export]]
