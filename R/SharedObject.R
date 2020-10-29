@@ -20,7 +20,6 @@
 SharedObject <- function(mode = c("raw","logical","integer","numeric","complex"),
                        length, attrib = list(), ...) {
     mode <- match.arg(mode)
-    stopifnot(length>0)
     options <- completeOptions(...)
     if(options$sharedAttributes){
         attrib <- doAttributes(tryShare, attrib,...)

@@ -138,8 +138,8 @@ SEXP createSharedStringFromSource(SEXP x, bool copyOnWrite,	SEXP attributes)
 			uniqueCharSet.insert(std::pair<SEXP, size_t>(curChar, uniqueCharSet.size()));
 		}
 	}
-	size_t unitBytes = std::ceil(std::log2(uniqueCharSet.size()) / 8);
-	unitBytes = unitBytes==0?1:unitBytes;
+	size_t unitElt = uniqueCharSet.size()>1?uniqueCharSet.size():2;
+	size_t unitBytes = std::ceil(std::log2(unitElt) / 8);
 	const size_t unitSize = std::pow(2, std::ceil(std::log2(unitBytes)));
 	if (unitSize != 1 && unitSize != 2 && unitSize != 4 && unitSize != 8)
 	{

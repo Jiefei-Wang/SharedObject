@@ -70,7 +70,7 @@ static void validate_shared_memory(std::string key,
     boost::interprocess::offset_t size;
     sharedMemoryHandle->get_size(size);
     size_t free_size = getFreeMemorySize();
-    if ((size_t)size > free_size)
+    if (size > free_size)
     {
         string error_msg =
             "Insufficient memory size(requested: " +
@@ -209,11 +209,11 @@ void SharedObjectClass::allocateSharedMemory()
     {
 #ifdef _WIN32
         sharedMemoryHandle = new windows_shared_memory(create_only, key.c_str(),
-                                                       read_write, size, unrestricted_permission);
+                                                       read_write, size>0?size:1, unrestricted_permission);
 #else
         sharedMemoryHandle = new shared_memory_object(create_only, key.c_str(),
                                                       read_write, unrestricted_permission);
-        sharedMemoryHandle->truncate(size);
+        sharedMemoryHandle->truncate(size>0?size:1);
 #endif
 
 #ifdef __linux__
