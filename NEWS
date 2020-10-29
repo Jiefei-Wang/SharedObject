@@ -1,31 +1,38 @@
-+ The package will not provide C APIs in this version
-+ The C++ APIs are not compatible with the old version
-+ Support for sharing character
-+ add new paramters `shareAttributes` and `minLength` to function `share`
-+ add a new paramter `depth` to function is.shared
-+ is.shared function report the sharing information of the object
-  attributes by appending "Shared" to the end of attribute names now.
+Changes in version 1.5.0
+ NEW FEATURES:
+  + Support sharing the character vector
+  + Support creating an empty shared object
+  + new paramters `shareAttributes` and `minLength` to function `share`
+  + new paramter `depth` to function is.shared
+  + R level developer API supports vector input
+  + add a safer memory check method before sharing an object on Linux
+  + Chinese vignette
+ CHANGES:
+  + The package will not provide C APIs in this version
+  + The C++ APIs are not compatible with the old version
+  + is.shared function reports the sharing status of object
+    attributes by appending "Shared" to the end of attribute names.
 Changes in version 1.3.8
-+ Support complex
-+ Support pairlist
-+ Use memcpy to copy the data when possible
+ + Support complex
+ + Support pairlist
+ + Use memcpy to copy the data when possible
 Changes in version 1.3.7
-+ change the parameters of is.shared function
-+ `mustWork = FALSE` by default, no error will be given
-when sharing a nonsharable object
-+ Support environment object
+ + change the parameters of is.shared function
+ + `mustWork = FALSE` by default, no error will be given
+   when sharing a nonsharable object
+ + Support environment object
 Changes in version 1.3.6
-+ Support S4 object
-+ new dispatching method(signiture "ANY") for share, unshare and is.shared functions
+ + Support S4 object
+ + new dispatching method(signiture "ANY") for share, unshare and is.shared functions
 Changes in version 1.1.6
-+ Add memory check on Linix system
+ + Add memory check on Linix system
 Changes in version 1.1.1
-+ Refactoring code
-+ Add supports for package developer at C++, R levels
+ + Refactoring code
+ + Add supports for package developer at C++, R levels
 Changes in version 1.0.0
-+ Publish in Bioconductor
+ + Publish in Bioconductor
 Changes in version 0.99.2 (2019-08-6)
-+ Clean some formating issues
+ + Clean some formating issues
 Changes in version 0.99.0 (2019-05-16)
-+ Submitted to Bioconductor
+ + Submitted to Bioconductor
 
