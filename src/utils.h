@@ -12,7 +12,7 @@ extern const std::string OS_ADDRESS_SIZE;
 void sharedMemoryPrint(const char *format, ...);
 void altrepPrint(const char *format, ...);
 void packagePrint(const char *format, ...);
-
+std::string getSharedMemoryPath();
 
 size_t getTypeSize(int type);
 void loadLibrary();

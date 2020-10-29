@@ -162,6 +162,35 @@ void copyData(void *target, SEXP source)
 	}
 }
 
+#ifdef __linux__
+#include <sys/statvfs.h>
+#pragma weak __shm_directory
+extern "C" const char *__shm_directory(size_t *len);
+// [[Rcpp::export]]
+string getSharedMemoryPath()
+{
+	
+	if (__shm_directory)
+	{
+		size_t size;
+		const char *path = __shm_directory(&size);
+		return path;
+	}
+	else
+	{
+		return "";
+	}
+}
+#else
+string getSharedMemoryPath()
+{
+	return "";
+}
+#endif
+
+
+
+
 
 
 PROTECT_GUARD::PROTECT_GUARD():protect_num(0) {}

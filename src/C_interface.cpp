@@ -274,22 +274,8 @@ uint64_t C_getSharedMemorySize(string id)
 	return getSharedMemorySize(id);
 }
 
-#ifdef __linux__
-#include <sys/statvfs.h>
-#endif
-#pragma weak __shm_directory
-extern "C" const char *__shm_directory(size_t *len);
 // [[Rcpp::export]]
 string C_getSharedMemoryPath()
 {
-	if (__shm_directory)
-	{
-		size_t size;
-		const char *path = __shm_directory(&size);
-		return path;
-	}
-	else
-	{
-		return "";
-	}
+	getSharedMemoryPath();
 }

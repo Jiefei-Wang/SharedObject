@@ -161,3 +161,7 @@ C_setPackagePrint <- function(x) {
     invisible(.Call(`_SharedObject_C_setPackagePrint`, x))
 }
 
+getSharedMemoryPath <- function() {
+    .Call(`_SharedObject_getSharedMemoryPath`)
+}
+

@@ -47,17 +47,13 @@ static void termination_handler(int signum)
 }
 
 //Check with free size
-#include <sys/statvfs.h>
-#pragma weak __shm_directory
-extern "C" const char *__shm_directory(size_t *len);
 size_t getFreeMemorySize()
 {
-    if (__shm_directory)
+    std::string path = getSharedMemoryPath();
+    if (path!="")
     {
-        size_t size;
-        const char *path = __shm_directory(&size);
         struct statvfs buf;
-        int status = statvfs(path, &buf);
+        int status = statvfs(path.c_str(), &buf);
         if (status == 0)
         {
             size_t free_Bytes = buf.f_bsize * buf.f_bfree;

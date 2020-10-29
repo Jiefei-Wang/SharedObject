@@ -451,6 +451,16 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// getSharedMemoryPath
+string getSharedMemoryPath();
+RcppExport SEXP _SharedObject_getSharedMemoryPath() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(getSharedMemoryPath());
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_getDataInfoTemplate", (DL_FUNC) &_SharedObject_C_getDataInfoTemplate, 0},
@@ -493,6 +503,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SharedObject_C_setSharedMemoryPrint", (DL_FUNC) &_SharedObject_C_setSharedMemoryPrint, 1},
     {"_SharedObject_C_setAltrepPrint", (DL_FUNC) &_SharedObject_C_setAltrepPrint, 1},
     {"_SharedObject_C_setPackagePrint", (DL_FUNC) &_SharedObject_C_setPackagePrint, 1},
+    {"_SharedObject_getSharedMemoryPath", (DL_FUNC) &_SharedObject_getSharedMemoryPath, 0},
     {NULL, NULL, 0}
 };
 
