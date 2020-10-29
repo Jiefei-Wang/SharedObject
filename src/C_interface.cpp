@@ -277,5 +277,5 @@ uint64_t C_getSharedMemorySize(string id)
 // [[Rcpp::export]]
 string C_getSharedMemoryPath()
 {
-	getSharedMemoryPath();
+	return getSharedMemoryPath();
 }
