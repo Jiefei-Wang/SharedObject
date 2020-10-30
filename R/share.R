@@ -7,8 +7,6 @@
 ## 3. If the internal is a list, dispatch to shareList
 ## 4. If the internal is an environment, dispatch to shareEnvironment
 ## 4. Otherwise, for any unknow object, throw an error
-
-
 shareANY <- function(x, ..., copyOnWrite, sharedSubset, sharedCopy, mustWork){
     allArgs <- list(x = x, ...)
     if(!missing(copyOnWrite))
@@ -63,8 +61,8 @@ shareAtomic <- function(x,...) {
         ## sometimes would duplicate the object using the pointer
         ## and results in an unshared object
         C_setAttributes(result,attrs)
-        ## We need to manually set the object attribute when the class 
-        ## attribute is not NULL for we use the internal C_setAttributes 
+        ## We need to manually set the object attribute when the class
+        ## attribute is not NULL for we use the internal C_setAttributes
         ## function to set the clas attribute.
         if(oldObject)
             C_setObject(result, TRUE)
