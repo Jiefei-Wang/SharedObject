@@ -95,7 +95,6 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP dataInfo)
 		return dataInfo;
 	}else{
 		SEXP result;
-		ERROR_CATCHER catcher;
 		try
 		{
 			loadLibrary();

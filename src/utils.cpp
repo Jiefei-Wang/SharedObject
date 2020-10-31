@@ -6,7 +6,7 @@ using namespace std;
 
 const string OS_ADDRESS_SIZE = "X" + to_string(sizeof(void*) * 8);
 
-#define BUFFER_SIZE 1024 * 1024
+#define BUFFER_SIZE 16 * 1024
 static char buffer[BUFFER_SIZE];
 
 static bool sharedMemoryPrintEnable = false;
@@ -202,20 +202,9 @@ SEXP PROTECT_GUARD::protect(SEXP x){
     return PROTECT(x);
 }
 
-size_t ERROR_CATCHER::counter = 0;
-ERROR_CATCHER::ERROR_CATCHER(){
-	++counter;
-}
-ERROR_CATCHER::~ERROR_CATCHER(){
-	--counter;
-}
 void throwError(const char *format, ...){
 		va_list args;
 		va_start(args, format);
 		vsnprintf(buffer, BUFFER_SIZE, format, args);
-		if(ERROR_CATCHER::counter==0){
-			Rf_error(buffer);
-		}else{
-			throw std::runtime_error(buffer);
-		}
+		throw std::runtime_error(buffer);
 }

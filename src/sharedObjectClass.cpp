@@ -72,11 +72,8 @@ static void validate_shared_memory(std::string key,
     size_t free_size = getFreeMemorySize();
     if (size > free_size)
     {
-        string error_msg =
-            "Insufficient memory size(requested: " +
-            std::to_string(size) +
-            "B, available: " + std::to_string(free_size) + "B\n";
-        throw std::runtime_error(error_msg);
+        throwError("Insufficient memory size(request: %lluB, available: %lluB)",
+                   (uint64_t)size, (uint64_t)free_size);
     }
     mapped_region region(*sharedMemoryHandle, read_write);
     void *ptr = region.get_address();
@@ -92,12 +89,11 @@ static void validate_shared_memory(std::string key,
     else
     {
         signal(SIGBUS, old_handle);
-        string error_msg = 
-        "Testing shared memory failed, key: " + key + ", size: " + 
-        std::to_string(size) + "B.\n " +
-        "This is a fatal error, please consider saving your data and restarting R "+
-        "to avoid the possible loss.\n";
-        throwError(error_msg.c_str());
+        Rf_error(
+            "Testing shared memory failed, key: %s, size: %lluB.\n"
+            "This is a fatal error, please consider saving your data "
+            "and restarting R to avoid the possible data loss.",
+            key.c_str(), (uint64_t)size);
     }
 }
 #endif
@@ -111,7 +107,7 @@ void SharedObjectClass::openSharedMemoryHandle()
     sharedMemoryPrint("opening existing shared memory, key:%s, size:%llu\n", key.c_str(), size);
     if (hasSharedMemoryHandle())
     {
-        throwError("The shared memory has been opened, this should not happen.\n");
+        throwError("The shared memory has been opened, this should not happen.");
     }
     try
     {
@@ -120,7 +116,7 @@ void SharedObjectClass::openSharedMemoryHandle()
     catch (const std::exception &ex)
     {
         freeSharedMemoryHandle();
-        throwError("An error has occured in opening shared memory: %s\n", ex.what());
+        throwError("An error has occured in opening shared memory:\n %s", ex.what());
     }
     size = get_size(sharedMemoryHandle);
 }
@@ -153,7 +149,7 @@ size_t SharedObjectClass::getSharedMemorySize()
         }
         catch (const std::exception &ex)
         {
-            throwError("Failed to get the size of the shared memory: %s\n", ex.what());
+            throwError("Failed to get the size of the shared memory:\n %s", ex.what());
             return 0;
         }
     }
@@ -227,7 +223,7 @@ void SharedObjectClass::allocateSharedMemory()
             SharedObjectClass::freeSharedMemory(key);
             freeSharedMemoryHandle();
         }
-        throwError("An error has occured in allocating shared memory: %s\n", ex.what());
+        throwError("An error has occured in allocating shared memory:\n %s", ex.what());
     }
     size = get_size(sharedMemoryHandle);
 }
@@ -263,7 +259,7 @@ void *SharedObjectClass::mapSharedMemory()
     catch (const std::exception &ex)
     {
         freeMappedRegionHandle();
-        throwError("An error has occured in mapping shared memory: %s\n", ex.what());
+        throwError("An error has occured in mapping shared memory:\n %s", ex.what());
         return nullptr;
     }
 }

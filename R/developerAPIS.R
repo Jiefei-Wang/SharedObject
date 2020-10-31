@@ -57,8 +57,15 @@ listSharedObjects <- function(end = NULL,start = NULL) {
             ids <- seq_len(end - start + 1) + start - 1
         usedIds <- ids[vapply(ids, hasSharedMemory, logical(1))]
     }
-    memorySize <- vapply(usedIds, getSharedMemorySize, double(1))
-    data.frame(Id = usedIds, size = memorySize, row.names = NULL)
+    memorySize <- unlist(lapply(usedIds, function(id)
+        {
+        tryCatch(
+            getSharedMemorySize(id),
+            error = function(e) -1
+        )
+    }))
+    idx <- (memorySize != -1)
+    data.frame(Id = usedIds[idx], size = memorySize[idx], row.names = NULL)
 }
 
 

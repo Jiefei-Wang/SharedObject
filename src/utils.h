@@ -20,13 +20,6 @@ void loadLibrary();
 
 //Catch all errors as a runtime error
 //Otherwise, the error will be an R error
-class ERROR_CATCHER
-{
-public:
-  static size_t counter;
-  ERROR_CATCHER();
-  ~ERROR_CATCHER();
-};
 void throwError(const char *format, ...);
 
 

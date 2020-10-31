@@ -97,7 +97,7 @@ std::string getNextId()
 			return std::to_string(id);
 		}
 	} while (id != initialId);
-	throwError("Unable to find an available key for creating a shared memory, all keys are in used.\n");
+	throwError("Unable to find an available key for creating a shared memory, all keys are in used.");
 	return "";
 }
 
@@ -119,8 +119,9 @@ void allocateSharedMemoryInternal(string key, uint64_t size_in_byte)
 	{
 		if (sharedObjectList.at(key)->getSize() < size_in_byte)
 		{
-			throwError("The shared memory size is smaller than you request(reqeust: %llu, actual:%llu)\n",
-					 size_in_byte, (uint64_t)sharedObjectList.at(key)->getSize());
+			throwError("The shared memory exists and its size is smaller than your request"
+					   "(reqeust: %llu, actual:%llu)",
+					   size_in_byte, (uint64_t)sharedObjectList.at(key)->getSize());
 		}
 	}
 	sharedObjectList.at(key)->allocateSharedMemory();
@@ -272,8 +273,9 @@ bool autoReleaseAfterUse(std::string id)
 	string key = getKey(id);
 	if (!keyInMap(sharedObjectList, key))
 	{
-		throwError("Error in <autoReleaseAfterUse>: The shared object have not been mapped to the current process(key: %s)\n",
-				 key.c_str());
+		throwError("Error in <autoReleaseAfterUse>: "
+				   "The shared object have not been mapped to the current process(key: %s)",
+				   key.c_str());
 	}
 	return sharedObjectList.at(key)->getOwnership();
 }
@@ -282,14 +284,16 @@ void autoReleaseAfterUse(std::string id, bool releaseAfterUse)
 	string key = getKey(id);
 	if (!keyInMap(sharedObjectList, key))
 	{
-		throwError("Error in <autoReleaseAfterUse>: The shared object have not been mapped to the current process(key: %s)\n",
-				 key.c_str());
+		throwError("Error in <autoReleaseAfterUse>: "
+				   "The shared object have not been mapped to the current process(key: %s)",
+				   key.c_str());
 	}
 	sharedObjectList.at(key)->setOwnership(releaseAfterUse);
 }
 
 uint64_t getLastIndex()
 {
+	initialPkgData();
 	return *lastId;
 }
 
@@ -297,7 +301,6 @@ uint64_t getLastIndex()
  Initialize the variable lastId which is located in the shared memory
  the variable serves as a hint for what the next id should be
  */
-
 void initialPkgData()
 {
 	if (lastId == nullptr)
@@ -306,7 +309,6 @@ void initialPkgData()
 		{
 			auto_semophore semophore;
 			semophore.lock();
-			ERROR_CATCHER catcher;
 			bool hasSharedMemory = SharedObjectClass::hasSharedMemory(SHARED_OBJECT_COUNTER);
 			void *ptr;
 			if (hasSharedMemory)
@@ -324,9 +326,9 @@ void initialPkgData()
 		catch (std::exception &ex)
 		{
 			lastId = nullptr;
-			throwError("An error has occured in initializing shared memory object: %s\n%s",
-					 ex.what(),
-					 "You must manually initial the package via <initialSharedObjectPackageData()>\n");
+			throwError("An error has occured in initializing shared memory object: %s\n"
+					   "You must manually initial the package via <initialSharedObjectPackageData()>",
+					   ex.what());
 		}
 	}
 }
@@ -336,3 +338,5 @@ void releasePkgData()
 	freeSharedMemoryInternal(SHARED_OBJECT_COUNTER);
 	lastId = nullptr;
 }
+
+
