@@ -60,7 +60,7 @@ library(parallel)
 cl <- makeCluster(1)
 clusterExport(cl, "A2")
 ## Check if the object is still a shared object
-clusterEvalQ(cl, is.shared(A2))
+clusterEvalQ(cl, SharedObject::is.shared(A2))
 stopCluster(cl)
 ```
 当你传输一个共享对象的时候，实际上只有共享内存的编号，还有一些R对象的信息被传输过去了。我们可以通过`serialize`函数来验证这一点

@@ -1,9 +1,9 @@
 Changes in version 1.5.0
  NEW FEATURES:
-  + Support sharing the character vector
-  + Support creating an empty shared object
-  + new paramters `shareAttributes` and `minLength` to function `share`
-  + new paramter `depth` to function is.shared
+  + Support sharing character vectors
+  + Support creating empty shared objects
+  + new paramters `shareAttributes` and `minLength` in package options
+  + new paramter `depth` in function is.shared
   + R level developer API supports vector input
   + add a safer memory check method before sharing an object on Linux
   + Chinese vignette

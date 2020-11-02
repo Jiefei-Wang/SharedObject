@@ -2,7 +2,9 @@ context("cluster export")
 sharedObjectPkgOptions(minLength = 1)
 library(parallel)
 cl = makeCluster(1)
-
+clusterEvalQ(cl, {
+    library(SharedObject)
+})
 n = 100
 data = floor(abs(runif(n) * 2))
 type = c(

@@ -97,7 +97,7 @@ SEXP sharedVector_unserialize(SEXP R_class, SEXP dataInfo)
 		SEXP result;
 		try
 		{
-			loadLibrary();
+			//loadLibrary();
 			altrepPrint("Library loaded\n");
 			result = readSharedObject(dataInfo);
 		}

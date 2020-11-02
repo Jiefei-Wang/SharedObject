@@ -140,8 +140,7 @@ SEXP sharedString_serialized_state(SEXP x)
 SEXP sharedString_unserialize(SEXP R_class, SEXP info)
 {
     altrepPrint("string: Unserializing data\n");
-    loadLibrary();
-    altrepPrint("Library loaded\n");
+    //loadLibrary();
     SEXP slot1 = VECTOR_ELT(info, 0);
     SEXP slot2 = VECTOR_ELT(info, 1);
     if (GET_SLOT(slot1, STR_DATA_INDEX) != R_NilValue)

@@ -59,7 +59,7 @@ library(parallel)
 cl <- makeCluster(1)
 clusterExport(cl, "A2")
 ## Check if the object is still a shared object
-clusterEvalQ(cl, is.shared(A2))
+clusterEvalQ(cl, SharedObject::is.shared(A2))
 stopCluster(cl)
 ```
 When a shared object is exported to the other R workers, only the data ID along with some basic information of the shared object will be sent to the workers. We can see the exported data from the `serialize` function.

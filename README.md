@@ -48,7 +48,7 @@ library(parallel)
 cl <- makeCluster(1)
 clusterExport(cl, "A2")
 ## Check if the object is still a shared object
-clusterEvalQ(cl, is.shared(A2))
+clusterEvalQ(cl, SharedObject::is.shared(A2))
 #> [[1]]
 #> [1] TRUE
 stopCluster(cl)
@@ -69,7 +69,7 @@ data2 <-serialize(x2, NULL)
 length(data1)
 #> [1] 80032
 length(data2)
-#> [1] 390
+#> [1] 391
 ```
 As we see from the example, the size of the shared object `x2` is significantly smaller than the size of the regular R object `x1`. When workers receive the shared object `x2`, they can get the data from the memory using the memory ID. Therefore, there is no memory allocation for the data of `x2` in the workers. 
 ## Creating a shared object from scratch
@@ -97,7 +97,7 @@ There are several properties associated with the shared object, one can check th
 ## get a summary report
 sharedObjectProperties(A2)
 #> $dataId
-#> [1] "1"
+#> [1] "28"
 #> 
 #> $length
 #> [1] 9
@@ -344,16 +344,17 @@ You can list the ID of the shared object you have created via
 
 ```r
 listSharedObjects()
-#>   Id  size
-#> 1  1  4096
-#> 2  2 81920
-#> 3  5  4096
-#> 4  8  4096
-#> 5  9  4096
-#> 6 10  4096
-#> 7 11  4096
-#> 8 12  4096
-#> 9 13  4096
+#>    Id  size
+#> 1  28  4096
+#> 2  29 81920
+#> 3  32  4096
+#> 4  34  4096
+#> 5  35  4096
+#> 6  36  4096
+#> 7  37  4096
+#> 8  38  4096
+#> 9  39  4096
+#> 10 40  4096
 ```
 Getting a list of shared object should have a rare use case, but it can be useful if you have a memory leaking problem and a shared memory can be manually released by `freeSharedMemory(ID)`.
 
@@ -414,11 +415,15 @@ sessionInfo()
 #> [1] parallel  stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] SharedObject_1.5.1
+#> [1] SharedObject_1.5.3 testthat_2.3.2    
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] compiler_4.1.0      magrittr_1.5        tools_4.1.0         Rcpp_1.0.5          stringi_1.4.6      
-#>  [6] knitr_1.29          stringr_1.4.0       xfun_0.16           BiocGenerics_0.35.4 evaluate_0.14
+#>  [1] Rcpp_1.0.5          rstudioapi_0.11     knitr_1.29          magrittr_1.5        BiocGenerics_0.35.4
+#>  [6] pkgload_1.1.0       R6_2.4.1            rlang_0.4.7         fansi_0.4.1         stringr_1.4.0      
+#> [11] tools_4.1.0         xfun_0.16           cli_2.0.2           withr_2.2.0         htmltools_0.5.0    
+#> [16] yaml_2.2.1          assertthat_0.2.1    rprojroot_1.3-2     digest_0.6.25       crayon_1.3.4       
+#> [21] BiocManager_1.30.10 glue_1.4.2          evaluate_0.14       rmarkdown_2.3       stringi_1.4.6      
+#> [26] compiler_4.1.0      desc_1.2.0          backports_1.1.9     BiocStyle_2.17.0
 ```
 
 
