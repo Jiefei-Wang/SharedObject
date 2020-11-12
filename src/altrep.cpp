@@ -237,6 +237,9 @@ SEXP unshareString(SEXP x, SEXP attributes)
         case 8:
             curChar = STRING_ELT(charSet, ((uint64_t *)indexPtr)[i]);
             break;
+		default:
+			Rf_error("Unknown unit size in the unshareString function, unit size: %llu", (uint64_t)unitSize);
+			curChar = R_NilValue;
         }
         SET_STRING_ELT(stringVec, i, curChar);
     }
