@@ -52,12 +52,8 @@ getOSBit <- function(){
 #' SharedObject:::pkgconfig("PKG_LIBS")
 #' SharedObject:::pkgconfig("PKG_CPPFLAGS")
 pkgconfig <- function(x){
-    if(getOSBit() == 64){
-        folder <- "usrlib/x64"
-    }else{
-        folder <- "usrlib/i386"
-    }
     if(x == "PKG_LIBS"){
+        folder <- sprintf("usrlib/%s", .Platform$r_arch)
         folder <- system.file(folder,
                               package = "SharedObject", mustWork = FALSE)
         if(folder == ""){
@@ -70,6 +66,7 @@ pkgconfig <- function(x){
         result <- ""
     }
     cat(result)
+    invisible(result)
 }
 
 ## Get POSIX shared memory files
