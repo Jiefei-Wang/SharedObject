@@ -1,8 +1,8 @@
 context("test the path in the package")
 
 test_that("Package library", {
-    libPath <- capture.output(SharedObject:::pkgconfig("PKG_LIBS"))
-    expect_true(SharedObject:::pkgconfig("PKG_LIBS"))
+    libPath <- SharedObject:::pkgconfig("PKG_LIBS")
+    expect_true(libPath)
     expect_true(file.exists(libPath))
 })
 
