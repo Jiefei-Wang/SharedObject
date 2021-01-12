@@ -53,15 +53,16 @@ getOSBit <- function(){
 #' SharedObject:::pkgconfig("PKG_CPPFLAGS")
 pkgconfig <- function(x){
     if(x == "PKG_LIBS"){
-        folder <- sprintf("usrlib/%s", .Platform$r_arch)
-        folder <- system.file(folder,
-                              package = "SharedObject", mustWork = FALSE)
-        if(folder == ""){
+        if(.Platform$OS.type=="windows"){
+            folder <- sprintf("usrlib/%s", .Platform$r_arch)
+            folder <- system.file(folder,
+                                  package = "SharedObject", mustWork = FALSE)
+        }else{
             folder <- system.file("usrlib",
-                                  package = "SharedObject", mustWork = TRUE)
+                                  package = "SharedObject", mustWork = FALSE)
         }
         files <- "SharedObject.a"
-        result <- paste0(folder,"/",files)
+        result <- file.path(folder,files)
     }else{
         result <- ""
     }
