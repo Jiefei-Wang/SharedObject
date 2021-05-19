@@ -1,7 +1,7 @@
 Package: SharedObject
 Type: Package
 Title: Sharing R objects across multiple R processes without memory duplication
-Version: 1.5.5
+Version: 1.6.0
 Date: 2019-6-10
 Authors@R: person("Jiefei", "Wang", email = "jwang96@buffalo.edu",
   role = c("aut", "cre"))
