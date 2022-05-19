@@ -78,6 +78,7 @@ length(data1)
 length(data2)
 ```
 As we see from the example, the size of the shared object `x2` is significantly smaller than the size of the regular R object `x1`. When workers receive the shared object `x2`, they can get the data from the memory using the memory ID. Therefore, there is no memory allocation for the data of `x2` in the workers. 
+
 ## Creating a shared object from scratch
 Analogy to the `vector` function in R, the shared object can also be made from scratch.
 ```{r}
