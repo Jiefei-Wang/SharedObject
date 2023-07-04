@@ -116,7 +116,7 @@ void SharedObjectClass::openSharedMemoryHandle()
     catch (const std::exception &ex)
     {
         freeSharedMemoryHandle();
-        throwError("An error has occured in opening shared memory:\n %s", ex.what());
+        throwError("An error has occurred in opening shared memory:\n %s", ex.what());
     }
     size = get_size(sharedMemoryHandle);
 }
@@ -223,7 +223,7 @@ void SharedObjectClass::allocateSharedMemory()
             SharedObjectClass::freeSharedMemory(key);
             freeSharedMemoryHandle();
         }
-        throwError("An error has occured in allocating shared memory:\n %s", ex.what());
+        throwError("An error has occurred in allocating shared memory:\n %s", ex.what());
     }
     size = get_size(sharedMemoryHandle);
 }
@@ -259,7 +259,7 @@ void *SharedObjectClass::mapSharedMemory()
     catch (const std::exception &ex)
     {
         freeMappedRegionHandle();
-        throwError("An error has occured in mapping shared memory:\n %s", ex.what());
+        throwError("An error has occurred in mapping shared memory:\n %s", ex.what());
         return nullptr;
     }
 }

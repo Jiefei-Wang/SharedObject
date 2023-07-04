@@ -326,7 +326,7 @@ void initialPkgData()
 		catch (std::exception &ex)
 		{
 			lastId = nullptr;
-			throwError("An error has occured in initializing shared memory object: %s\n"
+			throwError("An error has occurred in initializing shared memory object: %s\n"
 					   "You must manually initial the package via <initialSharedObjectPackageData()>",
 					   ex.what());
 		}

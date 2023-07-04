@@ -39,7 +39,7 @@ R_altrep_class_t& getAltClass(int type) {
 		return shared_string_class;
 	default: Rf_error("Type of %d is not supported yet", type);
 	}
-	// Just for suppressing the annoying warning, it should never be excuted
+	// Just for suppressing the annoying warning, it should never be executed
 	return shared_real_class;
 }
 SEXP getDataInfoTemplate()
