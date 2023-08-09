@@ -231,11 +231,18 @@ setGeneric("is.shared", signature="x",
 #'
 #' ## Get attributes
 #' sharedObjectProperties(x1)
+#' 
+#' ## Get a specific property
+#' ## Both symbol and character give the same result
 #' sharedObjectProperties(x1, copyOnWrite)
 #' sharedObjectProperties(x1, "copyOnWrite")
-#' props <- "copyOnWrite"
-#' sharedObjectProperties(x1, props, literal = FALSE)
+#' 
+#' ## Shortcut for obtaining copy-on-write property
 #' getCopyOnWrite(x1)
+#' 
+#' ## Use a character vector
+#' props <- c("copyOnWrite","sharedSubset")
+#' sharedObjectProperties(x1, props, literal = FALSE)
 #'
 #' ## Set attributes
 #' sharedObjectProperties(x1, copyOnWrite = FALSE)

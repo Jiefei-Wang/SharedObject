@@ -19,7 +19,7 @@
 #' Furthermore, there will be no named shared memory in the returned list.
 #'
 #' Note that the size in the return value is the true memory size
-#' that is reserved for the shared object, so it might be larger
+#' that is reserved by the shared object, so it might be larger
 #' than the object size.
 #'
 #' @examples
@@ -80,8 +80,9 @@ listSharedObjects <- function(end = NULL,start = NULL) {
 #' C++ code. Normal users should not use these functions unless
 #' dealing with memory leaking
 #'
-#' @param name,id The name of the shared memory
-#' @param size The size of the shared memory that you want to allocate
+#' @param name,id The name/id of the shared memory. Can be a vector
+#' @param size The size of the shared memory that you want to allocate. Can be a vector.
+#' If the argument `name` presents, The length of `size` must match the length of `name`.
 #'
 #' @details
 #' \strong{Quick explanation}
@@ -101,7 +102,7 @@ listSharedObjects <- function(end = NULL,start = NULL) {
 #' `hasSharedMemory`: whether the memory exist?
 #'
 #' `getSharedMemorySize`: get the actual size of the shared memory, it may be larger than the
-#' size that you required.
+#' size you required.
 #'
 #' \strong{Details}
 #'
