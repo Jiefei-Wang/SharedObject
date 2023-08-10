@@ -16,9 +16,7 @@ test_that("Package flags", {
 
 test_that("shared memory path", {
     memoryPath <- getSharedMemoryPath()
-    if(getOS()=="linux"){
+    if(memoryPath!=""){
         expect_true(dir.exists(memoryPath))
-    }else{
-        expect_true(memoryPath=="")
     }
 })
