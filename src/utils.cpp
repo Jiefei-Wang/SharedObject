@@ -35,8 +35,8 @@ void sharedMemoryPrint(const char *format, ...){
     {
         va_list args;
         va_start(args, format);
-        vsnprintf(buffer, BUFFER_SIZE, format, args);
-        Rprintf(buffer);
+        Rvprintf(format, args);
+        va_end(args);
     }
 }
 
@@ -45,8 +45,8 @@ void altrepPrint(const char *format, ...){
     {
         va_list args;
         va_start(args, format);
-        vsnprintf(buffer, BUFFER_SIZE, format, args);
-        Rprintf(buffer);
+        Rvprintf(format, args);
+        va_end(args);
     }
 }
 
@@ -55,8 +55,8 @@ void packagePrint(const char *format, ...){
     {
         va_list args;
         va_start(args, format);
-        vsnprintf(buffer, BUFFER_SIZE, format, args);
-        Rprintf(buffer);
+        Rvprintf(format, args);
+        va_end(args);
     }
 }
 
