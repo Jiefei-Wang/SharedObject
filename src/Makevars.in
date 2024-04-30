@@ -6,10 +6,11 @@ CXX_STD=CXX11
 #PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT
 MKDIR_P = ${MKDIR} -p
 PKG_LIBS = @LIBS@
+STATICLIB = SharedObject.a
 
-.PHONY: all create-folder make-static-lib copy-files
+.PHONY: all create-folder copy-files
 
-all: create-folder ${SHLIB} make-static-lib copy-files
+all: ${SHLIB} copy-files
 #all: ${SHLIB}
 
 create-folder:
@@ -17,9 +18,9 @@ create-folder:
 	 ${MKDIR_P} ../inst/include/SharedObject&&\
 	 ${MKDIR_P} ../inst/usrlib${R_ARCH}
 
-make-static-lib:
-	 ${AR} -crv SharedObject.a *.o
+${STATICLIB}: ${OBJECTS}
+	 ${AR} -crv ${STATICLIB} ${OBJECTS}
 
-copy-files:
+copy-files: create-folder ${STATICLIB}
 	 ${CP} "sharedMemory.h" "../inst/include/SharedObject/"&&\
-	 ${CP} "SharedObject.a" "../inst/usrlib${R_ARCH}/"
+	 ${CP} ${STATICLIB} "../inst/usrlib${R_ARCH}/"
